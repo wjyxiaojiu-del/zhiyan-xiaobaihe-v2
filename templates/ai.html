@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% set active = "ai" %}
+
+{% block title %}AI问答助手 - 植研小白盒{% endblock %}
+
+{% block content %}
+<div class="chat-container">
+    <div class="chat-header">
+        <h2>🤖 植研小白盒AI助手</h2>
+        <p>专属植物科研AI，解答实验问题、计算试剂、排查失败</p>
+    </div>
+
+    <!-- API Key输入 -->
+    <div style="margin-bottom:1rem;">
+        <input type="password" id="apiKey" placeholder="输入Anthropic API Key"
+               style="width:100%; padding:0.6rem 1rem; border:2px solid #E0E0E0; border-radius:8px; font-size:0.9rem;">
+    </div>
+
+    <!-- 消息区域 -->
+    <div class="chat-messages" id="chatMessages">
+        <div class="msg bot">
+            <div class="avatar">🌿</div>
+            <div class="bubble">
+                你好！我是植研小白盒AI助手，专门帮你解决植物实验问题。<br><br>
+                你可以问我：<br>
+                • 怎么测可溶性糖含量？<br>
+                • PCR没有条带怎么办？<br>
+                • 配100mL 0.1mol/L Tris要称多少克？<br>
+                • DNA提取用什么方法？
+            </div>
+        </div>
+    </div>
+
+    <!-- 输入区域 -->
+    <div class="chat-input-area">
+        <input type="text" id="chatInput" placeholder="输入你的实验问题..."
+               onkeydown="if(event.key==='Enter')sendMsg()">
+        <button class="chat-send-btn" onclick="sendMsg()">发送</button>
+    </div>
+</div>
+
+<script>
+const messages = [];
+
+function sendMsg() {
+    const input = document.getElementById('chatInput');
+    const apiKey = document.getElementById('apiKey').value;
+    const msg = input.value.trim();
+    if (!msg) return;
+
+    // 显示用户消息
+    addMsg('user', msg);
+    input.value = '';
+
+    // 显示loading
+    const loadingId = addMsg('bot', '<div class="loading"></div> 思考中...');
+
+    fetch('/api/chat', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({message: msg, api_key: apiKey})
+    })
+    .then(r => r.json())
+    .then(data => {
+        // 移除loading
+        document.getElementById(loadingId).remove();
+        if (data.error) {
+            addMsg('bot', '❌ ' + data.error);
+        } else {
+            addMsg('bot', data.response);
+        }
+    })
+    .catch(e => {
+        document.getElementById(loadingId).remove();
+        addMsg('bot', '❌ 网络错误：' + e.message);
+    });
+}
+
+function addMsg(role, content) {
+    const container = document.getElementById('chatMessages');
+    const id = 'msg-' + Date.now();
+    const avatar = role === 'user' ? '👤' : '🌿';
+    const div = document.createElement('div');
+    div.className = 'msg ' + role;
+    div.id = id;
+    div.innerHTML = '<div class="avatar">' + avatar + '</div><div class="bubble">' + content + '</div>';
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+    return id;
+}
+</script>
+{% endblock %}

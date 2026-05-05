@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% set active = "export" %}
+
+{% block content %}
+<section class="hero" style="padding:2rem 0;">
+    <h1>Protocol导出</h1>
+    <p class="subtitle">选择实验，导出为Word或Markdown格式，打印成纸质版</p>
+</section>
+
+<div style="max-width:900px;margin:0 auto;padding:0 1rem;">
+    <!-- 批量导出 -->
+    <div style="background:white;border-radius:16px;padding:1.5rem;margin-bottom:2rem;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
+        <h3 style="margin-bottom:1rem;">批量导出</h3>
+        <p style="color:#607D8B;margin-bottom:1rem;">一键导出全部65个Protocol</p>
+        <button class="btn btn-primary" onclick="exportAll('docx')" style="margin-right:0.5rem;">
+            全部导出为Word
+        </button>
+        <button class="btn btn-secondary" onclick="exportAll('md')">
+            全部导出为Markdown
+        </button>
+        <div id="exportStatus" style="margin-top:1rem;color:#2E7D32;display:none;"></div>
+    </div>
+
+    <!-- 分类筛选 -->
+    <div style="text-align:center;margin-bottom:1.5rem;">
+        <button class="filter-btn active" onclick="filterExport('all')">全部</button>
+        <button class="filter-btn" onclick="filterExport('植物生理')">植物生理</button>
+        <button class="filter-btn" onclick="filterExport('分子生物')">分子生物</button>
+        <button class="filter-btn" onclick="filterExport('基础操作')">基础操作</button>
+    </div>
+
+    <!-- Protocol列表 -->
+    <div id="exportGrid">
+        {% for p in protocols %}
+        <div class="export-item" data-category="{{ p.category }}" style="background:white;border-radius:12px;padding:1rem 1.5rem;margin-bottom:0.75rem;display:flex;align-items:center;justify-content:space-between;box-shadow:0 1px 6px rgba(0,0,0,0.06);">
+            <div>
+                <span style="color:#607D8B;font-size:0.8rem;font-weight:600;">{{ p.id }}</span>
+                <span style="margin-left:0.5rem;font-weight:600;">{{ p.name }}</span>
+                <span class="tag tag-category" style="margin-left:0.5rem;">{{ p.category }}</span>
+            </div>
+            <div style="display:flex;gap:0.5rem;">
+                <a href="/api/export/{{ p.id }}/md" class="btn btn-sm" style="background:#E8F5E9;color:#2E7D32;padding:0.3rem 0.8rem;border-radius:6px;font-size:0.85rem;">
+                    MD
+                </a>
+                <a href="/api/export/{{ p.id }}/docx" class="btn btn-sm" style="background:#E3F2FD;color:#1565C0;padding:0.3rem 0.8rem;border-radius:6px;font-size:0.85rem;">
+                    Word
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+function filterExport(cat) {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+    document.querySelectorAll('.export-item').forEach(item => {
+        if (cat === 'all' || item.dataset.category === cat) {
+            item.style.display = 'flex';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
+
+function exportAll(fmt) {
+    const status = document.getElementById('exportStatus');
+    status.style.display = 'block';
+    status.textContent = '正在逐个下载，请允许浏览器下载多个文件...';
+
+    const links = document.querySelectorAll(`.export-item a[href$="/${fmt}"]`);
+    let i = 0;
+    function downloadNext() {
+        if (i >= links.length) {
+            status.textContent = `全部 ${links.length} 个文件下载完成！`;
+            return;
+        }
+        links[i].click();
+        i++;
+        setTimeout(downloadNext, 300);
+    }
+    downloadNext();
+}
+</script>
+
+<style>
+.btn-sm { transition: all 0.2s; }
+.btn-sm:hover { transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
+</style>
+{% endblock %}

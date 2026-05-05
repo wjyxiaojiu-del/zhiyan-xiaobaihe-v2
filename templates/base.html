@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}植研小白盒{% endblock %}</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <a href="/" class="logo">
+            <span class="icon">🌿</span>
+            <span>植研小白盒</span>
+        </a>
+        <div class="nav-links">
+            <a href="/" class="{% if active == 'home' %}active{% endif %}">首页</a>
+            <a href="/search" class="{% if active == 'search' %}active{% endif %}">Protocol检索</a>
+            <a href="/calculator" class="{% if active == 'calc' %}active{% endif %}">试剂计算器</a>
+            <a href="/instruments" class="{% if active == 'instruments' %}active{% endif %}">仪器指南</a>
+            <a href="/ai" class="{% if active == 'ai' %}active{% endif %}">AI助手</a>
+            <a href="/export" class="{% if active == 'export' %}active{% endif %}">导出</a>
+        </div>
+    </nav>
+
+    <!-- 页面内容 -->
+    <main class="page-enter">
+        {% block content %}{% endblock %}
+    </main>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

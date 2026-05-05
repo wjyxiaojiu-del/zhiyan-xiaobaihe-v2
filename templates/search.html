@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+{% set active = "search" %}
+
+{% block title %}Protocol检索 - 植研小白盒{% endblock %}
+
+{% block content %}
+<div class="search-container">
+    <h1 class="page-title" style="text-align:center;">Protocol检索</h1>
+    <p class="page-subtitle" style="text-align:center;">输入实验关键词，匹配最相关的Protocol</p>
+
+    <div class="search-box">
+        <input type="text" id="searchInput" placeholder="例：可溶性糖 叶绿素 SOD 酶活性 DNA提取 呼吸速率..."
+               onkeydown="if(event.key==='Enter')doSearch()" autofocus>
+        <button onclick="doSearch()">检索</button>
+    </div>
+
+    <div id="searchResults"></div>
+
+    <!-- 热门搜索 -->
+    <div style="margin-top:2rem;">
+        <h3 style="font-size:1rem; color:#607D8B; margin-bottom:0.8rem;">热门搜索</h3>
+        <div style="display:flex; flex-wrap:wrap; gap:0.5rem;">
+            <button class="quick-btn" onclick="quickSearch('可溶性糖')">可溶性糖</button>
+            <button class="quick-btn" onclick="quickSearch('叶绿素')">叶绿素</button>
+            <button class="quick-btn" onclick="quickSearch('蛋白质含量')">蛋白质</button>
+            <button class="quick-btn" onclick="quickSearch('MDA 丙二醛')">MDA</button>
+            <button class="quick-btn" onclick="quickSearch('SOD 超氧物歧化酶')">SOD</button>
+            <button class="quick-btn" onclick="quickSearch('DNA提取')">DNA提取</button>
+            <button class="quick-btn" onclick="quickSearch('呼吸速率')">呼吸速率</button>
+            <button class="quick-btn" onclick="quickSearch('电泳')">电泳</button>
+            <button class="quick-btn" onclick="quickSearch('植物激素')">植物激素</button>
+            <button class="quick-btn" onclick="quickSearch('根系活力')">根系活力</button>
+        </div>
+    </div>
+
+    <!-- 全部Protocol浏览 -->
+    <div style="margin-top:2.5rem;">
+        <h3 style="font-size:1rem; color:#607D8B; margin-bottom:0.8rem;">全部Protocol（点击直接查看）</h3>
+        <div style="display:flex; flex-wrap:wrap; gap:0.4rem;">
+            {% for p in protocols %}
+            <a href="/protocol/{{ p.id }}" class="browse-tag" title="{{ p.desc }}">
+                {{ p.id }} {{ p.name[:12] }}
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<style>
+.quick-btn {
+    padding: 0.4rem 1rem;
+    border: 2px solid #E0E0E0;
+    background: white;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    color: #607D8B;
+}
+.quick-btn:hover { border-color: #4CAF50; color: #2E7D32; background: #E8F5E9; }
+
+.browse-tag {
+    display: inline-block;
+    padding: 0.25rem 0.6rem;
+    background: #F5F7FA;
+    border: 1px solid #E0E0E0;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    color: #455A64;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+.browse-tag:hover { background: #E8F5E9; border-color: #4CAF50; color: #2E7D32; }
+
+.search-result-card {
+    display: block;
+    background: white;
+    border-radius: 12px;
+    padding: 1rem 1.5rem;
+    margin-bottom: 0.75rem;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+    text-decoration: none;
+    color: #263238;
+    transition: all 0.2s;
+    border-left: 4px solid transparent;
+}
+.search-result-card:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    border-left-color: #4CAF50;
+    transform: translateX(2px);
+}
+.result-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+.result-name {
+    font-weight: 700;
+    font-size: 1rem;
+    color: #2E7D32;
+}
+.result-category {
+    font-size: 0.75rem;
+    background: #E8F5E9;
+    color: #2E7D32;
+    padding: 0.15rem 0.5rem;
+    border-radius: 10px;
+}
+.result-desc {
+    font-size: 0.85rem;
+    color: #607D8B;
+    margin-bottom: 0.4rem;
+}
+.result-snippet {
+    font-size: 0.8rem;
+    color: #90A4AE;
+    border-left: 3px solid #E0E0E0;
+    padding-left: 0.5rem;
+    margin-top: 0.3rem;
+}
+.result-score {
+    font-size: 0.7rem;
+    color: #B0BEC5;
+}
+</style>
+
+<script>
+function quickSearch(q) {
+    document.getElementById('searchInput').value = q;
+    doSearch();
+}
+
+function doSearch() {
+    const query = document.getElementById('searchInput').value.trim();
+    if (!query) return;
+
+    const container = document.getElementById('searchResults');
+    container.innerHTML = '<div style="text-align:center;padding:2rem;color:#607D8B;">检索中...</div>';
+
+    fetch('/api/search', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({query: query})
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.error) {
+            container.innerHTML = '<div style="text-align:center;padding:2rem;color:#F44336;">' + data.error + '</div>';
+            return;
+        }
+        if (!data.results || data.results.length === 0) {
+            container.innerHTML = '<div style="text-align:center;padding:2rem;color:#607D8B;">未找到相关Protocol，换个关键词试试</div>';
+            return;
+        }
+
+        let html = '<div style="margin-top:1.5rem;">';
+        html += '<p style="color:#607D8B;font-size:0.85rem;margin-bottom:0.8rem;">找到 ' + data.results.length + ' 个相关Protocol</p>';
+        data.results.forEach(r => {
+            const href = r.protocol_id ? '/protocol/' + r.protocol_id : '#';
+            html += '<a href="' + href + '" class="search-result-card">';
+            html += '<div class="result-header">';
+            html += '<span class="result-name">' + r.protocol_id + ' ' + r.protocol_name + '</span>';
+            html += '<span class="result-category">' + r.category + '</span>';
+            html += '</div>';
+            if (r.desc) {
+                html += '<div class="result-desc">' + r.desc + '</div>';
+            }
+            if (r.snippet) {
+                html += '<div class="result-snippet">' + r.snippet + '</div>';
+            }
+            html += '</a>';
+        });
+        html += '</div>';
+        container.innerHTML = html;
+    })
+    .catch(e => {
+        container.innerHTML = '<div style="text-align:center;padding:2rem;color:#F44336;">检索失败：' + e.message + '</div>';
+    });
+}
+</script>
+{% endblock %}

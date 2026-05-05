@@ -1,0 +1,304 @@
+{% extends "base.html" %}
+{% set active = "calc" %}
+
+{% block title %}试剂计算器 - 植研小白盒{% endblock %}
+
+{% block content %}
+<div class="calc-container">
+    <h1 class="page-title">🧪 试剂智能配比计算器</h1>
+    <p class="page-subtitle">选择计算类型，输入参数，一键出结果</p>
+
+    <!-- 计算类型Tab -->
+    <div class="calc-tabs">
+        <button class="calc-tab active" onclick="showCalc('m2m')">摩尔浓度→质量</button>
+        <button class="calc-tab" onclick="showCalc('m2c')">质量→浓度</button>
+        <button class="calc-tab" onclick="showCalc('dilution')">母液稀释</button>
+        <button class="calc-tab" onclick="showCalc('gradient')">梯度稀释</button>
+        <button class="calc-tab" onclick="showCalc('rpmrcf')">rpm/rcf换算</button>
+        <button class="calc-tab" onclick="showCalc('stdcurve')">标准曲线</button>
+    </div>
+
+    <!-- 摩尔浓度→质量 -->
+    <div class="calc-panel active" id="panel-m2m">
+        <h3 style="margin-bottom:1rem;">计算需要称取多少试剂</h3>
+        <div class="calc-row">
+            <div class="calc-field">
+                <label>选择试剂</label>
+                <select id="m2m-reagent" onchange="fillMW('m2m')">
+                    {% for name, mw in mw_db.items() %}
+                    <option value="{{ mw }}">{{ name }} ({{ mw }})</option>
+                    {% endfor %}
+                    <option value="custom">自定义分子量</option>
+                </select>
+            </div>
+            <div class="calc-field">
+                <label>分子量 (g/mol)</label>
+                <input type="number" id="m2m-mw" value="180.16" step="0.01">
+            </div>
+        </div>
+        <div class="calc-row">
+            <div class="calc-field">
+                <label>目标摩尔浓度 (mol/L)</label>
+                <input type="number" id="m2m-molarity" value="0.1" step="0.01">
+            </div>
+            <div class="calc-field">
+                <label>目标体积 (mL)</label>
+                <input type="number" id="m2m-volume" value="100" step="1">
+            </div>
+        </div>
+        <button class="calc-btn" onclick="doCalc('molarity_to_mass')">计算</button>
+        <div class="calc-result" id="result-m2m"></div>
+    </div>
+
+    <!-- 质量→浓度 -->
+    <div class="calc-panel" id="panel-m2c">
+        <h3 style="margin-bottom:1rem;">称取质量算实际浓度</h3>
+        <div class="calc-row">
+            <div class="calc-field">
+                <label>选择试剂</label>
+                <select id="m2c-reagent" onchange="fillMW('m2c')">
+                    {% for name, mw in mw_db.items() %}
+                    <option value="{{ mw }}">{{ name }} ({{ mw }})</option>
+                    {% endfor %}
+                    <option value="custom">自定义分子量</option>
+                </select>
+            </div>
+            <div class="calc-field">
+                <label>分子量 (g/mol)</label>
+                <input type="number" id="m2c-mw" value="121.14" step="0.01">
+            </div>
+        </div>
+        <div class="calc-row">
+            <div class="calc-field">
+                <label>称取质量 (g)</label>
+                <input type="number" id="m2c-mass" value="0.1211" step="0.0001">
+            </div>
+            <div class="calc-field">
+                <label>定容体积 (mL)</label>
+                <input type="number" id="m2c-volume" value="100" step="1">
+            </div>
+        </div>
+        <button class="calc-btn" onclick="doCalc('mass_to_molarity')">计算</button>
+        <div class="calc-result" id="result-m2c"></div>
+    </div>
+
+    <!-- 母液稀释 -->
+    <div class="calc-panel" id="panel-dilution">
+        <h3 style="margin-bottom:1rem;">母液稀释计算</h3>
+        <div class="calc-row">
+            <div class="calc-field">
+                <label>母液浓度 (任意单位)</label>
+                <input type="number" id="dil-stock" value="1" step="0.01">
+            </div>
+            <div class="calc-field">
+                <label>目标浓度 (同上单位)</label>
+                <input type="number" id="dil-target" value="0.1" step="0.01">
+            </div>
+        </div>
+        <div class="calc-row">
+            <div class="calc-field">
+                <label>目标体积 (mL)</label>
+                <input type="number" id="dil-volume" value="50" step="1">
+            </div>
+            <div class="calc-field"></div>
+        </div>
+        <button class="calc-btn" onclick="doCalc('dilution')">计算</button>
+        <div class="calc-result" id="result-dilution"></div>
+    </div>
+
+    <!-- 梯度稀释 -->
+    <div class="calc-panel" id="panel-gradient">
+        <h3 style="margin-bottom:1rem;">梯度稀释方案（系列稀释）</h3>
+        <div class="calc-row">
+            <div class="calc-field">
+                <label>起始浓度 (mg/mL)</label>
+                <input type="number" id="grad-start" value="1" step="0.01">
+            </div>
+            <div class="calc-field">
+                <label>稀释倍数</label>
+                <input type="number" id="grad-factor" value="2" step="0.1">
+            </div>
+        </div>
+        <div class="calc-row">
+            <div class="calc-field">
+                <label>梯度级数</label>
+                <input type="number" id="grad-steps" value="5" step="1">
+            </div>
+            <div class="calc-field">
+                <label>每管体积 (mL)</label>
+                <input type="number" id="grad-vol" value="1" step="0.1">
+            </div>
+        </div>
+        <button class="calc-btn" onclick="doCalc('gradient')">生成方案</button>
+        <div class="calc-result" id="result-gradient"></div>
+    </div>
+
+    <!-- rpm/rcf换算 -->
+    <div class="calc-panel" id="panel-rpmrcf">
+        <h3 style="margin-bottom:1rem;">rpm / rcf 换算</h3>
+        <div class="calc-row">
+            <div class="calc-field">
+                <label>换算方向</label>
+                <select id="rpmrcf-mode">
+                    <option value="rpm_to_rcf">rpm → rcf (×g)</option>
+                    <option value="rcf_to_rpm">rcf (×g) → rpm</option>
+                </select>
+            </div>
+            <div class="calc-field">
+                <label>转子半径 (mm) <small style="color:#607D8B">水平~150mm 角~85mm</small></label>
+                <input type="number" id="rpmrcf-radius" value="85" step="1">
+            </div>
+        </div>
+        <div class="calc-row">
+            <div class="calc-field">
+                <label>输入数值</label>
+                <input type="number" id="rpmrcf-value" value="12000" step="1">
+            </div>
+            <div class="calc-field"></div>
+        </div>
+        <button class="calc-btn" onclick="doCalc('rpm_rcf')">换算</button>
+        <div class="calc-result" id="result-rpmrcf"></div>
+    </div>
+
+    <!-- 标准曲线 -->
+    <div class="calc-panel" id="panel-stdcurve">
+        <h3 style="margin-bottom:1rem;">标准曲线配制方案</h3>
+        <div class="calc-row">
+            <div class="calc-field">
+                <label>母液浓度 (mg/mL)</label>
+                <input type="number" id="std-stock" value="1" step="0.01">
+            </div>
+            <div class="calc-field">
+                <label>最高点浓度 (mg/mL)</label>
+                <input type="number" id="std-max" value="1" step="0.01">
+            </div>
+        </div>
+        <div class="calc-row">
+            <div class="calc-field">
+                <label>标准点数（不含空白）</label>
+                <input type="number" id="std-points" value="5" step="1">
+            </div>
+            <div class="calc-field">
+                <label>每管体积 (mL)</label>
+                <input type="number" id="std-vol" value="2" step="0.1">
+            </div>
+        </div>
+        <button class="calc-btn" onclick="doCalc('stdcurve')">生成方案</button>
+        <div class="calc-result" id="result-stdcurve"></div>
+    </div>
+</div>
+
+<script>
+function fillMW(prefix) {
+    const sel = document.getElementById(prefix + '-reagent');
+    const mwInput = document.getElementById(prefix + '-mw');
+    if (sel.value !== 'custom') {
+        mwInput.value = sel.value;
+    }
+}
+
+function showCalc(name) {
+    document.querySelectorAll('.calc-tab').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.calc-panel').forEach(p => p.classList.remove('active'));
+    event.target.classList.add('active');
+    document.getElementById('panel-' + name).classList.add('active');
+}
+
+function doCalc(type) {
+    let body = {};
+    if (type === 'molarity_to_mass') {
+        body = {
+            type, mw: document.getElementById('m2m-mw').value,
+            molarity: document.getElementById('m2m-molarity').value,
+            volume: document.getElementById('m2m-volume').value
+        };
+    } else if (type === 'mass_to_molarity') {
+        body = {
+            type, mw: document.getElementById('m2c-mw').value,
+            mass: document.getElementById('m2c-mass').value,
+            volume: document.getElementById('m2c-volume').value
+        };
+    } else if (type === 'dilution') {
+        body = {
+            type, stock: document.getElementById('dil-stock').value,
+            target: document.getElementById('dil-target').value,
+            volume: document.getElementById('dil-volume').value
+        };
+    } else if (type === 'gradient') {
+        body = {
+            type, start: document.getElementById('grad-start').value,
+            factor: document.getElementById('grad-factor').value,
+            steps: document.getElementById('grad-steps').value,
+            vol: document.getElementById('grad-vol').value
+        };
+    } else if (type === 'rpm_rcf') {
+        body = {
+            type, mode: document.getElementById('rpmrcf-mode').value,
+            radius: document.getElementById('rpmrcf-radius').value,
+            value: document.getElementById('rpmrcf-value').value
+        };
+    } else if (type === 'stdcurve') {
+        body = {
+            type, stock: document.getElementById('std-stock').value,
+            max: document.getElementById('std-max').value,
+            points: document.getElementById('std-points').value,
+            vol: document.getElementById('std-vol').value
+        };
+    }
+
+    fetch('/api/calculate', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(body)
+    })
+    .then(r => r.json())
+    .then(data => renderResult(type, data));
+}
+
+function renderResult(type, data) {
+    const el = document.getElementById('result-' + type.replace('_', ''));
+    if (!el) return;
+
+    if (data.error) {
+        el.innerHTML = '<div class="result-title" style="color:#F44336">错误：' + data.error + '</div>';
+        el.classList.add('active');
+        return;
+    }
+
+    let html = '<div class="result-title">计算结果</div>';
+
+    if (type === 'molarity_to_mass') {
+        html += row('需要称取', data.mass_g + ' g (' + data.mass_mg + ' mg)');
+        html += row('定容体积', data.volume + ' mL');
+        html += '<div class="result-tip">操作：称取 ' + data.mass_g + 'g 试剂，用蒸馏水定容至 ' + data.volume + 'mL</div>';
+    } else if (type === 'mass_to_molarity') {
+        html += row('摩尔浓度', data.molarity_mol + ' mol/L (' + data.molarity_mmol + ' mmol/L)');
+        html += row('质量浓度', data.mass_conc + ' mg/mL');
+    } else if (type === 'dilution') {
+        html += row('取母液', data.vol_stock_ml + ' mL (' + data.vol_stock_ul + ' μL)');
+        html += row('加溶剂至', data.vol_solvent + ' mL');
+        html += row('稀释倍数', data.dilution_ratio + ' 倍');
+    } else if (type === 'rpm_rcf') {
+        html += row('换算结果', data.result + ' ' + data.unit);
+    } else if (type === 'gradient') {
+        html = '<div class="result-title">梯度稀释方案</div><table class="step-table"><thead><tr><th>梯度</th><th>浓度</th><th>配法</th></tr></thead><tbody>';
+        data.table.forEach(r => {
+            html += '<tr><td>' + r.level + '</td><td>' + r.conc + '</td><td>' + r.method + '</td></tr>';
+        });
+        html += '</tbody></table>';
+    } else if (type === 'stdcurve') {
+        html = '<div class="result-title">标准曲线配制方案</div><table class="step-table"><thead><tr><th>点</th><th>浓度</th><th>配法</th></tr></thead><tbody>';
+        // stdcurve not implemented in API yet, show placeholder
+        html += '<tr><td colspan="3">功能开发中</td></tr>';
+        html += '</tbody></table>';
+    }
+
+    el.innerHTML = html;
+    el.classList.add('active');
+}
+
+function row(label, value) {
+    return '<div class="result-row"><span class="result-label">' + label + '</span><span class="result-value">' + value + '</span></div>';
+}
+</script>
+{% endblock %}

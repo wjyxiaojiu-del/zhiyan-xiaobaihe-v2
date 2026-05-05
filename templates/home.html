@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% set active = "home" %}
+
+{% block content %}
+<!-- Hero区域 -->
+<section class="hero">
+    <h1>植研小白盒</h1>
+    <p class="subtitle">进实验室不慌，有小白盒兜底 —— 你的随身实验室教练</p>
+    <div class="stats">
+        <div class="stat-item">
+            <div class="stat-num">65</div>
+            <div class="stat-label">标准化Protocol</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-num">3</div>
+            <div class="stat-label">实验大类覆盖</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-num">10</div>
+            <div class="stat-label">仪器操作指南</div>
+        </div>
+    </div>
+</section>
+
+<!-- 功能入口 -->
+<div class="feature-cards">
+    <a href="/search" class="feature-card">
+        <div class="icon">🔍</div>
+        <h3>Protocol检索</h3>
+        <p>输入实验问题，智能匹配最相关Protocol</p>
+    </a>
+    <a href="/calculator" class="feature-card">
+        <div class="icon">🧪</div>
+        <h3>试剂计算器</h3>
+        <p>摩尔浓度换算、梯度稀释、rpm/rcf一键搞定</p>
+    </a>
+    <a href="/ai" class="feature-card">
+        <div class="icon">🤖</div>
+        <h3>AI问答助手</h3>
+        <p>专属植物科研AI，解答问题、排查失败</p>
+    </a>
+</div>
+
+<!-- Protocol卡片网格 -->
+<h2 class="section-title">标准化Protocol库</h2>
+<p class="section-subtitle">点击卡片查看完整Protocol，每个步骤都有避坑指南</p>
+
+<!-- 分类筛选 -->
+<div style="text-align:center; margin-bottom:1.5rem;">
+    <button class="filter-btn active" onclick="filterCards('all')">全部</button>
+    <button class="filter-btn" onclick="filterCards('植物生理')">🧪 植物生理</button>
+    <button class="filter-btn" onclick="filterCards('分子生物')">🧬 分子生物</button>
+    <button class="filter-btn" onclick="filterCards('基础操作')">⚙️ 基础操作</button>
+</div>
+
+<div class="protocol-grid" id="protocolGrid">
+    {% for p in protocols %}
+    <a href="/protocol/{{ p.id }}" class="protocol-card" data-category="{{ p.category }}">
+        <div class="card-bar" style="background:{{ p.color }}"></div>
+        <div class="card-header">
+            <div class="card-icon" style="background:{{ p.color }}">
+                {% if p.category == '植物生理' %}🧪{% elif p.category == '分子生物' %}🧬{% else %}⚙️{% endif %}
+            </div>
+            <div>
+                <div class="card-id">{{ p.id }}</div>
+                <div class="card-name">{{ p.name }}</div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="card-desc">{{ p.desc }}</div>
+            <div class="card-tags">
+                <span class="tag tag-category">{{ p.category }}</span>
+                <span class="tag tag-difficulty">{{ '⭐' * p.difficulty }}</span>
+                {% for t in p.tags %}
+                <span class="tag tag-instrument">{{ t }}</span>
+                {% endfor %}
+            </div>
+        </div>
+    </a>
+    {% endfor %}
+</div>
+
+<style>
+.filter-btn {
+    padding: 0.5rem 1.2rem;
+    border: 2px solid #E0E0E0;
+    background: white;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin: 0 0.3rem;
+    color: #607D8B;
+}
+.filter-btn:hover { border-color: #4CAF50; color: #2E7D32; }
+.filter-btn.active { border-color: #2E7D32; background: #2E7D32; color: white; }
+</style>
+
+<script>
+function filterCards(category) {
+    const cards = document.querySelectorAll('.protocol-card');
+    const btns = document.querySelectorAll('.filter-btn');
+    btns.forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+    cards.forEach(card => {
+        if (category === 'all' || card.dataset.category === category) {
+            card.style.display = 'block';
+            card.style.animation = 'fadeInUp 0.3s ease';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+}
+</script>
+{% endblock %}
