@@ -4,301 +4,659 @@
 {% block title %}试剂计算器 - 植研小白盒{% endblock %}
 
 {% block content %}
-<div class="calc-container">
-    <h1 class="page-title">🧪 试剂智能配比计算器</h1>
-    <p class="page-subtitle">选择计算类型，输入参数，一键出结果</p>
+<!-- Hero -->
+<section class="calc-hero">
+    <div class="calc-hero-inner">
+        <div class="calc-hero-icon">🧪</div>
+        <h1>试剂智能计算器</h1>
+        <p>精准配比，一步到位</p>
+    </div>
+</section>
 
-    <!-- 计算类型Tab -->
-    <div class="calc-tabs">
-        <button class="calc-tab active" onclick="showCalc('m2m')">摩尔浓度→质量</button>
-        <button class="calc-tab" onclick="showCalc('m2c')">质量→浓度</button>
-        <button class="calc-tab" onclick="showCalc('dilution')">母液稀释</button>
-        <button class="calc-tab" onclick="showCalc('gradient')">梯度稀释</button>
-        <button class="calc-tab" onclick="showCalc('rpmrcf')">rpm/rcf换算</button>
-        <button class="calc-tab" onclick="showCalc('stdcurve')">标准曲线</button>
+<div class="calc-wrap">
+    <!-- Tab导航 -->
+    <div class="calc-tabs" id="calcTabs">
+        <button class="calc-tab active" onclick="switchCalc('dilution')">
+            <span class="calc-tab-icon">💧</span>
+            <span class="calc-tab-text">稀释计算</span>
+        </button>
+        <button class="calc-tab" onclick="switchCalc('molarity')">
+            <span class="calc-tab-icon">⚖️</span>
+            <span class="calc-tab-text">摩尔浓度</span>
+        </button>
+        <button class="calc-tab" onclick="switchCalc('reconstitution')">
+            <span class="calc-tab-icon">🔬</span>
+            <span class="calc-tab-text">复溶计算</span>
+        </button>
+        <button class="calc-tab" onclick="switchCalc('specific_activity')">
+            <span class="calc-tab-icon">📊</span>
+            <span class="calc-tab-text">比活力计算</span>
+        </button>
+        <button class="calc-tab" onclick="switchCalc('unit_convert')">
+            <span class="calc-tab-icon">🔄</span>
+            <span class="calc-tab-text">单位换算</span>
+        </button>
     </div>
 
-    <!-- 摩尔浓度→质量 -->
-    <div class="calc-panel active" id="panel-m2m">
-        <h3 style="margin-bottom:1rem;">计算需要称取多少试剂</h3>
-        <div class="calc-row">
-            <div class="calc-field">
-                <label>选择试剂</label>
-                <select id="m2m-reagent" onchange="fillMW('m2m')">
-                    {% for name, mw in mw_db.items() %}
-                    <option value="{{ mw }}">{{ name }} ({{ mw }})</option>
-                    {% endfor %}
-                    <option value="custom">自定义分子量</option>
-                </select>
+    <!-- ==================== 稀释计算 ==================== -->
+    <div class="calc-panel active" id="panel-dilution">
+        <div class="equation-bar eq-dilution">
+            <div class="eq-text">C₁ × V₁ = C₂ × V₂</div>
+        </div>
+
+        <div class="calc-card">
+            <div class="calc-inputs-row">
+                <div class="calc-group">
+                    <label>浓度 <span class="calc-label-dim">(start)</span></label>
+                    <div class="calc-input-row">
+                        <input type="number" id="dil-c1" value="" step="any" placeholder="如 100">
+                        <select id="dil-c1u">
+                            <option value="mM">mM</option>
+                            <option value="μM">μM</option>
+                            <option value="nM">nM</option>
+                            <option value="mol/L">mol/L</option>
+                            <option value="mg/mL">mg/mL</option>
+                            <option value="μg/mL">μg/mL</option>
+                        </select>
+                    </div>
+                    <div class="calc-var-label">C₁</div>
+                </div>
+
+                <div class="calc-op">×</div>
+
+                <div class="calc-group">
+                    <label>体积 <span class="calc-label-dim">(start)</span></label>
+                    <div class="calc-input-row">
+                        <input type="number" id="dil-v1" value="" step="any" placeholder="如 10">
+                        <select id="dil-v1u">
+                            <option value="mL">mL</option>
+                            <option value="μL">μL</option>
+                            <option value="L">L</option>
+                        </select>
+                    </div>
+                    <div class="calc-var-label">V₁</div>
+                </div>
+
+                <div class="calc-op">=</div>
+
+                <div class="calc-group">
+                    <label>浓度 <span class="calc-label-dim">(final)</span></label>
+                    <div class="calc-input-row">
+                        <input type="number" id="dil-c2" value="" step="any" placeholder="如 10">
+                        <select id="dil-c2u">
+                            <option value="mM">mM</option>
+                            <option value="μM">μM</option>
+                            <option value="nM">nM</option>
+                            <option value="mol/L">mol/L</option>
+                            <option value="mg/mL">mg/mL</option>
+                            <option value="μg/mL">μg/mL</option>
+                        </select>
+                    </div>
+                    <div class="calc-var-label">C₂</div>
+                </div>
+
+                <div class="calc-op">×</div>
+
+                <div class="calc-group">
+                    <label>体积 <span class="calc-label-dim">(final)</span></label>
+                    <div class="calc-input-row">
+                        <input type="number" id="dil-v2" value="" step="any" placeholder="如 100">
+                        <select id="dil-v2u">
+                            <option value="mL">mL</option>
+                            <option value="μL">μL</option>
+                            <option value="L">L</option>
+                        </select>
+                    </div>
+                    <div class="calc-var-label">V₂</div>
+                </div>
             </div>
-            <div class="calc-field">
-                <label>分子量 (g/mol)</label>
-                <input type="number" id="m2m-mw" value="180.16" step="0.01">
+
+            <div class="calc-actions">
+                <button class="calc-btn-reset" onclick="resetDilution()">重置</button>
+                <button class="calc-btn-go" onclick="doDilution()">计算</button>
             </div>
         </div>
-        <div class="calc-row">
-            <div class="calc-field">
-                <label>目标摩尔浓度 (mol/L)</label>
-                <input type="number" id="m2m-molarity" value="0.1" step="0.01">
-            </div>
-            <div class="calc-field">
-                <label>目标体积 (mL)</label>
-                <input type="number" id="m2m-volume" value="100" step="1">
-            </div>
+
+        <div class="calc-result" id="result-dilution">
+            <div class="result-title">计算结果</div>
+            <div class="result-body" id="result-dilution-body"></div>
         </div>
-        <button class="calc-btn" onclick="doCalc('molarity_to_mass')">计算</button>
-        <div class="calc-result" id="result-m2m"></div>
     </div>
 
-    <!-- 质量→浓度 -->
-    <div class="calc-panel" id="panel-m2c">
-        <h3 style="margin-bottom:1rem;">称取质量算实际浓度</h3>
-        <div class="calc-row">
-            <div class="calc-field">
-                <label>选择试剂</label>
-                <select id="m2c-reagent" onchange="fillMW('m2c')">
-                    {% for name, mw in mw_db.items() %}
-                    <option value="{{ mw }}">{{ name }} ({{ mw }})</option>
-                    {% endfor %}
-                    <option value="custom">自定义分子量</option>
-                </select>
+    <!-- ==================== 摩尔浓度计算 ==================== -->
+    <div class="calc-panel" id="panel-molarity">
+        <div class="equation-bar eq-molarity">
+            <div class="eq-text">质量 (g) = 体积 (L) × 浓度 (mol/L) × 分子量 (g/mol)</div>
+        </div>
+
+        <div class="calc-card">
+            <div class="calc-inputs-col">
+                <div class="calc-group-row">
+                    <label>试剂</label>
+                    <div class="calc-input-row">
+                        <select id="mol-reagent" onchange="fillMWMol()" class="calc-select-wide">
+                            {% for name, mw in mw_db.items() %}
+                            <option value="{{ mw }}">{{ name }} ({{ mw }})</option>
+                            {% endfor %}
+                            <option value="custom">自定义分子量</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="calc-group-row">
+                    <label>分子量</label>
+                    <div class="calc-input-row">
+                        <input type="number" id="mol-mw" value="121.14" step="any" placeholder="g/mol">
+                        <span class="calc-unit-static">g/mol</span>
+                    </div>
+                </div>
+                <div class="calc-group-row">
+                    <label>体积</label>
+                    <div class="calc-input-row">
+                        <input type="number" id="mol-volume" value="" step="any" placeholder="如 100">
+                        <select id="mol-volume-u">
+                            <option value="mL">mL</option>
+                            <option value="L">L</option>
+                            <option value="μL">μL</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="calc-group-row">
+                    <label>浓度</label>
+                    <div class="calc-input-row">
+                        <input type="number" id="mol-conc" value="" step="any" placeholder="如 0.1">
+                        <select id="mol-conc-u">
+                            <option value="mol/L">mol/L</option>
+                            <option value="mmol/L">mmol/L</option>
+                            <option value="μmol/L">μmol/L</option>
+                            <option value="nmol/L">nmol/L</option>
+                        </select>
+                    </div>
+                </div>
             </div>
-            <div class="calc-field">
-                <label>分子量 (g/mol)</label>
-                <input type="number" id="m2c-mw" value="121.14" step="0.01">
+
+            <div class="calc-actions">
+                <button class="calc-btn-reset" onclick="resetMolarity()">重置</button>
+                <button class="calc-btn-go" onclick="doMolarity()">计算</button>
             </div>
         </div>
-        <div class="calc-row">
-            <div class="calc-field">
-                <label>称取质量 (g)</label>
-                <input type="number" id="m2c-mass" value="0.1211" step="0.0001">
-            </div>
-            <div class="calc-field">
-                <label>定容体积 (mL)</label>
-                <input type="number" id="m2c-volume" value="100" step="1">
-            </div>
+
+        <div class="calc-result" id="result-molarity">
+            <div class="result-title">计算结果</div>
+            <div class="result-body" id="result-molarity-body"></div>
         </div>
-        <button class="calc-btn" onclick="doCalc('mass_to_molarity')">计算</button>
-        <div class="calc-result" id="result-m2c"></div>
     </div>
 
-    <!-- 母液稀释 -->
-    <div class="calc-panel" id="panel-dilution">
-        <h3 style="margin-bottom:1rem;">母液稀释计算</h3>
-        <div class="calc-row">
-            <div class="calc-field">
-                <label>母液浓度 (任意单位)</label>
-                <input type="number" id="dil-stock" value="1" step="0.01">
+    <!-- ==================== 复溶计算 ==================== -->
+    <div class="calc-panel" id="panel-reconstitution">
+        <div class="equation-bar eq-recon">
+            <div class="eq-text">体积 (add to vial) = 质量 (in vial) ÷ 复溶浓度</div>
+        </div>
+
+        <div class="calc-card">
+            <div class="calc-inputs-col">
+                <div class="calc-group-row">
+                    <label>试剂</label>
+                    <div class="calc-input-row">
+                        <select id="rc-reagent" onchange="fillMWRC()" class="calc-select-wide">
+                            {% for name, mw in mw_db.items() %}
+                            <option value="{{ mw }}">{{ name }} ({{ mw }})</option>
+                            {% endfor %}
+                            <option value="custom">自定义分子量</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="calc-group-row">
+                    <label>分子量（选填，用于算摩尔浓度）</label>
+                    <div class="calc-input-row">
+                        <input type="number" id="rc-mw" value="121.14" step="any" placeholder="g/mol（可选）">
+                        <span class="calc-unit-static">g/mol</span>
+                    </div>
+                </div>
+                <div class="calc-group-row">
+                    <label>瓶内质量</label>
+                    <div class="calc-input-row">
+                        <input type="number" id="rc-mass" value="" step="any" placeholder="如 5">
+                        <select id="rc-mass-u">
+                            <option value="μg">μg</option>
+                            <option value="mg">mg</option>
+                            <option value="g">g</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="calc-group-row">
+                    <label>目标复溶浓度</label>
+                    <div class="calc-input-row">
+                        <input type="number" id="rc-conc" value="" step="any" placeholder="如 1">
+                        <select id="rc-conc-u">
+                            <option value="μg/mL">μg/mL</option>
+                            <option value="mg/mL">mg/mL</option>
+                            <option value="g/mL">g/mL</option>
+                            <option value="mM">mM</option>
+                        </select>
+                    </div>
+                </div>
             </div>
-            <div class="calc-field">
-                <label>目标浓度 (同上单位)</label>
-                <input type="number" id="dil-target" value="0.1" step="0.01">
+
+            <div class="calc-actions">
+                <button class="calc-btn-reset" onclick="resetReconstitution()">重置</button>
+                <button class="calc-btn-go" onclick="doReconstitution()">计算</button>
             </div>
         </div>
-        <div class="calc-row">
-            <div class="calc-field">
-                <label>目标体积 (mL)</label>
-                <input type="number" id="dil-volume" value="50" step="1">
-            </div>
-            <div class="calc-field"></div>
+
+        <div class="calc-result" id="result-recon">
+            <div class="result-title">计算结果</div>
+            <div class="result-body" id="result-recon-body"></div>
         </div>
-        <button class="calc-btn" onclick="doCalc('dilution')">计算</button>
-        <div class="calc-result" id="result-dilution"></div>
     </div>
 
-    <!-- 梯度稀释 -->
-    <div class="calc-panel" id="panel-gradient">
-        <h3 style="margin-bottom:1rem;">梯度稀释方案（系列稀释）</h3>
-        <div class="calc-row">
-            <div class="calc-field">
-                <label>起始浓度 (mg/mL)</label>
-                <input type="number" id="grad-start" value="1" step="0.01">
+    <!-- ==================== 比活力计算 ==================== -->
+    <div class="calc-panel" id="panel-specific_activity">
+        <div class="equation-bar eq-specact">
+            <div class="eq-text">Specific Activity = 10⁶ ÷ ED₅₀</div>
+        </div>
+
+        <div class="calc-card">
+            <div class="calc-inputs-col">
+                <div class="calc-group-row">
+                    <label>生物活性 ED₅₀</label>
+                    <div class="calc-input-row">
+                        <input type="number" id="sa-ed50" value="" step="any" placeholder="如 50">
+                        <select id="sa-ed50-u">
+                            <option value="ng/mL">ng/mL</option>
+                            <option value="μg/mL">μg/mL</option>
+                            <option value="pg/mL">pg/mL</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="calc-group-row">
+                    <label>分子量（选填，用于算 nmol/mg）</label>
+                    <div class="calc-input-row">
+                        <input type="number" id="sa-mw" value="" step="any" placeholder="g/mol（可选）">
+                        <span class="calc-unit-static">g/mol</span>
+                    </div>
+                </div>
             </div>
-            <div class="calc-field">
-                <label>稀释倍数</label>
-                <input type="number" id="grad-factor" value="2" step="0.1">
+
+            <div class="calc-actions">
+                <button class="calc-btn-reset" onclick="resetSpecificActivity()">重置</button>
+                <button class="calc-btn-go" onclick="doSpecificActivity()">计算</button>
             </div>
         </div>
-        <div class="calc-row">
-            <div class="calc-field">
-                <label>梯度级数</label>
-                <input type="number" id="grad-steps" value="5" step="1">
-            </div>
-            <div class="calc-field">
-                <label>每管体积 (mL)</label>
-                <input type="number" id="grad-vol" value="1" step="0.1">
-            </div>
+
+        <div class="calc-result" id="result-sa">
+            <div class="result-title">计算结果</div>
+            <div class="result-body" id="result-sa-body"></div>
         </div>
-        <button class="calc-btn" onclick="doCalc('gradient')">生成方案</button>
-        <div class="calc-result" id="result-gradient"></div>
     </div>
 
-    <!-- rpm/rcf换算 -->
-    <div class="calc-panel" id="panel-rpmrcf">
-        <h3 style="margin-bottom:1rem;">rpm / rcf 换算</h3>
-        <div class="calc-row">
-            <div class="calc-field">
-                <label>换算方向</label>
-                <select id="rpmrcf-mode">
-                    <option value="rpm_to_rcf">rpm → rcf (×g)</option>
-                    <option value="rcf_to_rpm">rcf (×g) → rpm</option>
-                </select>
-            </div>
-            <div class="calc-field">
-                <label>转子半径 (mm) <small style="color:#607D8B">水平~150mm 角~85mm</small></label>
-                <input type="number" id="rpmrcf-radius" value="85" step="1">
-            </div>
+    <!-- ==================== 单位换算 ==================== -->
+    <div class="calc-panel" id="panel-unit_convert">
+        <div class="equation-bar eq-dilution">
+            <div class="eq-text">浓度 · 体积 · 转速 · 温度 互算</div>
         </div>
-        <div class="calc-row">
-            <div class="calc-field">
-                <label>输入数值</label>
-                <input type="number" id="rpmrcf-value" value="12000" step="1">
-            </div>
-            <div class="calc-field"></div>
-        </div>
-        <button class="calc-btn" onclick="doCalc('rpm_rcf')">换算</button>
-        <div class="calc-result" id="result-rpmrcf"></div>
-    </div>
 
-    <!-- 标准曲线 -->
-    <div class="calc-panel" id="panel-stdcurve">
-        <h3 style="margin-bottom:1rem;">标准曲线配制方案</h3>
-        <div class="calc-row">
-            <div class="calc-field">
-                <label>母液浓度 (mg/mL)</label>
-                <input type="number" id="std-stock" value="1" step="0.01">
+        <!-- 浓度换算 -->
+        <div class="calc-card">
+            <h3 style="font-size:0.95rem;font-weight:700;margin-bottom:0.8rem;">⚖️ 浓度单位换算</h3>
+            <div class="calc-inputs-row">
+                <div class="calc-field">
+                    <label>数值</label>
+                    <input type="number" step="any" id="concVal" value="1" oninput="convertConc()">
+                </div>
+                <div class="calc-field">
+                    <label>从</label>
+                    <select id="concFrom" onchange="convertConc()">
+                        <option>mol/L</option><option>mmol/L</option><option selected>μmol/L</option><option>nmol/L</option>
+                        <option>mM</option><option>μM</option><option>nM</option>
+                        <option>mg/mL</option><option>μg/mL</option>
+                    </select>
+                </div>
+                <div style="display:flex;align-items:flex-end;padding-bottom:0.5rem;font-size:1.2rem;">→</div>
+                <div class="calc-field">
+                    <label>到</label>
+                    <select id="concTo" onchange="convertConc()">
+                        <option>mol/L</option><option selected>mmol/L</option><option>μmol/L</option><option>nmol/L</option>
+                        <option>mM</option><option>μM</option><option>nM</option>
+                        <option>mg/mL</option><option>μg/mL</option>
+                    </select>
+                </div>
             </div>
-            <div class="calc-field">
-                <label>最高点浓度 (mg/mL)</label>
-                <input type="number" id="std-max" value="1" step="0.01">
+            <div class="calc-result" id="result-conc" style="margin-top:0.8rem;">
+                <div class="result-body" id="result-conc-body"></div>
             </div>
         </div>
-        <div class="calc-row">
-            <div class="calc-field">
-                <label>标准点数（不含空白）</label>
-                <input type="number" id="std-points" value="5" step="1">
+
+        <!-- 体积换算 -->
+        <div class="calc-card">
+            <h3 style="font-size:0.95rem;font-weight:700;margin-bottom:0.8rem;">🧪 体积单位换算</h3>
+            <div class="calc-inputs-row">
+                <div class="calc-field">
+                    <label>数值</label>
+                    <input type="number" step="any" id="volVal" value="1" oninput="convertVol()">
+                </div>
+                <div class="calc-field">
+                    <label>从</label>
+                    <select id="volFrom" onchange="convertVol()">
+                        <option>L</option><option selected>mL</option><option>μL</option>
+                    </select>
+                </div>
+                <div style="display:flex;align-items:flex-end;padding-bottom:0.5rem;font-size:1.2rem;">→</div>
+                <div class="calc-field">
+                    <label>到</label>
+                    <select id="volTo" onchange="convertVol()">
+                        <option>L</option><option>mL</option><option selected>μL</option>
+                    </select>
+                </div>
             </div>
-            <div class="calc-field">
-                <label>每管体积 (mL)</label>
-                <input type="number" id="std-vol" value="2" step="0.1">
+            <div class="calc-result" id="result-vol" style="margin-top:0.8rem;">
+                <div class="result-body" id="result-vol-body"></div>
             </div>
         </div>
-        <button class="calc-btn" onclick="doCalc('stdcurve')">生成方案</button>
-        <div class="calc-result" id="result-stdcurve"></div>
+
+        <!-- 转速换算 -->
+        <div class="calc-card">
+            <h3 style="font-size:0.95rem;font-weight:700;margin-bottom:0.8rem;">⚙️ 离心转速换算 (rpm ↔ rcf)</h3>
+            <div class="calc-inputs-row">
+                <div class="calc-field">
+                    <label>数值</label>
+                    <input type="number" step="any" id="rpmVal" value="12000" oninput="convertRpm()">
+                </div>
+                <div class="calc-field">
+                    <label>转子半径 (mm)</label>
+                    <input type="number" step="any" id="rpmRadius" value="85" oninput="convertRpm()">
+                </div>
+                <div class="calc-field">
+                    <label>方向</label>
+                    <select id="rpmDir" onchange="convertRpm()">
+                        <option value="rpm2rcf">rpm → rcf(×g)</option>
+                        <option value="rcf2rpm">rcf(×g) → rpm</option>
+                    </select>
+                </div>
+            </div>
+            <div class="calc-result" id="result-rpm" style="margin-top:0.8rem;">
+                <div class="result-body" id="result-rpm-body"></div>
+            </div>
+        </div>
     </div>
 </div>
 
 <script>
-function fillMW(prefix) {
-    const sel = document.getElementById(prefix + '-reagent');
-    const mwInput = document.getElementById(prefix + '-mw');
-    if (sel.value !== 'custom') {
-        mwInput.value = sel.value;
-    }
-}
+/* ===== 单位换算因子（归一化到基础单位） ===== */
+/* 浓度基础单位：mM (mmol/L) */
+const CONC_TO_MM = {
+    'mol/L': 1e3, 'mmol/L': 1, 'μmol/L': 1e-3, 'nmol/L': 1e-6,
+    'mM': 1, 'μM': 1e-3, 'nM': 1e-6,
+    'mg/mL': 1, 'μg/mL': 1e-3,
+};
+/* 体积基础单位：mL */
+const VOL_TO_ML = { 'L': 1e3, 'mL': 1, 'μL': 1e-3 };
 
-function showCalc(name) {
+function toConcMM(val, unit) { return val * (CONC_TO_MM[unit] || 1); }
+function toVolML(val, unit)   { return val * (VOL_TO_ML[unit] || 1); }
+
+/* ===== Tab切换 ===== */
+function switchCalc(name) {
     document.querySelectorAll('.calc-tab').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.calc-panel').forEach(p => p.classList.remove('active'));
-    event.target.classList.add('active');
+    event.target.closest('.calc-tab').classList.add('active');
     document.getElementById('panel-' + name).classList.add('active');
+    /* 隐藏所有结果 */
+    document.querySelectorAll('.calc-result').forEach(r => r.classList.remove('show'));
 }
 
-function doCalc(type) {
-    let body = {};
-    if (type === 'molarity_to_mass') {
-        body = {
-            type, mw: document.getElementById('m2m-mw').value,
-            molarity: document.getElementById('m2m-molarity').value,
-            volume: document.getElementById('m2m-volume').value
-        };
-    } else if (type === 'mass_to_molarity') {
-        body = {
-            type, mw: document.getElementById('m2c-mw').value,
-            mass: document.getElementById('m2c-mass').value,
-            volume: document.getElementById('m2c-volume').value
-        };
-    } else if (type === 'dilution') {
-        body = {
-            type, stock: document.getElementById('dil-stock').value,
-            target: document.getElementById('dil-target').value,
-            volume: document.getElementById('dil-volume').value
-        };
-    } else if (type === 'gradient') {
-        body = {
-            type, start: document.getElementById('grad-start').value,
-            factor: document.getElementById('grad-factor').value,
-            steps: document.getElementById('grad-steps').value,
-            vol: document.getElementById('grad-vol').value
-        };
-    } else if (type === 'rpm_rcf') {
-        body = {
-            type, mode: document.getElementById('rpmrcf-mode').value,
-            radius: document.getElementById('rpmrcf-radius').value,
-            value: document.getElementById('rpmrcf-value').value
-        };
-    } else if (type === 'stdcurve') {
-        body = {
-            type, stock: document.getElementById('std-stock').value,
-            max: document.getElementById('std-max').value,
-            points: document.getElementById('std-points').value,
-            vol: document.getElementById('std-vol').value
-        };
-    }
-
-    fetch('/api/calculate', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(body)
-    })
-    .then(r => r.json())
-    .then(data => renderResult(type, data));
+/* ===== 结果动画 ===== */
+function showResult(id, html) {
+    const el = document.getElementById(id);
+    el.querySelector('.result-body').innerHTML = html;
+    el.classList.remove('show');
+    /* 重置动画 */
+    void el.offsetWidth;
+    el.classList.add('show');
 }
 
-function renderResult(type, data) {
-    const el = document.getElementById('result-' + type.replace('_', ''));
-    if (!el) return;
-
-    if (data.error) {
-        el.innerHTML = '<div class="result-title" style="color:#F44336">错误：' + data.error + '</div>';
-        el.classList.add('active');
-        return;
-    }
-
-    let html = '<div class="result-title">计算结果</div>';
-
-    if (type === 'molarity_to_mass') {
-        html += row('需要称取', data.mass_g + ' g (' + data.mass_mg + ' mg)');
-        html += row('定容体积', data.volume + ' mL');
-        html += '<div class="result-tip">操作：称取 ' + data.mass_g + 'g 试剂，用蒸馏水定容至 ' + data.volume + 'mL</div>';
-    } else if (type === 'mass_to_molarity') {
-        html += row('摩尔浓度', data.molarity_mol + ' mol/L (' + data.molarity_mmol + ' mmol/L)');
-        html += row('质量浓度', data.mass_conc + ' mg/mL');
-    } else if (type === 'dilution') {
-        html += row('取母液', data.vol_stock_ml + ' mL (' + data.vol_stock_ul + ' μL)');
-        html += row('加溶剂至', data.vol_solvent + ' mL');
-        html += row('稀释倍数', data.dilution_ratio + ' 倍');
-    } else if (type === 'rpm_rcf') {
-        html += row('换算结果', data.result + ' ' + data.unit);
-    } else if (type === 'gradient') {
-        html = '<div class="result-title">梯度稀释方案</div><table class="step-table"><thead><tr><th>梯度</th><th>浓度</th><th>配法</th></tr></thead><tbody>';
-        data.table.forEach(r => {
-            html += '<tr><td>' + r.level + '</td><td>' + r.conc + '</td><td>' + r.method + '</td></tr>';
-        });
-        html += '</tbody></table>';
-    } else if (type === 'stdcurve') {
-        html = '<div class="result-title">标准曲线配制方案</div><table class="step-table"><thead><tr><th>点</th><th>浓度</th><th>配法</th></tr></thead><tbody>';
-        // stdcurve not implemented in API yet, show placeholder
-        html += '<tr><td colspan="3">功能开发中</td></tr>';
-        html += '</tbody></table>';
-    }
-
-    el.innerHTML = html;
-    el.classList.add('active');
+/* ===== 稀释计算 ===== */
+function resetDilution() {
+    ['dil-c1','dil-v1','dil-c2','dil-v2'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('result-dilution').classList.remove('show');
 }
 
+function doDilution() {
+    const c1v = parseFloat(document.getElementById('dil-c1').value);
+    const c1u = document.getElementById('dil-c1u').value;
+    const v1v = parseFloat(document.getElementById('dil-v1').value);
+    const v1u = document.getElementById('dil-v1u').value;
+    const c2v = parseFloat(document.getElementById('dil-c2').value);
+    const c2u = document.getElementById('dil-c2u').value;
+    const v2v = parseFloat(document.getElementById('dil-v2').value);
+    const v2u = document.getElementById('dil-v2u').value;
+
+    const filled = [[c1v,'C₁'],[v1v,'V₁'],[c2v,'C₂'],[v2v,'V₂']];
+    const missing = filled.filter(f => isNaN(f[0]) || f[0] === '');
+    if (missing.length !== 1) { alert('请填写3个值，留空1个待计算（' + missing.map(m=>m[1]).join(', ') + '）'); return; }
+    const m = missing[0][1];
+
+    let html = '';
+    if (m === 'C₁') {
+        const c2 = toConcMM(c2v, c2u), v2 = toVolML(v2v, v2u), v1 = toVolML(v1v, v1u);
+        const c1 = (c2 * v2) / v1;
+        html += row('C₁', c1.toFixed(4) + ' mM');
+        const c1Out = c1u === 'mM' ? c1 : c1u === 'μM' ? c1*1e3 : c1u === 'nM' ? c1*1e6 : c1u === 'mol/L' ? c1/1e3 : c1;
+        html += row('换算为 ' + c1u, c1Out.toFixed(4) + ' ' + c1u);
+        html += tip('验证：' + c1.toFixed(4) + ' mM × ' + v1v + ' ' + v1u + ' = ' + c2v + ' ' + c2u + ' × ' + v2v + ' ' + v2u);
+    } else if (m === 'V₁') {
+        const c1 = toConcMM(c1v, c1u), c2 = toConcMM(c2v, c2u), v2 = toVolML(v2v, v2u);
+        const v1 = (c2 * v2) / c1;
+        html += row('V₁', v1.toFixed(4) + ' mL');
+        const v1Out = v1u === 'mL' ? v1 : v1u === 'μL' ? v1*1e3 : v1/1e3;
+        html += row('换算为 ' + v1u, v1Out.toFixed(2) + ' ' + v1u);
+        html += row('取母液', v1.toFixed(4) + ' mL (' + (v1*1000).toFixed(2) + ' μL)');
+        html += row('加溶剂', (v2 - v1).toFixed(4) + ' mL');
+    } else if (m === 'C₂') {
+        const c1 = toConcMM(c1v, c1u), v1 = toVolML(v1v, v1u), v2 = toVolML(v2v, v2u);
+        const c2 = (c1 * v1) / v2;
+        html += row('C₂', c2.toFixed(4) + ' mM');
+        const c2Out = c2u === 'mM' ? c2 : c2u === 'μM' ? c2*1e3 : c2u === 'nM' ? c2*1e6 : c2u === 'mol/L' ? c2/1e3 : c2;
+        html += row('换算为 ' + c2u, c2Out.toFixed(4) + ' ' + c2u);
+    } else {
+        const c1 = toConcMM(c1v, c1u), v1 = toVolML(v1v, v1u), c2 = toConcMM(c2v, c2u);
+        const v2 = (c1 * v1) / c2;
+        html += row('V₂', v2.toFixed(4) + ' mL');
+        const v2Out = v2u === 'mL' ? v2 : v2u === 'μL' ? v2*1e3 : v2/1e3;
+        html += row('换算为 ' + v2u, v2Out.toFixed(2) + ' ' + v2u);
+        html += row('需加入溶剂', (v2 - v1).toFixed(4) + ' mL');
+    }
+    showResult('result-dilution', html);
+}
+
+/* ===== 摩尔浓度计算 ===== */
+function fillMWMol() {
+    const sel = document.getElementById('mol-reagent');
+    if (sel.value !== 'custom') document.getElementById('mol-mw').value = sel.value;
+}
+function resetMolarity() {
+    document.getElementById('mol-mw').value = '121.14';
+    ['mol-volume','mol-conc'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('result-molarity').classList.remove('show');
+}
+function doMolarity() {
+    const mw = parseFloat(document.getElementById('mol-mw').value);
+    const volV = parseFloat(document.getElementById('mol-volume').value);
+    const volU = document.getElementById('mol-volume-u').value;
+    const concV = parseFloat(document.getElementById('mol-conc').value);
+    const concU = document.getElementById('mol-conc-u').value;
+
+    if (isNaN(mw) || mw <= 0) { alert('请输入正确的分子量'); return; }
+
+    const filled = [[volV,'体积'],[concV,'浓度']];
+    const missing = filled.filter(f => isNaN(f[0]) || f[0] === '');
+    if (missing.length > 1) { alert('请至少填写体积和浓度中的一个'); return; }
+    const m = missing.length === 1 ? missing[0][1] : null;
+
+    let html = '';
+    if (m === '体积') {
+        const concMolL = concV * (concU === 'mol/L' ? 1 : concU === 'mmol/L' ? 1e-3 : concU === 'μmol/L' ? 1e-6 : 1e-9);
+        const massG = concMolL * mw;
+        html += row('质量', massG.toFixed(4) + ' g');
+        html += row('质量', (massG * 1000).toFixed(2) + ' mg');
+        html += row('质量', (massG * 1e6).toFixed(2) + ' μg');
+    } else if (m === '浓度') {
+        const volL = volV * (volU === 'L' ? 1 : volU === 'mL' ? 1e-3 : 1e-6);
+        html += row('浓度', '（请填写质量来计算浓度）');
+    } else {
+        /* 两个都填了：用质量→浓度 或 摩尔浓度→质量，看哪个更有意义 */
+        /* 这里算质量 */
+        const concMolL = concV * (concU === 'mol/L' ? 1 : concU === 'mmol/L' ? 1e-3 : concU === 'μmol/L' ? 1e-6 : 1e-9);
+        const volL = volV * (volU === 'L' ? 1 : volU === 'mL' ? 1e-3 : 1e-6);
+        const massG = concMolL * volL * mw;
+        const massMg = massG * 1000;
+        html += row('需称取质量', massG.toFixed(4) + ' g (' + massMg.toFixed(2) + ' mg)');
+        html += row('定容体积', volV + ' ' + volU);
+        html += tip('操作：称取 ' + massG.toFixed(4) + 'g 试剂，定容至 ' + volV + volU);
+    }
+    showResult('result-molarity', html);
+}
+
+/* ===== 复溶计算 ===== */
+function fillMWRC() {
+    const sel = document.getElementById('rc-reagent');
+    if (sel.value !== 'custom') document.getElementById('rc-mw').value = sel.value;
+}
+function resetReconstitution() {
+    document.getElementById('rc-mw').value = '121.14';
+    ['rc-mass','rc-conc'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('result-recon').classList.remove('show');
+}
+function doReconstitution() {
+    const mass = parseFloat(document.getElementById('rc-mass').value);
+    const massU = document.getElementById('rc-mass-u').value;
+    const conc = parseFloat(document.getElementById('rc-conc').value);
+    const concU = document.getElementById('rc-conc-u').value;
+    const mw = parseFloat(document.getElementById('rc-mw').value) || 0;
+
+    if (isNaN(mass) || isNaN(conc) || mass <= 0 || conc <= 0) { alert('请输入质量和浓度'); return; }
+
+    /* 统一到 mg 和 mg/mL */
+    const massMg = massU === 'mg' ? mass : massU === 'g' ? mass * 1000 : mass / 1000;
+    const concMgMl = concU === 'mg/mL' ? conc : concU === 'g/mL' ? conc * 1000 : concU === 'μg/mL' ? conc / 1000 : 0;
+
+    let html = '';
+
+    if (concU === 'mM') {
+        /* 用摩尔浓度计算 */
+        if (mw <= 0) { alert('使用mM浓度时请填写分子量'); return; }
+        const massMol = massMg / mw; /* mass in mg, mw in g/mol => mol = mg/(g/mol*1000) */
+        const massMolCorrect = massMg / (mw * 1000); /* mmol */
+        const volumeMl = massMolCorrect / conc;
+        html += row('需加溶剂体积', volumeMl.toFixed(4) + ' mL (' + (volumeMl * 1000).toFixed(2) + ' μL)');
+        html += row('摩尔浓度', conc + ' mM');
+        const massConcMgMl = massMg / volumeMl;
+        html += row('质量浓度', massConcMgMl.toFixed(4) + ' mg/mL');
+    } else {
+        const volumeMl = massMg / concMgMl;
+        html += row('需加溶剂体积', volumeMl.toFixed(4) + ' mL (' + (volumeMl * 1000).toFixed(2) + ' μL)');
+        html += row('质量浓度', conc + ' ' + concU);
+        if (mw > 0) {
+            const molarity = (massMg / (mw * 1000)) / volumeMl;
+            html += row('摩尔浓度', (molarity * 1000).toFixed(4) + ' mM');
+        }
+    }
+
+    html += tip('操作：向含 ' + mass + massU + ' 试剂的管中，加入溶剂至上述体积，涡旋混匀');
+    showResult('result-recon', html);
+}
+
+/* ===== 比活力计算 ===== */
+function resetSpecificActivity() {
+    ['sa-ed50','sa-mw'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('result-sa').classList.remove('show');
+}
+function doSpecificActivity() {
+    const ed50 = parseFloat(document.getElementById('sa-ed50').value);
+    const ed50U = document.getElementById('sa-ed50-u').value;
+    const mw = parseFloat(document.getElementById('sa-mw').value) || 0;
+
+    if (isNaN(ed50) || ed50 <= 0) { alert('请输入ED₅₀值'); return; }
+
+    /* 统一到 ng/mL */
+    const ed50NgMl = ed50U === 'ng/mL' ? ed50 : ed50U === 'μg/mL' ? ed50 * 1000 : ed50 / 1000;
+    const sa = 1e6 / ed50NgMl;
+
+    let html = '';
+    html += row('Specific Activity', sa.toFixed(2) + ' Unit/mg');
+    html += row('计算过程', '10⁶ ÷ ' + ed50NgMl + ' = ' + sa.toFixed(2));
+
+    if (mw > 0) {
+        const saMol = 1e6 / (ed50NgMl * mw);
+        html += row('Specific Activity', saMol.toFixed(4) + ' nmol/mg');
+        html += row('计算过程', '10⁶ ÷ (' + ed50NgMl + ' × ' + mw + ') = ' + saMol.toFixed(4));
+    }
+
+    showResult('result-sa', html);
+}
+
+/* ===== 单位换算 ===== */
+function convertConc() {
+    var val = parseFloat(document.getElementById('concVal').value);
+    var from = document.getElementById('concFrom').value;
+    var to = document.getElementById('concTo').value;
+    if (isNaN(val)) { document.getElementById('result-conc-body').innerHTML = ''; return; }
+
+    /* 先转到 mg/mL 基准 (假设分子量=1用于通用换算) */
+    var base;
+    if (['mol/L','mmol/L','μmol/L','nmol/L','mM','μM','nM'].includes(from)) {
+        base = val * (CONC_TO_MM[from] || 1);
+    } else {
+        base = toConcMM(val, from);
+    }
+    var result;
+    if (['mol/L','mmol/L','μmol/L','nmol/L','mM','μM','nM'].includes(to)) {
+        result = base / (CONC_TO_MM[to] || 1);
+    } else {
+        result = base;
+    }
+    document.getElementById('result-conc-body').innerHTML =
+        row('换算结果', val + ' ' + from + ' = <strong>' + result.toPrecision(6) + ' ' + to + '</strong>');
+}
+
+function convertVol() {
+    var val = parseFloat(document.getElementById('volVal').value);
+    var from = document.getElementById('volFrom').value;
+    var to = document.getElementById('volTo').value;
+    if (isNaN(val)) { document.getElementById('result-vol-body').innerHTML = ''; return; }
+    var baseML = val * (VOL_TO_ML[from] || 1);
+    var result = baseML / (VOL_TO_ML[to] || 1);
+    document.getElementById('result-vol-body').innerHTML =
+        row('换算结果', val + ' ' + from + ' = <strong>' + result.toPrecision(6) + ' ' + to + '</strong>');
+}
+
+function convertRpm() {
+    var val = parseFloat(document.getElementById('rpmVal').value);
+    var r = parseFloat(document.getElementById('rpmRadius').value);
+    var dir = document.getElementById('rpmDir').value;
+    if (isNaN(val) || isNaN(r) || r <= 0) { document.getElementById('result-rpm-body').innerHTML = ''; return; }
+
+    var result, formula;
+    if (dir === 'rpm2rcf') {
+        result = 1.118e-5 * r * val * val;
+        formula = 'rcf = 1.118×10⁻⁵ × ' + r + ' × ' + val + '²';
+        document.getElementById('result-rpm-body').innerHTML =
+            row('换算结果', val + ' rpm = <strong>' + Math.round(result) + ' ×g</strong>') +
+            tip(formula + ' = ' + Math.round(result));
+    } else {
+        result = Math.sqrt(val / (1.118e-5 * r));
+        formula = 'rpm = √(' + val + ' / (1.118×10⁻⁵ × ' + r + '))';
+        document.getElementById('result-rpm-body').innerHTML =
+            row('换算结果', val + ' ×g = <strong>' + Math.round(result) + ' rpm</strong>') +
+            tip(formula + ' = ' + Math.round(result));
+    }
+}
+
+/* ===== 通用结果渲染 ===== */
 function row(label, value) {
     return '<div class="result-row"><span class="result-label">' + label + '</span><span class="result-value">' + value + '</span></div>';
+}
+function tip(text) {
+    return '<div class="result-tip">' + text + '</div>';
 }
 </script>
 {% endblock %}
