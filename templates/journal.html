@@ -1,0 +1,245 @@
+{% extends "base.html" %}
+{% set active = "journal" %}
+
+{% block title %}实验日志 - 植研小白盒{% endblock %}
+
+{% block head %}
+<style>
+.journal-wrap { max-width: 860px; margin: 0 auto; padding: 1.5rem; }
+.journal-header { text-align: center; margin-bottom: 1.5rem; }
+.journal-header h1 { font-size: 1.6rem; font-weight: 800; }
+.journal-header p { font-size: 0.9rem; color: var(--text-light); }
+
+/* 新建日志 */
+.journal-new {
+    background: var(--card-bg); border: 1px solid var(--border); border-radius: 14px;
+    padding: 1.3rem; margin-bottom: 1.5rem;
+}
+.journal-new h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.8rem; }
+.journal-form-row { display: flex; gap: 0.8rem; margin-bottom: 0.8rem; flex-wrap: wrap; }
+.journal-form-row input, .journal-form-row select {
+    padding: 0.5rem 0.8rem; border: 1.5px solid var(--border); border-radius: 8px;
+    font-size: 0.88rem; outline: none; background: white;
+}
+.journal-form-row input:focus, .journal-form-row select:focus { border-color: var(--primary); }
+.journal-form-row input[name="title"] { flex: 1; min-width: 200px; }
+.journal-form-row select { min-width: 120px; }
+.journal-form-row textarea {
+    flex: 1; width: 100%; min-height: 100px; padding: 0.6rem 0.8rem;
+    border: 1.5px solid var(--border); border-radius: 8px; font-size: 0.88rem;
+    outline: none; resize: vertical; font-family: inherit; line-height: 1.6;
+}
+.journal-form-row textarea:focus { border-color: var(--primary); }
+.journal-tags-input {
+    display: flex; gap: 0.4rem; align-items: center; flex-wrap: wrap;
+}
+.journal-tag {
+    display: inline-flex; align-items: center; gap: 0.2rem;
+    padding: 0.2rem 0.6rem; background: rgba(107,124,78,0.1); color: var(--primary);
+    border-radius: 12px; font-size: 0.78rem; font-weight: 600;
+}
+.journal-tag button {
+    background: none; border: none; color: var(--primary); cursor: pointer;
+    font-size: 0.9rem; padding: 0; line-height: 1;
+}
+.journal-submit-btn {
+    padding: 0.6rem 1.5rem; background: var(--primary); color: white; border: none;
+    border-radius: 10px; font-size: 0.9rem; font-weight: 700; cursor: pointer;
+    transition: all 0.25s;
+}
+.journal-submit-btn:hover { background: var(--primary-dark); }
+
+/* 日志列表 */
+.journal-list { display: flex; flex-direction: column; gap: 0.8rem; }
+.journal-entry {
+    background: var(--card-bg); border: 1px solid var(--border); border-radius: 14px;
+    padding: 1.2rem; transition: all 0.2s;
+}
+.journal-entry:hover { border-color: var(--primary); }
+.journal-entry-header {
+    display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;
+}
+.journal-entry-title { font-size: 1.05rem; font-weight: 700; color: var(--text); }
+.journal-entry-meta { display: flex; gap: 0.5rem; align-items: center; font-size: 0.78rem; color: var(--text-light); }
+.journal-entry-content { font-size: 0.9rem; line-height: 1.7; color: var(--text); margin-bottom: 0.5rem; white-space: pre-wrap; }
+.journal-entry-tags { display: flex; gap: 0.3rem; flex-wrap: wrap; }
+.journal-entry-actions { display: flex; gap: 0.3rem; margin-top: 0.5rem; }
+.journal-del-btn {
+    padding: 0.2rem 0.6rem; background: rgba(244,67,54,0.1); color: #F44336;
+    border: none; border-radius: 6px; font-size: 0.78rem; cursor: pointer; transition: all 0.2s;
+}
+.journal-del-btn:hover { background: #F44336; color: white; }
+
+.journal-empty { text-align: center; padding: 3rem; color: var(--text-light); }
+.journal-empty p { margin: 0.3rem 0; }
+.journal-empty a { color: var(--primary); font-weight: 600; text-decoration: none; }
+
+@media (max-width: 768px) {
+    .journal-form-row { flex-direction: column; }
+    .journal-form-row input, .journal-form-row select { width: 100%; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="journal-wrap">
+    <div class="journal-header">
+        <h1>📔 实验日志</h1>
+        <p>记录每次实验的过程、结果和心得，积累你的科研经验</p>
+    </div>
+
+    <!-- 新建日志 -->
+    <div class="journal-new">
+        <h3>✏️ 写日志</h3>
+        <div class="journal-form-row">
+            <input type="text" id="logTitle" placeholder="实验标题，如：可溶性糖测定-第3次">
+            <select id="logProtocol">
+                <option value="">关联Protocol（可选）</option>
+            </select>
+            <select id="logStatus">
+                <option value="done">已完成</option>
+                <option value="in-progress">进行中</option>
+                <option value="planned">计划中</option>
+            </select>
+        </div>
+        <div class="journal-form-row">
+            <textarea id="logContent" placeholder="记录实验过程、结果、遇到的问题...&#10;支持多行输入"></textarea>
+        </div>
+        <div class="journal-form-row">
+            <div class="journal-tags-input">
+                <input type="text" id="logTagInput" placeholder="输入标签回车添加" style="width:150px;">
+                <div id="logTags"></div>
+            </div>
+            <button class="journal-submit-btn" onclick="addLog()">发布日志</button>
+        </div>
+    </div>
+
+    <!-- 日志列表 -->
+    <div id="journalList" class="journal-list">
+        <div class="journal-empty" id="journalEmpty">
+            <p>📝 还没有日志</p>
+            <p>记录你的第一次实验吧！</p>
+        </div>
+    </div>
+</div>
+
+<script>
+var logTags = [];
+var protocolOptions = '';
+
+/* 加载Protocol列表 */
+document.addEventListener('DOMContentLoaded', function() {
+    var sel = document.getElementById('logProtocol');
+    var metas = [
+        {% for p in protocols %}
+        {id:'{{ p.id }}', name:'{{ p.name }}'},
+        {% endfor %}
+    ];
+    metas.forEach(function(m) {
+        var opt = document.createElement('option');
+        opt.value = m.id;
+        opt.textContent = m.id + ' ' + m.name;
+        sel.appendChild(opt);
+    });
+    loadLogs();
+});
+
+/* 标签输入 */
+document.getElementById('logTagInput').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        var v = this.value.trim();
+        if (v && logTags.indexOf(v) < 0) {
+            logTags.push(v);
+            renderTags();
+        }
+        this.value = '';
+    }
+});
+
+function renderTags() {
+    var c = document.getElementById('logTags');
+    c.innerHTML = logTags.map(function(t, i) {
+        return '<span class="journal-tag">' + t + ' <button onclick="removeTag(' + i + ')">×</button></span>';
+    }).join('');
+}
+
+function removeTag(i) {
+    logTags.splice(i, 1);
+    renderTags();
+}
+
+/* 发布日志 */
+function addLog() {
+    var title = document.getElementById('logTitle').value.trim();
+    var content = document.getElementById('logContent').value.trim();
+    if (!title || !content) { alert('请填写标题和内容'); return; }
+
+    fetch('/api/journal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            title: title,
+            protocol_id: document.getElementById('logProtocol').value,
+            content: content,
+            tags: logTags.join(','),
+            status: document.getElementById('logStatus').value
+        })
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (d.ok) {
+            document.getElementById('logTitle').value = '';
+            document.getElementById('logContent').value = '';
+            document.getElementById('logProtocol').value = '';
+            logTags = [];
+            renderTags();
+            loadLogs();
+        }
+    });
+}
+
+/* 加载日志 */
+function loadLogs() {
+    fetch('/api/journal')
+        .then(r => r.json())
+        .then(logs => {
+            var c = document.getElementById('journalList');
+            if (logs.length === 0) {
+                c.innerHTML = '<div class="journal-empty"><p>📝 还没有日志</p><p>记录你的第一次实验吧！</p></div>';
+                return;
+            }
+            var statusMap = {done:'✅ 已完成', 'in-progress':'🔄 进行中', planned:'📋 计划中'};
+            c.innerHTML = logs.map(function(l) {
+                var tagsHtml = '';
+                if (l.tags) {
+                    tagsHtml = '<div class="journal-entry-tags">' +
+                        l.tags.split(',').map(function(t) {
+                            return '<span class="journal-tag">' + t.trim() + '</span>';
+                        }).join('') + '</div>';
+                }
+                var protoHtml = l.protocol_id ?
+                    '<a href="/protocol/' + l.protocol_id + '" style="color:var(--primary);text-decoration:none;font-weight:600;font-size:0.85rem;">📋 ' + l.protocol_id + '</a>' : '';
+                return '<div class="journal-entry" id="log-' + l.id + '">' +
+                    '<div class="journal-entry-header">' +
+                    '<div><div class="journal-entry-title">' + l.title + '</div>' +
+                    '<div class="journal-entry-meta">' + protoHtml +
+                    '<span>' + (statusMap[l.status] || l.status) + '</span>' +
+                    '<span>' + l.created_at + '</span></div></div></div>' +
+                    '<div class="journal-entry-content">' + l.content + '</div>' +
+                    tagsHtml +
+                    '<div class="journal-entry-actions">' +
+                    '<button class="journal-del-btn" onclick="deleteLog(' + l.id + ')">删除</button>' +
+                    '</div></div>';
+            }).join('');
+        });
+}
+
+function deleteLog(id) {
+    if (!confirm('确定删除这条日志？')) return;
+    fetch('/api/journal/' + id, { method: 'DELETE' })
+        .then(r => r.json())
+        .then(d => { if (d.ok) document.getElementById('log-' + id).remove(); });
+}
+</script>
+{% endblock %}
