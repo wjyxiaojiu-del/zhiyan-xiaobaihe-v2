@@ -3,7 +3,7 @@
 植物生理生化实验一站式Web工具，面向实验新手，提供Protocol检索、试剂计算、AI问答等功能。
 
 **在线访问**: [https://zhiyan-xiaobaihe-v2.vercel.app](https://zhiyan-xiaobaihe-v2.vercel.app)
-
+              https://zhiyan-xiaobaihe-v2-j60hnwenh-wjyxiaojiu-dels-projects.vercel.app
 ## 功能
 
 - **Protocol库** — 65个标准化实验Protocol，涵盖植物生理、生化、分子生物学三大方向
