@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% set active = "admin" %}
+
+{% block title %}管理后台 - 植研小白盒{% endblock %}
+
+{% block head %}
+<style>
+.admin-wrap { max-width: 1100px; margin: 0 auto; padding: 1.5rem; }
+.admin-header { text-align: center; margin-bottom: 2rem; }
+.admin-header h1 { font-size: 1.8rem; font-weight: 800; }
+.admin-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 2rem; }
+.admin-stat-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 14px; padding: 1.2rem; text-align: center; }
+.admin-stat-card .num { font-size: 2rem; font-weight: 800; color: var(--primary); }
+.admin-stat-card .label { font-size: 0.85rem; color: var(--text-light); margin-top: 0.3rem; }
+.admin-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; background: var(--card-bg); border-radius: 12px; overflow: hidden; border: 1px solid var(--border); }
+.admin-table th { background: rgba(107,124,78,0.08); padding: 0.6rem; text-align: center; font-weight: 600; }
+.admin-table td { padding: 0.5rem 0.6rem; border-top: 1px solid var(--border); text-align: center; }
+.admin-table tr:hover { background: rgba(107,124,78,0.03); }
+.admin-btn { padding: 0.3rem 0.7rem; border: none; border-radius: 6px; font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+.admin-btn-green { background: #E8F5E9; color: #2E7D32; }
+.admin-btn-green:hover { background: #2E7D32; color: white; }
+.admin-btn-orange { background: #FFF3E0; color: #E65100; }
+.admin-btn-orange:hover { background: #E65100; color: white; }
+.admin-btn-red { background: #FFEBEE; color: #C62828; }
+.admin-btn-red:hover { background: #C62828; color: white; }
+.admin-btn-blue { background: #E3F2FD; color: #1565C0; }
+.admin-btn-blue:hover { background: #1565C0; color: white; }
+.role-tag { padding: 0.15rem 0.5rem; border-radius: 10px; font-size: 0.75rem; font-weight: 600; }
+.role-admin { background: #FFF3E0; color: #E65100; }
+.role-user { background: #E3F2FD; color: #1565C0; }
+.premium-yes { color: #2E7D32; font-weight: 700; }
+.premium-no { color: #999; }
+@media (max-width: 768px) { .admin-stats { grid-template-columns: 1fr; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-wrap">
+    <div class="admin-header">
+        <h1>🔧 管理后台</h1>
+        <p style="color:var(--text-light);">用户管理 · 数据统计 · 权限控制</p>
+    </div>
+
+    <div class="admin-stats">
+        <div class="admin-stat-card">
+            <div class="num">{{ total_users }}</div>
+            <div class="label">总用户数</div>
+        </div>
+        <div class="admin-stat-card">
+            <div class="num">{{ total_data }}</div>
+            <div class="label">保存数据条数</div>
+        </div>
+    </div>
+
+    <div class="admin-card" style="background:var(--card-bg);border:1px solid var(--border);border-radius:14px;padding:1.2rem;">
+        <h3 style="margin-bottom:1rem;">用户列表</h3>
+        <div style="overflow-x:auto;">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>用户名</th>
+                        <th>邮箱</th>
+                        <th>角色</th>
+                        <th>注册时间</th>
+                        <th>最近登录</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in users %}
+                    <tr id="user-row-{{ u.id }}">
+                        <td>{{ u.id }}</td>
+                        <td><strong>{{ u.username }}</strong></td>
+                        <td>{{ u.email }}</td>
+                        <td><span class="role-tag role-{{ u.role }}">{{ u.role }}</span></td>
+                        <td>{{ u.created_at }}</td>
+                        <td>{{ u.last_login or '-' }}</td>
+                        <td>
+                            <button class="admin-btn admin-btn-blue" onclick="resetPassword({{ u.id }})">重置密码</button>
+                            <button class="admin-btn admin-btn-red" onclick="deleteUser({{ u.id }})">删除</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+function resetPassword(uid) {
+    if (!confirm('确定重置该用户密码？')) return;
+    fetch('/admin/api/reset-password/' + uid, { method: 'POST' })
+        .then(r => r.json())
+        .then(d => {
+            if (d.ok) alert('新密码: ' + d.new_password);
+        });
+}
+function deleteUser(uid) {
+    if (!confirm('确定删除该用户？此操作不可逆！')) return;
+    fetch('/admin/api/delete-user/' + uid, { method: 'POST' })
+        .then(r => r.json())
+        .then(d => {
+            if (d.ok) document.getElementById('user-row-' + uid).remove();
+            else alert(d.error);
+        });
+}
+</script>
+{% endblock %}
