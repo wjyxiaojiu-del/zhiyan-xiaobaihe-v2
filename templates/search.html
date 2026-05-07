@@ -14,6 +14,28 @@
         <button onclick="doSearch()">检索</button>
     </div>
 
+    <!-- 筛选栏 -->
+    <div style="display:flex;gap:0.5rem;justify-content:center;margin-top:1rem;flex-wrap:wrap;">
+        <select id="filterCategory" onchange="doSearch()" style="padding:0.4rem 0.8rem;border:2px solid var(--border);border-radius:8px;font-size:0.85rem;background:white;cursor:pointer;">
+            <option value="">全部分类</option>
+            <option value="植物生理">植物生理</option>
+            <option value="分子生物">分子生物</option>
+            <option value="基础操作">基础操作</option>
+        </select>
+        <select id="filterDifficulty" onchange="doSearch()" style="padding:0.4rem 0.8rem;border:2px solid var(--border);border-radius:8px;font-size:0.85rem;background:white;cursor:pointer;">
+            <option value="">全部难度</option>
+            <option value="1">⭐ 入门</option>
+            <option value="2">⭐⭐ 基础</option>
+            <option value="3">⭐⭐⭐ 进阶</option>
+        </select>
+        <select id="sortBy" onchange="doSearch()" style="padding:0.4rem 0.8rem;border:2px solid var(--border);border-radius:8px;font-size:0.85rem;background:white;cursor:pointer;">
+            <option value="relevance">按相关度</option>
+            <option value="favorites">按收藏数</option>
+            <option value="rating">按评分</option>
+            <option value="difficulty">按难度</option>
+        </select>
+    </div>
+
     <div id="searchResults"></div>
 
     <!-- 热门搜索 -->
@@ -49,44 +71,44 @@
 <style>
 .quick-btn {
     padding: 0.4rem 1rem;
-    border: 2px solid #E0E0E0;
+    border: 2px solid #E4DFD6;
     background: white;
     border-radius: 20px;
     font-size: 0.85rem;
     cursor: pointer;
     transition: all 0.3s;
-    color: #607D8B;
+    color: #8C7E6E;
 }
-.quick-btn:hover { border-color: #4CAF50; color: #2E7D32; background: #E8F5E9; }
+.quick-btn:hover { border-color: #8FA465; color: #6B7C4E; background: #F0EDE6; }
 
 .browse-tag {
     display: inline-block;
     padding: 0.25rem 0.6rem;
-    background: #F5F7FA;
-    border: 1px solid #E0E0E0;
+    background: #FAFAF5;
+    border: 1px solid #E4DFD6;
     border-radius: 6px;
     font-size: 0.75rem;
-    color: #455A64;
+    color: #6B5D4E;
     text-decoration: none;
     transition: all 0.2s;
 }
-.browse-tag:hover { background: #E8F5E9; border-color: #4CAF50; color: #2E7D32; }
+.browse-tag:hover { background: #F0EDE6; border-color: #8FA465; color: #6B7C4E; }
 
 .search-result-card {
     display: block;
-    background: white;
+    background: #FDFCFA;
     border-radius: 12px;
     padding: 1rem 1.5rem;
     margin-bottom: 0.75rem;
-    box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+    box-shadow: 0 1px 6px rgba(80,65,45,0.06);
     text-decoration: none;
-    color: #263238;
+    color: #3D3225;
     transition: all 0.2s;
     border-left: 4px solid transparent;
 }
 .search-result-card:hover {
-    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
-    border-left-color: #4CAF50;
+    box-shadow: 0 4px 16px rgba(80,65,45,0.12);
+    border-left-color: #8FA465;
     transform: translateX(2px);
 }
 .result-header {
@@ -98,30 +120,30 @@
 .result-name {
     font-weight: 700;
     font-size: 1rem;
-    color: #2E7D32;
+    color: #6B7C4E;
 }
 .result-category {
     font-size: 0.75rem;
-    background: #E8F5E9;
-    color: #2E7D32;
+    background: rgba(107,124,78,0.1);
+    color: #6B7C4E;
     padding: 0.15rem 0.5rem;
     border-radius: 10px;
 }
 .result-desc {
     font-size: 0.85rem;
-    color: #607D8B;
+    color: #8C7E6E;
     margin-bottom: 0.4rem;
 }
 .result-snippet {
     font-size: 0.8rem;
-    color: #90A4AE;
-    border-left: 3px solid #E0E0E0;
+    color: #A09080;
+    border-left: 3px solid #E4DFD6;
     padding-left: 0.5rem;
     margin-top: 0.3rem;
 }
 .result-score {
     font-size: 0.7rem;
-    color: #B0BEC5;
+    color: #B8A88C;
 }
 </style>
 
@@ -133,7 +155,9 @@ function quickSearch(q) {
 
 function doSearch() {
     const query = document.getElementById('searchInput').value.trim();
-    if (!query) return;
+    const category = document.getElementById('filterCategory').value;
+    const difficulty = document.getElementById('filterDifficulty').value;
+    const sort = document.getElementById('sortBy').value;
 
     const container = document.getElementById('searchResults');
     container.innerHTML = '<div style="text-align:center;padding:2rem;color:#607D8B;">检索中...</div>';
@@ -141,14 +165,10 @@ function doSearch() {
     fetch('/api/search', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({query: query})
+        body: JSON.stringify({ query, category, difficulty, sort })
     })
     .then(r => r.json())
     .then(data => {
-        if (data.error) {
-            container.innerHTML = '<div style="text-align:center;padding:2rem;color:#F44336;">' + data.error + '</div>';
-            return;
-        }
         if (!data.results || data.results.length === 0) {
             container.innerHTML = '<div style="text-align:center;padding:2rem;color:#607D8B;">未找到相关Protocol，换个关键词试试</div>';
             return;
@@ -158,17 +178,18 @@ function doSearch() {
         html += '<p style="color:#607D8B;font-size:0.85rem;margin-bottom:0.8rem;">找到 ' + data.results.length + ' 个相关Protocol</p>';
         data.results.forEach(r => {
             const href = r.protocol_id ? '/protocol/' + r.protocol_id : '#';
+            const diffStars = '⭐'.repeat(r.difficulty || 1);
             html += '<a href="' + href + '" class="search-result-card">';
             html += '<div class="result-header">';
             html += '<span class="result-name">' + r.protocol_id + ' ' + r.protocol_name + '</span>';
+            html += '<div style="display:flex;gap:0.4rem;align-items:center;">';
+            if (r.favorites > 0) html += '<span style="font-size:0.75rem;color:#F44336;">❤️' + r.favorites + '</span>';
+            if (r.avg_rating > 0) html += '<span style="font-size:0.75rem;color:#F57F17;">★' + r.avg_rating + '</span>';
             html += '<span class="result-category">' + r.category + '</span>';
-            html += '</div>';
-            if (r.desc) {
-                html += '<div class="result-desc">' + r.desc + '</div>';
-            }
-            if (r.snippet) {
-                html += '<div class="result-snippet">' + r.snippet + '</div>';
-            }
+            html += '<span style="font-size:0.7rem;color:#B8A88C;">' + diffStars + '</span>';
+            html += '</div></div>';
+            if (r.desc) html += '<div class="result-desc">' + r.desc + '</div>';
+            if (r.snippet) html += '<div class="result-snippet">' + r.snippet + '</div>';
             html += '</a>';
         });
         html += '</div>';
