@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% set active = "register" %}
+
+{% block title %}注册 - 植研小白盒{% endblock %}
+
+{% block content %}
+<div class="auth-wrap">
+    <div class="auth-card">
+        <div class="auth-header">
+            <div class="auth-logo">🌱</div>
+            <h1>创建账号</h1>
+            <p>注册后即可保存实验数据、使用AI助手</p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for cat, msg in messages %}
+        <div class="auth-flash auth-flash-{{ cat }}">{{ msg }}</div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <form method="POST" class="auth-form">
+            <div class="auth-field">
+                <label>用户名</label>
+                <input type="text" name="username" placeholder="2个字符以上" required autofocus minlength="2">
+            </div>
+            <div class="auth-field">
+                <label>邮箱</label>
+                <input type="email" name="email" placeholder="用于登录和找回密码" required>
+            </div>
+            <div class="auth-field">
+                <label>密码</label>
+                <input type="password" name="password" placeholder="至少6位" required minlength="6">
+            </div>
+            <div class="auth-field">
+                <label>确认密码</label>
+                <input type="password" name="confirm" placeholder="再次输入密码" required>
+            </div>
+            <button type="submit" class="auth-btn">注 册</button>
+        </form>
+
+        <div class="auth-footer">
+            已有账号？<a href="/login">立即登录</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
