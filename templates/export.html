@@ -3,7 +3,7 @@
 
 {% block content %}
 <section class="hero" style="padding:2rem 0;">
-    <h1>Protocol导出</h1>
+    <h1>📄 Protocol导出</h1>
     <p class="subtitle">选择实验，导出为Word或Markdown格式，打印成纸质版</p>
 </section>
 
@@ -86,6 +86,20 @@ function exportAll(fmt) {
 
 <style>
 .btn-sm { transition: all 0.2s; }
-.btn-sm:hover { transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
+.btn-sm:hover { transform: translateY(-1px); box-shadow: 0 2px 8px rgba(80,65,45,0.12); }
+.filter-btn {
+    padding: 0.5rem 1.2rem;
+    border: 2px solid #E4DFD6;
+    background: white;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin: 0 0.3rem;
+    color: #8C7E6E;
+}
+.filter-btn:hover { border-color: #8FA465; color: #6B7C4E; }
+.filter-btn.active { border-color: #6B7C4E; background: #6B7C4E; color: white; }
 </style>
 {% endblock %}
