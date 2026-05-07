@@ -4,65 +4,60 @@
 {% block title %}{{ inst.name }} - 仪器指南{% endblock %}
 
 {% block content %}
-<div class="detail-container">
-    <a href="/instruments" class="back-btn">← 返回仪器列表</a>
-
-    <!-- 头部 -->
-    <div class="detail-header" style="border-top: 6px solid {{ inst.color }}">
-        <span class="id-badge" style="background:{{ inst.color }}">{{ inst.id }}</span>
+<!-- 详情Hero -->
+<section class="inst-detail-hero" style="background: linear-gradient(135deg, {{ inst.color }}dd, {{ inst.color }}bb, {{ inst.color }}99);">
+    <a href="/instruments" class="back-btn" style="color:white;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.2);">← 返回仪器列表</a>
+    <div style="margin-top:1rem;">
+        <span class="inst-id-badge">{{ inst.id }}</span>
         <h1>{{ inst.name }}</h1>
-        <p class="one-liner">{{ inst.desc }}</p>
+        <p class="inst-desc">{{ inst.desc }}</p>
+        <p style="font-size:0.85rem;opacity:0.7;">关联 {{ inst.protocols|length }} 个Protocol</p>
     </div>
+</section>
 
-    <!-- 热区交互区 -->
-    <div class="tab-content" style="margin-bottom:1.5rem;">
-        <h2 style="margin-bottom:0.5rem;">📷 点击下方热区查看操作指南</h2>
-        <p style="color:#607D8B; margin-bottom:1rem; font-size:0.9rem;">点击仪器上标注的彩色区域，直接弹出对应操作步骤和避坑提示</p>
-
-        <div class="hotspot-container">
-            <div class="instrument-visual" style="background: linear-gradient(135deg, {{ inst.color }}22, {{ inst.color }}11);">
-                <span style="font-size:8rem; color:{{ inst.color }}; opacity:0.3;">⚙️</span>
-                {% for zone in inst.hotspots %}
-                <div class="hotspot-zone"
-                     style="left:{{ zone.x }}; top:{{ zone.y }}; width:{{ zone.w }}; height:{{ zone.h }};"
-                     onclick="showHotspot('{{ loop.index }}')">
-                    <span class="zone-label">{{ zone.name }}</span>
-                </div>
-                {% endfor %}
-            </div>
+<div class="detail-container">
+    <!-- SVG展示 + 热区 -->
+    <div class="inst-svg-display">
+        <h2>📷 仪器结构图</h2>
+        <p class="hint">点击下方区域查看各部分操作指南</p>
+        <div class="inst-svg-container">
+            {{ svg | safe }}
         </div>
     </div>
 
-    <!-- 热区弹出内容 -->
+    <!-- 各热区操作指南 -->
     {% for zone in inst.hotspots %}
-    <div class="hotspot-popup" id="popup-{{ loop.index }}">
+    <div class="inst-hotspot-detail" style="border-left: 4px solid {{ inst.color }};">
         <h3>📌 {{ zone.name }}</h3>
-        <p style="color:#607D8B; font-size:0.9rem;">{{ zone.desc }}</p>
+        <p class="zone-desc">{{ zone.desc }}</p>
 
-        <div class="popup-steps">
-            <h4 style="margin: 0.8rem 0 0.5rem; font-size:0.95rem;">操作步骤</h4>
+        <!-- 操作步骤 -->
+        <ul class="inst-steps-list">
             {% for step in zone.steps %}
-            <div class="popup-step">
-                <span class="step-num-sm">{{ loop.index }}</span>
-                <span style="font-size:0.9rem;">{{ step }}</span>
-            </div>
+            <li>
+                <span class="inst-step-num">{{ loop.index }}</span>
+                <span>{{ step }}</span>
+            </li>
             {% endfor %}
-        </div>
+        </ul>
 
-        <div class="tips-section">
-            <h4 style="margin-bottom:0.5rem; font-size:0.95rem; color:#E65100;">⚠️ 避坑提示</h4>
-            {% for tip in zone.tips %}
-            <div class="safety-item" style="font-size:0.85rem;">
-                <span>•</span>
-                <span>{{ tip }}</span>
-            </div>
-            {% endfor %}
+        <!-- 避坑提示 -->
+        {% if zone.tips %}
+        <div class="inst-tips-box">
+            <h4>⚠️ 避坑提示</h4>
+            <ul>
+                {% for tip in zone.tips %}
+                <li>{{ tip }}</li>
+                {% endfor %}
+            </ul>
         </div>
+        {% endif %}
 
+        <!-- 视频链接 -->
         {% if zone.video %}
-        <a href="https://www.bilibili.com/video/{{ zone.video.bvid }}?t={{ zone.video.t }}"
-           target="_blank" class="video-link">
-            ▶️ 观看操作视频 (跳转{{ zone.video.t }}秒)
+        <a href="https://search.bilibili.com/all?keyword={{ zone.video.search | urlencode }}"
+           target="_blank" class="inst-video-link">
+            ▶️ 在B站搜索「{{ zone.video.search }}」
         </a>
         {% endif %}
     </div>
@@ -70,29 +65,18 @@
 
     <!-- 关联Protocol -->
     {% if protocols %}
-    <div class="tab-content">
-        <h2 style="margin-bottom:1rem;">关联Protocol</h2>
-        <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(220px,1fr)); gap:1rem;">
+    <div class="inst-related">
+        <h2>📋 关联Protocol</h2>
+        <div class="inst-protocol-grid">
             {% for p in protocols %}
-            <a href="/protocol/{{ p.id }}" class="feature-card" style="padding:1rem;">
-                <div class="icon" style="font-size:1.5rem;">{% if p.category == '植物生理' %}🧪{% elif p.category == '分子生物' %}🧬{% else %}⚙️{% endif %}</div>
-                <h3 style="font-size:0.9rem;">{{ p.name }}</h3>
+            <a href="/protocol/{{ p.id }}" class="inst-protocol-card">
+                <div class="icon">{% if p.category == '植物生理' %}🧪{% elif p.category == '分子生物' %}🧬{% else %}⚙️{% endif %}</div>
+                <h4>{{ p.id }} {{ p.name }}</h4>
+                <p>{{ p.category }} · {{ '⭐' * p.difficulty }}</p>
             </a>
             {% endfor %}
         </div>
     </div>
     {% endif %}
 </div>
-
-<script>
-function showHotspot(index) {
-    // 隐藏所有弹出
-    document.querySelectorAll('.hotspot-popup').forEach(p => p.classList.remove('active'));
-    // 显示目标弹出
-    const popup = document.getElementById('popup-' + index);
-    popup.classList.add('active');
-    // 滚动到弹出内容
-    popup.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-}
-</script>
 {% endblock %}
