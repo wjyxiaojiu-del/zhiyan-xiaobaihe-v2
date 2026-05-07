@@ -13,7 +13,7 @@ import sqlite3
 import secrets
 from datetime import datetime
 from functools import wraps
-from flask import Flask, render_template, request, jsonify, send_file, session, redirect, url_for, flash
+from flask import Flask, render_template, request, jsonify, send_file, send_from_directory, session, redirect, url_for, flash
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
@@ -827,6 +827,11 @@ def reset_password(uid):
     conn.close()
     return jsonify({"ok": True, "new_password": new_pw})
 
+
+# ========== 静态文件路由（Vercel 兼容） ==========
+@app.route("/static/<path:filename>")
+def serve_static(filename):
+    return send_from_directory(os.path.join(BASE_DIR, "static"), filename)
 
 # ========== 路由 ==========
 
