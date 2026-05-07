@@ -10,25 +10,53 @@
 
     <!-- 导出按钮 -->
     <div style="float:right;display:flex;gap:0.5rem;">
-        <a href="/api/export/{{ meta.id }}/docx" style="background:#E3F2FD;color:#1565C0;padding:0.4rem 1rem;border-radius:8px;font-size:0.9rem;text-decoration:none;">
+        <a href="/api/export/{{ meta.id }}/docx" style="background:#F0EDE6;color:#6B7C4E;padding:0.4rem 1rem;border-radius:8px;font-size:0.9rem;text-decoration:none;">
             导出Word
         </a>
-        <a href="/api/export/{{ meta.id }}/md" style="background:#E8F5E9;color:#2E7D32;padding:0.4rem 1rem;border-radius:8px;font-size:0.9rem;text-decoration:none;">
+        <a href="/api/export/{{ meta.id }}/md" style="background:#EDE7F6;color:#6B5D8A;padding:0.4rem 1rem;border-radius:8px;font-size:0.9rem;text-decoration:none;">
             导出MD
         </a>
     </div>
 
     <!-- 头部信息 -->
     <div class="detail-header" style="border-top: 6px solid {{ meta.color }}">
-        <span class="id-badge" style="background:{{ meta.color }}">{{ meta.id }}</span>
-        <h1>{{ meta.name }}</h1>
-        <p class="one-liner">{{ meta.desc }}</p>
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:0.5rem;">
+            <div>
+                <span class="id-badge" style="background:{{ meta.color }}">{{ meta.id }}</span>
+                <h1>{{ meta.name }}</h1>
+                <p class="one-liner">{{ meta.desc }}</p>
+            </div>
+            <div style="display:flex;gap:0.5rem;align-items:center;">
+                <button id="favBtn" onclick="toggleFav()" style="padding:0.4rem 1rem;border:2px solid var(--border);background:white;border-radius:20px;cursor:pointer;font-size:0.85rem;transition:all 0.25s;">
+                    <span id="favIcon">🤍</span> <span id="favText">收藏</span> <span id="favCount" style="color:var(--text-light);font-size:0.8rem;"></span>
+                </button>
+            </div>
+        </div>
         <div class="meta-row">
             <span class="tag tag-category">{{ meta.category }}</span>
             <span class="tag tag-difficulty">难度 {{ '⭐' * meta.difficulty }}</span>
             {% for t in meta.tags %}
             <span class="tag tag-instrument">{{ t }}</span>
             {% endfor %}
+        </div>
+
+        <!-- 评分区 -->
+        <div id="ratingArea" style="margin-top:1rem;padding:1rem;background:rgba(255,255,255,0.5);border-radius:12px;">
+            <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+                <div>
+                    <span style="font-size:0.85rem;color:var(--text-light);">综合评分</span>
+                    <span id="avgRating" style="font-size:1.3rem;font-weight:800;color:var(--primary);margin-left:0.3rem;">-</span>
+                    <span id="ratingCount" style="font-size:0.8rem;color:var(--text-light);"></span>
+                </div>
+                <div style="border-left:1px solid var(--border);padding-left:1rem;">
+                    <span style="font-size:0.85rem;color:var(--text-light);">我的评分：</span>
+                    <button onclick="setRating(1)" style="background:none;border:none;font-size:1.3rem;cursor:pointer;padding:0 2px;" onmouseover="hoverStar(1)" onmouseout="unhoverStar()">☆</button>
+                    <button onclick="setRating(2)" style="background:none;border:none;font-size:1.3rem;cursor:pointer;padding:0 2px;" onmouseover="hoverStar(2)" onmouseout="unhoverStar()">☆</button>
+                    <button onclick="setRating(3)" style="background:none;border:none;font-size:1.3rem;cursor:pointer;padding:0 2px;" onmouseover="hoverStar(3)" onmouseout="unhoverStar()">☆</button>
+                    <button onclick="setRating(4)" style="background:none;border:none;font-size:1.3rem;cursor:pointer;padding:0 2px;" onmouseover="hoverStar(4)" onmouseout="unhoverStar()">☆</button>
+                    <button onclick="setRating(5)" style="background:none;border:none;font-size:1.3rem;cursor:pointer;padding:0 2px;" onmouseover="hoverStar(5)" onmouseout="unhoverStar()">☆</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -111,7 +139,7 @@
             {% endif %}
 
             <div style="margin-top:1.5rem;">
-                <a href="/calculator" class="calc-btn" style="display:inline-block; text-decoration:none; color:white;">
+                <a href="/calculator" class="calc-btn" style="display:inline-block; text-decoration:none; color:white; background: linear-gradient(135deg, #C47D2B, #D4882E); box-shadow: 0 4px 14px rgba(196,125,43,0.3); padding: 0.8rem 2rem; border-radius: 10px; font-weight: 700;">
                     🧮 打开试剂计算器
                 </a>
             </div>
@@ -169,13 +197,95 @@
 </div>
 
 <script>
+var isFavorited = false;
+
 function switchTab(name) {
-    // 切换按钮状态
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     event.target.classList.add('active');
-    // 切换内容
     document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
     document.getElementById('tab-' + name).classList.add('active');
 }
+
+/* 收藏 */
+function toggleFav() {
+    fetch('/api/favorite/{{ meta.id }}', { method: 'POST' })
+        .then(r => r.json())
+        .then(d => {
+            isFavorited = d.favorited;
+            updateFavUI();
+        });
+}
+
+function updateFavUI() {
+    var icon = document.getElementById('favIcon');
+    var text = document.getElementById('favText');
+    var btn = document.getElementById('favBtn');
+    if (isFavorited) {
+        icon.textContent = '❤️';
+        text.textContent = '已收藏';
+        btn.style.borderColor = '#F44336';
+        btn.style.background = '#FFF5F5';
+    } else {
+        icon.textContent = '🤍';
+        text.textContent = '收藏';
+        btn.style.borderColor = 'var(--border)';
+        btn.style.background = 'white';
+    }
+}
+
+/* 评分 */
+var currentMyRating = 0;
+function setRating(n) {
+    currentMyRating = n;
+    renderStars(n);
+    fetch('/api/rate/{{ meta.id }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rating: n })
+    }).then(() => loadRatings());
+}
+
+function hoverStar(n) {
+    var btns = document.querySelectorAll('#ratingArea button');
+    for (var i = 0; i < btns.length; i++) {
+        btns[i].textContent = i < n ? '★' : '☆';
+        btns[i].style.color = i < n ? '#F57F17' : '#CCC';
+    }
+}
+
+function unhoverStar() {
+    renderStars(currentMyRating);
+}
+
+function renderStars(n) {
+    var btns = document.querySelectorAll('#ratingArea button');
+    for (var i = 0; i < btns.length; i++) {
+        btns[i].textContent = i < n ? '★' : '☆';
+        btns[i].style.color = i < n ? '#F57F17' : '#CCC';
+    }
+}
+
+function loadRatings() {
+    fetch('/api/ratings/{{ meta.id }}')
+        .then(r => r.json())
+        .then(d => {
+            document.getElementById('avgRating').textContent = d.avg || '暂无';
+            document.getElementById('ratingCount').textContent = d.count ? '(' + d.count + '人评价)' : '';
+            currentMyRating = d.my_rating || 0;
+            renderStars(currentMyRating);
+        });
+}
+
+/* 初始化 */
+document.addEventListener('DOMContentLoaded', function() {
+    fetch('/api/favorites')
+        .then(r => r.json())
+        .then(ids => {
+            isFavorited = ids.indexOf('{{ meta.id }}') >= 0;
+            updateFavUI();
+        })
+        .catch(() => {});
+    loadRatings();
+});
 </script>
 {% endblock %}
