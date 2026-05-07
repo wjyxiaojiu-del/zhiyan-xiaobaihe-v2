@@ -1,8 +1,8 @@
-# 植研小白盒 v2
+# 植研小白盒 v2.0
 
 植物生理生化实验一站式Web工具，面向实验新手，提供Protocol检索、试剂计算、AI问答等功能。
 
-**在线访问**: [https://zhiyan-xiaobaihe-v2.vercel.app](https://zhiyan-xiaobaihe-v2.vercel.app)
+**在线访问**: [https://wjyxiaojiu-del.github.io/zhiyan-xiaobaihe-v2](https://wjyxiaojiu-del.github.io/zhiyan-xiaobaihe-v2)
 
 ## 功能
 
@@ -17,7 +17,7 @@
 ## 快速开始
 
 ### 在线使用
-直接访问：[https://zhiyan-xiaobaihe-v2.vercel.app](https://zhiyan-xiaobaihe-v2.vercel.app)
+直接访问：[https://wjyxiaojiu-del.github.io/zhiyan-xiaobaihe-v2](https://wjyxiaojiu-del.github.io/zhiyan-xiaobaihe-v2)
 
 ### 本地运行
 
@@ -50,6 +50,19 @@ python app.py
 ├── instrument_guides/      # 仪器操作指南文档
 └── requirements.txt        # Python依赖
 ```
+
+## 更新日志
+
+### v2.0 (2026-05-07)
+- 全面升级界面与交互体验
+- 优化Protocol检索算法
+- 新增AI智能问答功能
+- 完善仪器可视化操作指南
+
+### v1.0 (2026-05-05)
+- 首次发布
+- 65个标准化实验Protocol
+- 试剂计算器与导出功能
 
 ## 数据来源
 
