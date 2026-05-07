@@ -4,34 +4,37 @@
 {% block title %}仪器指南 - 植研小白盒{% endblock %}
 
 {% block content %}
-<div class="container" style="padding-top:2rem; padding-bottom:3rem;">
-    <h1 class="page-title">🔧 植物实验室仪器指南</h1>
-    <p class="page-subtitle">点击仪器卡片，查看可视化热区操作指南</p>
+<!-- Hero -->
+<section class="inst-hero">
+    <h1>🔧 植物实验室仪器指南</h1>
+    <p>点击仪器卡片，查看可视化操作指南、避坑提示和视频演示</p>
+</section>
 
-    <div class="protocol-grid">
-        {% for inst in instruments %}
-        <a href="/instrument/{{ inst.id }}" class="protocol-card">
-            <div class="card-bar" style="background:{{ inst.color }}"></div>
-            <div class="card-header">
-                <div class="card-icon" style="background:{{ inst.color }}">🔧</div>
-                <div>
-                    <div class="card-id">{{ inst.id }}</div>
-                    <div class="card-name">{{ inst.name }}</div>
-                </div>
+<div class="inst-grid">
+    {% for inst in instruments %}
+    <a href="/instrument/{{ inst.id }}" class="inst-card">
+        <!-- SVG图形区 -->
+        <div class="inst-card-visual" style="background: linear-gradient(135deg, {{ inst.color }}15, {{ inst.color }}08);">
+            <div class="float-shape" style="width:60px;height:60px;background:{{ inst.color }};top:15%;left:10%;animation-delay:0s;"></div>
+            <div class="float-shape" style="width:40px;height:40px;background:{{ inst.color }};bottom:20%;right:15%;animation-delay:1.5s;"></div>
+            <div class="float-shape" style="width:25px;height:25px;background:{{ inst.color }};top:60%;left:70%;animation-delay:3s;"></div>
+            {{ svg(inst.icon) | safe }}
+        </div>
+
+        <!-- 文字信息 -->
+        <div class="inst-card-body">
+            <div class="inst-card-name">{{ inst.name }}</div>
+            <div class="inst-card-desc">{{ inst.desc }}</div>
+            <div class="inst-card-tags">
+                {% for pid in inst.protocols[:4] %}
+                <span class="tag tag-instrument">{{ pid }}</span>
+                {% endfor %}
+                {% if inst.protocols|length > 4 %}
+                <span class="tag tag-instrument">+{{ inst.protocols|length - 4 }}</span>
+                {% endif %}
             </div>
-            <div class="card-body">
-                <div class="card-desc">{{ inst.desc }}</div>
-                <div class="card-tags">
-                    {% for pid in inst.protocols[:3] %}
-                    <span class="tag tag-instrument">{{ pid }}</span>
-                    {% endfor %}
-                    {% if inst.protocols|length > 3 %}
-                    <span class="tag tag-instrument">+{{ inst.protocols|length - 3 }}</span>
-                    {% endif %}
-                </div>
-            </div>
-        </a>
-        {% endfor %}
-    </div>
+        </div>
+    </a>
+    {% endfor %}
 </div>
 {% endblock %}
