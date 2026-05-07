@@ -1,0 +1,291 @@
+{% extends "base.html" %}
+{% set active = "home" %}
+
+{% block title %}{{ meta.name }} - 植研小白盒{% endblock %}
+
+{% block content %}
+<div class="detail-container">
+    <!-- 返回按钮 -->
+    <a href="/" class="back-btn">← 返回Protocol库</a>
+
+    <!-- 导出按钮 -->
+    <div style="float:right;display:flex;gap:0.5rem;">
+        <a href="/api/export/{{ meta.id }}/docx" style="background:#F0EDE6;color:#6B7C4E;padding:0.4rem 1rem;border-radius:8px;font-size:0.9rem;text-decoration:none;">
+            导出Word
+        </a>
+        <a href="/api/export/{{ meta.id }}/md" style="background:#EDE7F6;color:#6B5D8A;padding:0.4rem 1rem;border-radius:8px;font-size:0.9rem;text-decoration:none;">
+            导出MD
+        </a>
+    </div>
+
+    <!-- 头部信息 -->
+    <div class="detail-header" style="border-top: 6px solid {{ meta.color }}">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:0.5rem;">
+            <div>
+                <span class="id-badge" style="background:{{ meta.color }}">{{ meta.id }}</span>
+                <h1>{{ meta.name }}</h1>
+                <p class="one-liner">{{ meta.desc }}</p>
+            </div>
+            <div style="display:flex;gap:0.5rem;align-items:center;">
+                <button id="favBtn" onclick="toggleFav()" style="padding:0.4rem 1rem;border:2px solid var(--border);background:white;border-radius:20px;cursor:pointer;font-size:0.85rem;transition:all 0.25s;">
+                    <span id="favIcon">🤍</span> <span id="favText">收藏</span> <span id="favCount" style="color:var(--text-light);font-size:0.8rem;"></span>
+                </button>
+            </div>
+        </div>
+        <div class="meta-row">
+            <span class="tag tag-category">{{ meta.category }}</span>
+            <span class="tag tag-difficulty">难度 {{ '⭐' * meta.difficulty }}</span>
+            {% for t in meta.tags %}
+            <span class="tag tag-instrument">{{ t }}</span>
+            {% endfor %}
+        </div>
+
+        <!-- 评分区 -->
+        <div id="ratingArea" style="margin-top:1rem;padding:1rem;background:rgba(255,255,255,0.5);border-radius:12px;">
+            <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+                <div>
+                    <span style="font-size:0.85rem;color:var(--text-light);">综合评分</span>
+                    <span id="avgRating" style="font-size:1.3rem;font-weight:800;color:var(--primary);margin-left:0.3rem;">-</span>
+                    <span id="ratingCount" style="font-size:0.8rem;color:var(--text-light);"></span>
+                </div>
+                <div style="border-left:1px solid var(--border);padding-left:1rem;">
+                    <span style="font-size:0.85rem;color:var(--text-light);">我的评分：</span>
+                    <button onclick="setRating(1)" style="background:none;border:none;font-size:1.3rem;cursor:pointer;padding:0 2px;" onmouseover="hoverStar(1)" onmouseout="unhoverStar()">☆</button>
+                    <button onclick="setRating(2)" style="background:none;border:none;font-size:1.3rem;cursor:pointer;padding:0 2px;" onmouseover="hoverStar(2)" onmouseout="unhoverStar()">☆</button>
+                    <button onclick="setRating(3)" style="background:none;border:none;font-size:1.3rem;cursor:pointer;padding:0 2px;" onmouseover="hoverStar(3)" onmouseout="unhoverStar()">☆</button>
+                    <button onclick="setRating(4)" style="background:none;border:none;font-size:1.3rem;cursor:pointer;padding:0 2px;" onmouseover="hoverStar(4)" onmouseout="unhoverStar()">☆</button>
+                    <button onclick="setRating(5)" style="background:none;border:none;font-size:1.3rem;cursor:pointer;padding:0 2px;" onmouseover="hoverStar(5)" onmouseout="unhoverStar()">☆</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab导航 -->
+    <div class="tab-nav">
+        <button class="tab-btn active" onclick="switchTab('overview')">📋 概览</button>
+        <button class="tab-btn" onclick="switchTab('steps')">🔬 操作步骤</button>
+        <button class="tab-btn" onclick="switchTab('reagents')">🧪 试剂配方</button>
+        <button class="tab-btn" onclick="switchTab('safety')">⚠️ 避坑指南</button>
+        <button class="tab-btn" onclick="switchTab('data')">📊 数据处理</button>
+        {% if instruments %}
+        <button class="tab-btn" onclick="switchTab('related')">🔧 关联仪器</button>
+        {% endif %}
+    </div>
+
+    <!-- Tab内容 -->
+    <div class="tab-content">
+        <!-- 概览Tab -->
+        <div class="tab-pane active" id="tab-overview">
+            <h2 style="margin-bottom:1rem;">实验原理</h2>
+            {% if content.principle %}
+            <div style="line-height:1.8; font-size:0.95rem;">{{ content.principle | replace('\n', '<br>') | safe }}</div>
+            {% endif %}
+            {% if content.principle_inner %}
+            <div style="line-height:1.8; font-size:0.95rem; margin-top:0.5rem;">{{ content.principle_inner | replace('\n', '<br>') | safe }}</div>
+            {% endif %}
+
+            <h2 style="margin: 1.5rem 0 0.5rem;">来源出处</h2>
+            {% if content.source %}
+            <div style="line-height:1.8; font-size:0.9rem; color:#607D8B;">{{ content.source | replace('\n', '<br>') | safe }}</div>
+            {% endif %}
+
+            <h2 style="margin: 1.5rem 0 0.5rem;">所需仪器</h2>
+            {% if content.instruments %}
+            <div style="line-height:1.8; font-size:0.9rem;">{{ content.instruments | replace('\n', '<br>') | safe }}</div>
+            {% endif %}
+        </div>
+
+        <!-- 操作步骤Tab -->
+        <div class="tab-pane" id="tab-steps">
+            <h2 style="margin-bottom:1rem;">分步操作步骤</h2>
+            {% if content.steps and content.steps is iterable and content.steps is not string %}
+            <table class="step-table">
+                <thead>
+                    <tr>
+                        <th>步骤</th>
+                        <th>操作</th>
+                        <th>为什么这么做</th>
+                        <th>做对了</th>
+                        <th>做错了</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for step in content.steps %}
+                    <tr>
+                        <td><span class="step-num">{{ loop.index }}</span></td>
+                        <td><strong>{{ step.title }}</strong>{% if step.how %}<br>{{ step.how }}{% endif %}</td>
+                        <td>{{ step.why }}</td>
+                        <td style="color:#2E7D32">{{ step.correct }}</td>
+                        <td style="color:#F44336">{{ step.wrong }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% elif content.steps_raw %}
+            <div style="line-height:1.8; font-size:0.9rem;">{{ content.steps_raw | replace('\n', '<br>') | safe }}</div>
+            {% endif %}
+        </div>
+
+        <!-- 试剂配方Tab -->
+        <div class="tab-pane" id="tab-reagents">
+            <h2 style="margin-bottom:1rem;">所需试剂</h2>
+            {% if content.reagents %}
+            <div style="line-height:1.8; font-size:0.9rem;">{{ content.reagents | replace('\n', '<br>') | safe }}</div>
+            {% endif %}
+
+            <h2 style="margin: 1.5rem 0 0.5rem;">试剂配方与配制方法</h2>
+            {% if content.formula %}
+            <div style="line-height:1.8; font-size:0.9rem;">{{ content.formula | replace('\n', '<br>') | safe }}</div>
+            {% endif %}
+
+            <div style="margin-top:1.5rem;">
+                <a href="/calculator" class="calc-btn" style="display:inline-block; text-decoration:none; color:white; background: linear-gradient(135deg, #C47D2B, #D4882E); box-shadow: 0 4px 14px rgba(196,125,43,0.3); padding: 0.8rem 2rem; border-radius: 10px; font-weight: 700;">
+                    🧮 打开试剂计算器
+                </a>
+            </div>
+        </div>
+
+        <!-- 避坑指南Tab -->
+        <div class="tab-pane" id="tab-safety">
+            <h2 style="margin-bottom:1rem;">安全红线</h2>
+            {% if content.safety %}
+            <div class="safety-box">
+                <div class="title">⚠️ 必须遵守的安全规则</div>
+                <div style="line-height:1.8; font-size:0.9rem;">{{ content.safety | replace('\n', '<br>') | safe }}</div>
+            </div>
+            {% endif %}
+
+            <h2 style="margin: 1.5rem 0 0.5rem;">新手避坑提示</h2>
+            {% if content.tips %}
+            <div class="tip-box">
+                <div class="title">💡 来自真实踩坑经验</div>
+                <div style="line-height:1.8; font-size:0.9rem;">{{ content.tips | replace('\n', '<br>') | safe }}</div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- 数据处理Tab -->
+        <div class="tab-pane" id="tab-data">
+            <h2 style="margin-bottom:1rem;">数据处理与结果判读</h2>
+            {% if content.data %}
+            <div style="line-height:1.8; font-size:0.95rem;">{{ content.data | replace('\n', '<br>') | safe }}</div>
+            {% endif %}
+
+            <h2 style="margin: 1.5rem 0 0.5rem;">常见问题排查表</h2>
+            {% if content.troubleshoot %}
+            <div style="line-height:1.8; font-size:0.9rem;">{{ content.troubleshoot | replace('\n', '<br>') | safe }}</div>
+            {% endif %}
+        </div>
+
+        <!-- 关联仪器Tab -->
+        {% if instruments %}
+        <div class="tab-pane" id="tab-related">
+            <h2 style="margin-bottom:1rem;">关联仪器</h2>
+            <p style="color:#607D8B; margin-bottom:1rem;">点击仪器卡片查看可视化操作指南</p>
+            <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(220px,1fr)); gap:1rem;">
+                {% for inst in instruments %}
+                <a href="/instrument/{{ inst.id }}" class="feature-card" style="padding:1rem;">
+                    <div class="icon" style="font-size:2rem;">🔧</div>
+                    <h3 style="font-size:0.95rem;">{{ inst.name }}</h3>
+                    <p style="font-size:0.8rem;">{{ inst.desc }}</p>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+var isFavorited = false;
+
+function switchTab(name) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+}
+
+/* 收藏 */
+function toggleFav() {
+    fetch('/api/favorite/{{ meta.id }}', { method: 'POST' })
+        .then(r => r.json())
+        .then(d => {
+            isFavorited = d.favorited;
+            updateFavUI();
+        });
+}
+
+function updateFavUI() {
+    var icon = document.getElementById('favIcon');
+    var text = document.getElementById('favText');
+    var btn = document.getElementById('favBtn');
+    if (isFavorited) {
+        icon.textContent = '❤️';
+        text.textContent = '已收藏';
+        btn.style.borderColor = '#F44336';
+        btn.style.background = '#FFF5F5';
+    } else {
+        icon.textContent = '🤍';
+        text.textContent = '收藏';
+        btn.style.borderColor = 'var(--border)';
+        btn.style.background = 'white';
+    }
+}
+
+/* 评分 */
+var currentMyRating = 0;
+function setRating(n) {
+    currentMyRating = n;
+    renderStars(n);
+    fetch('/api/rate/{{ meta.id }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rating: n })
+    }).then(() => loadRatings());
+}
+
+function hoverStar(n) {
+    var btns = document.querySelectorAll('#ratingArea button');
+    for (var i = 0; i < btns.length; i++) {
+        btns[i].textContent = i < n ? '★' : '☆';
+        btns[i].style.color = i < n ? '#F57F17' : '#CCC';
+    }
+}
+
+function unhoverStar() {
+    renderStars(currentMyRating);
+}
+
+function renderStars(n) {
+    var btns = document.querySelectorAll('#ratingArea button');
+    for (var i = 0; i < btns.length; i++) {
+        btns[i].textContent = i < n ? '★' : '☆';
+        btns[i].style.color = i < n ? '#F57F17' : '#CCC';
+    }
+}
+
+function loadRatings() {
+    fetch('/api/ratings/{{ meta.id }}')
+        .then(r => r.json())
+        .then(d => {
+            document.getElementById('avgRating').textContent = d.avg || '暂无';
+            document.getElementById('ratingCount').textContent = d.count ? '(' + d.count + '人评价)' : '';
+            currentMyRating = d.my_rating || 0;
+            renderStars(currentMyRating);
+        });
+}
+
+/* 初始化 */
+document.addEventListener('DOMContentLoaded', function() {
+    fetch('/api/favorites')
+        .then(r => r.json())
+        .then(ids => {
+            isFavorited = ids.indexOf('{{ meta.id }}') >= 0;
+            updateFavUI();
+        })
+        .catch(() => {});
+    loadRatings();
+});
+</script>
+{% endblock %}

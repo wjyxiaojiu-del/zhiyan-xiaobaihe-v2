@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+{% set active = "home" %}
+
+{% block content %}
+<!-- Hero区域 -->
+<section class="hero">
+    <div class="hero-particles">
+        <div class="particle p1"></div>
+        <div class="particle p2"></div>
+        <div class="particle p3"></div>
+        <div class="particle p4"></div>
+        <div class="particle p5"></div>
+        <div class="particle p6"></div>
+        <div class="particle p7"></div>
+        <div class="particle p8"></div>
+    </div>
+    <h1>🌿 植研小白盒</h1>
+    <p class="subtitle">进实验室不慌，有小白盒兜底 —— 你的随身实验室教练</p>
+    <div class="stats">
+        <div class="stat-item">
+            <div class="stat-num">65</div>
+            <div class="stat-label">标准化Protocol</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-num">3</div>
+            <div class="stat-label">实验大类覆盖</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-num">10</div>
+            <div class="stat-label">仪器操作指南</div>
+        </div>
+    </div>
+</section>
+
+<!-- 功能入口 -->
+<div class="feature-cards">
+    <a href="/search" class="feature-card">
+        <div class="icon">🔍</div>
+        <h3>Protocol检索</h3>
+        <p>输入实验问题，智能匹配最相关Protocol</p>
+    </a>
+    <a href="/calculator" class="feature-card">
+        <div class="icon">🧪</div>
+        <h3>试剂计算器</h3>
+        <p>摩尔浓度换算、梯度稀释、复溶比活力一键搞定</p>
+    </a>
+    <a href="/ai" class="feature-card">
+        <div class="icon">🤖</div>
+        <h3>AI问答助手</h3>
+        <p>专属植物科研AI，解答问题、排查失败</p>
+    </a>
+</div>
+
+<!-- Protocol卡片网格 -->
+<h2 class="section-title">标准化Protocol库</h2>
+<p class="section-subtitle">点击卡片查看完整Protocol，每个步骤都有避坑指南</p>
+
+<!-- 分类筛选 -->
+<div style="text-align:center; margin-bottom:1.5rem;">
+    <button class="filter-btn active" onclick="filterCards('all')">全部</button>
+    <button class="filter-btn" onclick="filterCards('植物生理')">🧪 植物生理</button>
+    <button class="filter-btn" onclick="filterCards('分子生物')">🧬 分子生物</button>
+    <button class="filter-btn" onclick="filterCards('基础操作')">⚙️ 基础操作</button>
+</div>
+
+<div class="protocol-grid" id="protocolGrid">
+    {% for p in protocols %}
+    <a href="/protocol/{{ p.id }}" class="protocol-card" data-category="{{ p.category }}">
+        <div class="card-bar" style="background:{{ p.color }}"></div>
+        <div class="card-header">
+            <div class="card-icon" style="background:{{ p.color }}">
+                {% if p.category == '植物生理' %}🧪{% elif p.category == '分子生物' %}🧬{% else %}⚙️{% endif %}
+            </div>
+            <div>
+                <div class="card-id">{{ p.id }}</div>
+                <div class="card-name">{{ p.name }}</div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="card-desc">{{ p.desc }}</div>
+            <div class="card-tags">
+                <span class="tag tag-category">{{ p.category }}</span>
+                <span class="tag tag-difficulty">{{ '⭐' * p.difficulty }}</span>
+                {% for t in p.tags %}
+                <span class="tag tag-instrument">{{ t }}</span>
+                {% endfor %}
+            </div>
+        </div>
+    </a>
+    {% endfor %}
+</div>
+
+<style>
+.filter-btn {
+    padding: 0.5rem 1.2rem;
+    border: 2px solid #E4DFD6;
+    background: white;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin: 0 0.3rem;
+    color: #8C7E6E;
+}
+.filter-btn:hover { border-color: #8FA465; color: #6B7C4E; }
+.filter-btn.active { border-color: #6B7C4E; background: #6B7C4E; color: white; }
+
+/* 粒子 */
+.hero-particles {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.particle {
+    position: absolute;
+    border-radius: 50%;
+    opacity: 0.15;
+    animation: particleFloat linear infinite;
+}
+
+.p1 { width: 12px; height: 12px; background: white; top: 15%; left: 8%; animation-duration: 12s; animation-delay: 0s; }
+.p2 { width: 8px; height: 8px; background: white; top: 25%; left: 85%; animation-duration: 15s; animation-delay: 1s; }
+.p3 { width: 15px; height: 15px; background: white; top: 60%; left: 12%; animation-duration: 18s; animation-delay: 2s; }
+.p4 { width: 6px; height: 6px; background: white; top: 70%; left: 90%; animation-duration: 10s; animation-delay: 0.5s; }
+.p5 { width: 10px; height: 10px; background: white; top: 40%; left: 75%; animation-duration: 14s; animation-delay: 3s; }
+.p6 { width: 14px; height: 14px; background: white; top: 80%; left: 50%; animation-duration: 16s; animation-delay: 1.5s; }
+.p7 { width: 9px; height: 9px; background: white; top: 10%; left: 45%; animation-duration: 11s; animation-delay: 4s; }
+.p8 { width: 7px; height: 7px; background: white; top: 50%; left: 30%; animation-duration: 13s; animation-delay: 2.5s; }
+
+@keyframes particleFloat {
+    0%   { transform: translate(0, 0) scale(1); opacity: 0.1; }
+    25%  { transform: translate(15px, -20px) scale(1.2); opacity: 0.2; }
+    50%  { transform: translate(-10px, -35px) scale(0.8); opacity: 0.15; }
+    75%  { transform: translate(20px, -15px) scale(1.1); opacity: 0.18; }
+    100% { transform: translate(0, 0) scale(1); opacity: 0.1; }
+}
+
+/* Protocol卡片交错入场动画 */
+.protocol-card {
+    animation: cardFadeIn 0.5s ease both;
+}
+.protocol-card:nth-child(1) { animation-delay: 0.05s; }
+.protocol-card:nth-child(2) { animation-delay: 0.08s; }
+.protocol-card:nth-child(3) { animation-delay: 0.11s; }
+.protocol-card:nth-child(4) { animation-delay: 0.14s; }
+.protocol-card:nth-child(5) { animation-delay: 0.17s; }
+.protocol-card:nth-child(6) { animation-delay: 0.20s; }
+.protocol-card:nth-child(7) { animation-delay: 0.23s; }
+.protocol-card:nth-child(8) { animation-delay: 0.26s; }
+.protocol-card:nth-child(9) { animation-delay: 0.29s; }
+.protocol-card:nth-child(10) { animation-delay: 0.32s; }
+
+@keyframes cardFadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* 功能卡片入场 */
+.feature-card {
+    animation: featureFadeIn 0.5s ease both;
+}
+.feature-card:nth-child(1) { animation-delay: 0.35s; }
+.feature-card:nth-child(2) { animation-delay: 0.45s; }
+.feature-card:nth-child(3) { animation-delay: 0.55s; }
+
+@keyframes featureFadeIn {
+    from { opacity: 0; transform: translateY(16px) scale(0.96); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+</style>
+
+<script>
+function filterCards(category) {
+    const cards = document.querySelectorAll('.protocol-card');
+    const btns = document.querySelectorAll('.filter-btn');
+    btns.forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+    cards.forEach(card => {
+        if (category === 'all' || card.dataset.category === category) {
+            card.style.display = 'block';
+            card.style.animation = 'cardFadeIn 0.3s ease';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+}
+</script>
+{% endblock %}

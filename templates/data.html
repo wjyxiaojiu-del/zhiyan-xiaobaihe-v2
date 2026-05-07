@@ -1,0 +1,1156 @@
+{% extends "base.html" %}
+{% set active = "data" %}
+
+{% block title %}数据处理 - 植研小白盒{% endblock %}
+
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+.data-wrap {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 1.5rem;
+}
+
+.data-header {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.data-header h1 {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--text);
+    margin-bottom: 0.3rem;
+}
+
+.data-header p {
+    font-size: 0.9rem;
+    color: var(--text-light);
+}
+
+/* Tab导航 */
+.data-tab-nav {
+    display: flex;
+    gap: 0.3rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 2px solid var(--border);
+    overflow-x: auto;
+}
+
+.data-tab-btn {
+    padding: 0.7rem 1.3rem;
+    border: none;
+    background: none;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-light);
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    transition: all 0.25s;
+    white-space: nowrap;
+}
+
+.data-tab-btn:hover {
+    color: var(--primary);
+}
+
+.data-tab-btn.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+}
+
+.data-panel {
+    display: none;
+}
+
+.data-panel.active {
+    display: block;
+    animation: panelFadeIn 0.3s ease;
+}
+
+@keyframes panelFadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* 卡片 */
+.d-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.3rem;
+    margin-bottom: 1.2rem;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+
+.d-card h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 0.8rem;
+}
+
+/* 输入表格 */
+.d-input-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+}
+
+.d-input-table th {
+    background: rgba(107,124,78,0.06);
+    padding: 0.5rem;
+    text-align: center;
+    font-weight: 600;
+    color: var(--text);
+    border: 1px solid var(--border);
+}
+
+.d-input-table td {
+    padding: 0.3rem;
+    border: 1px solid var(--border);
+    text-align: center;
+}
+
+.d-input-table input[type="text"],
+.d-input-table input[type="number"] {
+    width: 100%;
+    padding: 0.4rem 0.5rem;
+    border: 1.5px solid var(--border);
+    border-radius: 6px;
+    font-size: 0.85rem;
+    text-align: center;
+    outline: none;
+    transition: border 0.2s;
+    background: white;
+}
+
+.d-input-table input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(107,124,78,0.1);
+}
+
+/* 按钮 */
+.d-btn {
+    padding: 0.5rem 1.2rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.d-btn-primary {
+    background: var(--primary);
+    color: white;
+}
+
+.d-btn-primary:hover {
+    background: var(--primary-dark);
+    transform: translateY(-1px);
+}
+
+.d-btn-outline {
+    background: transparent;
+    color: var(--primary);
+    border: 1.5px solid var(--primary);
+}
+
+.d-btn-outline:hover {
+    background: rgba(107,124,78,0.06);
+}
+
+.d-btn-sm {
+    padding: 0.3rem 0.7rem;
+    font-size: 0.8rem;
+}
+
+.d-btn-danger {
+    background: #F44336;
+    color: white;
+}
+
+.d-btn-danger:hover {
+    background: #D32F2F;
+}
+
+.d-btn-row {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.8rem;
+    flex-wrap: wrap;
+}
+
+/* 结果表格 */
+.d-result-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    margin-top: 0.8rem;
+    animation: resultSlideIn 0.3s ease;
+}
+
+@keyframes resultSlideIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.d-result-table th {
+    background: rgba(107,124,78,0.08);
+    padding: 0.5rem 0.6rem;
+    font-weight: 600;
+    color: var(--text);
+    border: 1px solid var(--border);
+    text-align: center;
+}
+
+.d-result-table td {
+    padding: 0.45rem 0.6rem;
+    border: 1px solid var(--border);
+    text-align: center;
+}
+
+.d-result-table tr:nth-child(even) {
+    background: rgba(107,124,78,0.02);
+}
+
+/* 公式栏 */
+.d-formula-bar {
+    background: linear-gradient(135deg, rgba(107,124,78,0.08), rgba(196,125,43,0.06));
+    border-radius: 10px;
+    padding: 0.8rem 1.2rem;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+    color: var(--text);
+    line-height: 1.6;
+    border-left: 4px solid var(--primary);
+}
+
+.d-formula-bar code {
+    background: rgba(107,124,78,0.1);
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    font-family: "SF Mono", "Fira Code", monospace;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+/* 图表容器 */
+.d-chart-container {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1rem;
+    margin-top: 1rem;
+    position: relative;
+    max-height: 400px;
+}
+
+.d-chart-container canvas {
+    max-height: 360px;
+}
+
+/* 单位选择 */
+.d-unit-select {
+    padding: 0.4rem 0.5rem;
+    border: 1.5px solid var(--border);
+    border-radius: 6px;
+    font-size: 0.82rem;
+    background: white;
+    outline: none;
+    cursor: pointer;
+}
+
+/* 行内操作按钮 */
+.d-inline-btn {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: none;
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.d-add-col {
+    background: rgba(107,124,78,0.1);
+    color: var(--primary);
+}
+
+.d-add-col:hover {
+    background: var(--primary);
+    color: white;
+}
+
+.d-del-col {
+    background: rgba(244,67,54,0.1);
+    color: #F44336;
+}
+
+.d-del-col:hover {
+    background: #F44336;
+    color: white;
+}
+
+/* 响应式 */
+@media (max-width: 768px) {
+    .data-wrap { padding: 1rem; }
+    .data-tab-nav { gap: 0; }
+    .data-tab-btn { font-size: 0.8rem; padding: 0.6rem 0.8rem; }
+    .d-input-table { font-size: 0.8rem; }
+    .d-input-table input { font-size: 0.8rem; padding: 0.3rem; }
+}
+
+/* 横向滚动容器 */
+.d-table-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* 导出区域 */
+.d-export-bar {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="data-wrap">
+    <div class="data-header">
+        <h1>📊 数据处理中心</h1>
+        <p>输入实验数据 · 自动统计分析 · 标准曲线拟合 · 图表可视化</p>
+    </div>
+
+    <div class="data-tab-nav">
+        <button class="data-tab-btn active" onclick="switchDataTab('stats')">📈 统计分析</button>
+        <button class="data-tab-btn" onclick="switchDataTab('curve')">📐 标准曲线</button>
+        <button class="data-tab-btn" onclick="switchDataTab('unknown')">🔬 浓度计算</button>
+        <button class="data-tab-btn" onclick="switchDataTab('charts')">📊 图表展示</button>
+    </div>
+
+    <!-- ===== Tab1: 统计分析 ===== -->
+    <div class="data-panel active" id="panel-stats">
+        <div class="d-card">
+            <h3>输入实验数据</h3>
+            <div class="d-formula-bar">
+                在下方输入各样品的重复测定值，系统自动计算 <code>均值 ± SD ± SE</code>，支持动态增减重复次数。
+            </div>
+            <div class="d-table-scroll">
+                <table class="d-input-table" id="statsTable">
+                    <thead id="statsHead"></thead>
+                    <tbody id="statsBody"></tbody>
+                </table>
+            </div>
+            <div class="d-btn-row">
+                <button class="d-btn d-btn-outline d-btn-sm" onclick="addSampleRow()">+ 添加样品</button>
+                <button class="d-btn d-btn-outline d-btn-sm" onclick="addReplicate()">+ 添加重复</button>
+                <button class="d-btn d-btn-outline d-btn-sm" onclick="removeReplicate()">- 删除重复</button>
+                <button class="d-btn d-btn-primary" onclick="calcStats()">计算统计量</button>
+            </div>
+        </div>
+
+        <div id="statsResult" style="display:none;">
+            <div class="d-card">
+                <h3>计算结果</h3>
+                <div class="d-table-scroll">
+                    <table class="d-result-table" id="statsResultTable"></table>
+                </div>
+                <div class="d-btn-row">
+                    <button class="d-btn d-btn-outline d-btn-sm" onclick="copyStatsResult()">复制结果</button>
+                    <button class="d-btn d-btn-primary d-btn-sm" onclick="exportStatsExcel()">📥 导出Excel</button>
+                    <button class="d-btn d-btn-outline d-btn-sm" onclick="saveData('stats')">💾 保存数据</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== Tab2: 标准曲线 ===== -->
+    <div class="data-panel" id="panel-curve">
+        <div class="d-card">
+            <h3>标准品数据</h3>
+            <div class="d-formula-bar">
+                输入标准品的 <code>浓度</code> 和对应的 <code>吸光度(OD)</code> 值，系统自动进行线性回归，生成标准曲线方程和 R² 值。
+            </div>
+            <div class="d-table-scroll">
+                <table class="d-input-table" id="curveTable">
+                    <thead>
+                        <tr>
+                            <th>标准品名称</th>
+                            <th>浓度</th>
+                            <th>吸光度 (OD)</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="curveBody">
+                        <tr>
+                            <td><input type="text" value="空白(0)" class="std-name"></td>
+                            <td><input type="number" step="any" value="0" class="std-conc"></td>
+                            <td><input type="number" step="any" value="0" class="std-od"></td>
+                            <td><button class="d-inline-btn d-del-col" onclick="this.closest('tr').remove()">×</button></td>
+                        </tr>
+                        <tr>
+                            <td><input type="text" value="标准1" class="std-name"></td>
+                            <td><input type="number" step="any" value="" class="std-conc"></td>
+                            <td><input type="number" step="any" value="" class="std-od"></td>
+                            <td><button class="d-inline-btn d-del-col" onclick="this.closest('tr').remove()">×</button></td>
+                        </tr>
+                        <tr>
+                            <td><input type="text" value="标准2" class="std-name"></td>
+                            <td><input type="number" step="any" value="" class="std-conc"></td>
+                            <td><input type="number" step="any" value="" class="std-od"></td>
+                            <td><button class="d-inline-btn d-del-col" onclick="this.closest('tr').remove()">×</button></td>
+                        </tr>
+                        <tr>
+                            <td><input type="text" value="标准3" class="std-name"></td>
+                            <td><input type="number" step="any" value="" class="std-conc"></td>
+                            <td><input type="number" step="any" value="" class="std-od"></td>
+                            <td><button class="d-inline-btn d-del-col" onclick="this.closest('tr').remove()">×</button></td>
+                        </tr>
+                        <tr>
+                            <td><input type="text" value="标准4" class="std-name"></td>
+                            <td><input type="number" step="any" value="" class="std-conc"></td>
+                            <td><input type="number" step="any" value="" class="std-od"></td>
+                            <td><button class="d-inline-btn d-del-col" onclick="this.closest('tr').remove()">×</button></td>
+                        </tr>
+                        <tr>
+                            <td><input type="text" value="标准5" class="std-name"></td>
+                            <td><input type="number" step="any" value="" class="std-conc"></td>
+                            <td><input type="number" step="any" value="" class="std-od"></td>
+                            <td><button class="d-inline-btn d-del-col" onclick="this.closest('tr').remove()">×</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="d-btn-row">
+                <button class="d-btn d-btn-outline d-btn-sm" onclick="addCurvePoint()">+ 添加标准点</button>
+                <button class="d-btn d-btn-primary" onclick="fitCurve()">拟合标准曲线</button>
+            </div>
+        </div>
+
+        <div id="curveResult" style="display:none;">
+            <div class="d-card">
+                <h3>回归结果</h3>
+                <div id="curveEquation" class="d-formula-bar"></div>
+                <div class="d-chart-container">
+                    <canvas id="curveChart"></canvas>
+                </div>
+                <div class="d-btn-row">
+                    <button class="d-btn d-btn-outline d-btn-sm" onclick="saveData('curve')">💾 保存标准曲线</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== Tab3: 浓度计算 ===== -->
+    <div class="data-panel" id="panel-unknown">
+        <div class="d-card">
+            <h3>用标准曲线计算未知样品浓度</h3>
+            <div class="d-formula-bar">
+                输入待测样品的 <code>吸光度</code> 值，结合标准曲线方程 <code>y = ax + b</code> 自动反算浓度，支持输入 <code>稀释倍数</code> 和 <code>样品重量/体积</code> 换算最终含量。
+            </div>
+
+            <div style="margin-bottom:1rem;">
+                <label style="font-size:0.88rem;font-weight:600;">标准曲线方程：y = </label>
+                <input type="number" step="any" id="slopeInput" placeholder="斜率 a" style="width:100px;padding:0.4rem;border:1.5px solid var(--border);border-radius:6px;font-size:0.85rem;text-align:center;">
+                <span style="font-size:0.9rem;">x + </span>
+                <input type="number" step="any" id="interceptInput" placeholder="截距 b" style="width:100px;padding:0.4rem;border:1.5px solid var(--border);border-radius:6px;font-size:0.85rem;text-align:center;">
+                <span style="font-size:0.8rem;color:var(--text-light);margin-left:0.5rem;">(从标准曲线Tab自动填入)</span>
+            </div>
+
+            <div class="d-table-scroll">
+                <table class="d-input-table" id="unknownTable">
+                    <thead>
+                        <tr>
+                            <th>样品名称</th>
+                            <th>吸光度 (OD)</th>
+                            <th>稀释倍数</th>
+                            <th>样品量 (g或mL)</th>
+                            <th>提取液总体积 (mL)</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="unknownBody">
+                        <tr>
+                            <td><input type="text" value="样品1" class="unk-name"></td>
+                            <td><input type="number" step="any" class="unk-od"></td>
+                            <td><input type="number" step="any" value="1" class="unk-df"></td>
+                            <td><input type="number" step="any" value="0.2" class="unk-weight"></td>
+                            <td><input type="number" step="any" value="5" class="unk-volume"></td>
+                            <td><button class="d-inline-btn d-del-col" onclick="this.closest('tr').remove()">×</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="d-btn-row">
+                <button class="d-btn d-btn-outline d-btn-sm" onclick="addUnknownRow()">+ 添加样品</button>
+                <button class="d-btn d-btn-primary" onclick="calcUnknown()">计算浓度</button>
+            </div>
+        </div>
+
+        <div id="unknownResult" style="display:none;">
+            <div class="d-card">
+                <h3>计算结果</h3>
+                <div class="d-table-scroll">
+                    <table class="d-result-table" id="unknownResultTable"></table>
+                </div>
+                <div class="d-btn-row">
+                    <button class="d-btn d-btn-outline d-btn-sm" onclick="copyUnknownResult()">复制结果</button>
+                    <button class="d-btn d-btn-primary d-btn-sm" onclick="exportUnknownExcel()">📥 导出Excel</button>
+                    <button class="d-btn d-btn-outline d-btn-sm" onclick="saveData('unknown')">💾 保存数据</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== Tab4: 图表展示 ===== -->
+    <div class="data-panel" id="panel-charts">
+        <div class="d-card">
+            <h3>柱状图（带误差棒）</h3>
+            <div class="d-formula-bar">
+                自动将统计分析结果绘制成带 <code>标准差(SD)</code> 和 <code>标准误(SE)</code> 误差棒的柱状图。请先在"统计分析"Tab计算结果。
+            </div>
+            <div id="chartBarEmpty" style="text-align:center;padding:2rem;color:var(--text-light);">
+                请先在「统计分析」Tab中输入数据并点击"计算统计量"
+            </div>
+            <div class="d-chart-container" id="chartBarWrap" style="display:none;">
+                <canvas id="barChart"></canvas>
+            </div>
+            <div class="d-export-bar" id="barExportBar" style="display:none;">
+                <button class="d-btn d-btn-outline d-btn-sm" onclick="downloadChart('barChart','柱状图')">下载图片</button>
+            </div>
+        </div>
+
+        <div class="d-card">
+            <h3>标准曲线图</h3>
+            <div id="chartCurveEmpty" style="text-align:center;padding:2rem;color:var(--text-light);">
+                请先在「标准曲线」Tab中拟合曲线
+            </div>
+            <div class="d-chart-container" id="chartCurveWrap" style="display:none;">
+                <canvas id="curveChartDisplay"></canvas>
+            </div>
+            <div class="d-export-bar" id="curveExportBar" style="display:none;">
+                <button class="d-btn d-btn-outline d-btn-sm" onclick="downloadChart('curveChartDisplay','标准曲线')">下载图片</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+/* ============ 全局状态 ============ */
+let replicateCount = 3;
+let sampleRows = [];
+let barChartInstance = null;
+let curveChartInstance = null;
+let curveDisplayInstance = null;
+let fittedSlope = 0, fittedIntercept = 0, fittedR2 = 0;
+
+/* ============ Tab切换 ============ */
+function switchDataTab(name) {
+    document.querySelectorAll('.data-tab-btn').forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+    document.querySelectorAll('.data-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('panel-' + name).classList.add('active');
+}
+
+/* ============ Tab1: 统计分析 ============ */
+function buildStatsHead() {
+    const h = document.getElementById('statsHead');
+    let html = '<tr><th>样品名称</th>';
+    for (let i = 1; i <= replicateCount; i++) {
+        html += `<th>重复${i}</th>`;
+    }
+    html += '<th></th></tr>';
+    h.innerHTML = html;
+}
+
+function addSampleRow(name) {
+    const tbody = document.getElementById('statsBody');
+    const tr = document.createElement('tr');
+    const idx = tbody.children.length + 1;
+    let html = `<td><input type="text" value="${name || '样品' + idx}" class="sname"></td>`;
+    for (let i = 0; i < replicateCount; i++) {
+        html += `<td><input type="number" step="any" class="sval"></td>`;
+    }
+    html += `<td><button class="d-inline-btn d-del-col" onclick="this.closest('tr').remove()">×</button></td>`;
+    tr.innerHTML = html;
+    tbody.appendChild(tr);
+}
+
+function addReplicate() {
+    replicateCount++;
+    buildStatsHead();
+    document.querySelectorAll('#statsBody tr').forEach(tr => {
+        const name = tr.querySelector('.sname');
+        const vals = tr.querySelectorAll('.sval');
+        const btnTd = tr.lastElementChild;
+        const td = document.createElement('td');
+        td.innerHTML = `<input type="number" step="any" class="sval">`;
+        tr.insertBefore(td, btnTd);
+    });
+}
+
+function removeReplicate() {
+    if (replicateCount <= 2) return;
+    replicateCount--;
+    buildStatsHead();
+    document.querySelectorAll('#statsBody tr').forEach(tr => {
+        const btnTd = tr.lastElementChild;
+        if (tr.children.length > 2) {
+            tr.removeChild(tr.children[tr.children.length - 2]);
+        }
+    });
+}
+
+function calcStats() {
+    const rows = document.querySelectorAll('#statsBody tr');
+    if (rows.length === 0) return;
+
+    const results = [];
+    rows.forEach(tr => {
+        const name = tr.querySelector('.sname').value || '未命名';
+        const inputs = tr.querySelectorAll('.sval');
+        const vals = [];
+        inputs.forEach(inp => {
+            const v = parseFloat(inp.value);
+            if (!isNaN(v)) vals.push(v);
+        });
+        if (vals.length === 0) return;
+
+        const n = vals.length;
+        const mean = vals.reduce((a, b) => a + b, 0) / n;
+        const variance = n > 1 ? vals.reduce((a, b) => a + (b - mean) ** 2, 0) / (n - 1) : 0;
+        const sd = Math.sqrt(variance);
+        const se = sd / Math.sqrt(n);
+        const cv = mean !== 0 ? (sd / Math.abs(mean)) * 100 : 0;
+
+        results.push({ name, n, mean, sd, se, cv, vals });
+    });
+
+    if (results.length === 0) return;
+
+    /* 显示结果表格 */
+    const t = document.getElementById('statsResultTable');
+    let html = '<thead><tr><th>样品</th><th>n</th><th>均值 (Mean)</th><th>标准差 (SD)</th><th>标准误 (SE)</th><th>变异系数 CV(%)</th><th>Mean ± SD</th></tr></thead><tbody>';
+    results.forEach(r => {
+        html += `<tr>
+            <td><strong>${r.name}</strong></td>
+            <td>${r.n}</td>
+            <td>${r.mean.toFixed(4)}</td>
+            <td>${r.sd.toFixed(4)}</td>
+            <td>${r.se.toFixed(4)}</td>
+            <td>${r.cv.toFixed(2)}</td>
+            <td>${r.mean.toFixed(3)} ± ${r.sd.toFixed(3)}</td>
+        </tr>`;
+    });
+    html += '</tbody>';
+    t.innerHTML = html;
+    document.getElementById('statsResult').style.display = 'block';
+
+    /* 绘制柱状图 */
+    drawBarChart(results);
+}
+
+function drawBarChart(results) {
+    const ctx = document.getElementById('barChart').getContext('2d');
+    if (barChartInstance) barChartInstance.destroy();
+
+    const labels = results.map(r => r.name);
+    const means = results.map(r => r.mean);
+    const sdErrors = results.map(r => r.sd);
+
+    barChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: '均值',
+                data: means,
+                backgroundColor: 'rgba(107, 124, 78, 0.6)',
+                borderColor: 'rgba(107, 124, 78, 1)',
+                borderWidth: 2,
+                borderRadius: 6,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(ctx) {
+                            const r = results[ctx.dataIndex];
+                            return `Mean: ${r.mean.toFixed(4)} | SD: ${r.sd.toFixed(4)} | SE: ${r.se.toFixed(4)}`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: { display: true, text: '测量值', font: { weight: 'bold' } },
+                    grid: { color: 'rgba(0,0,0,0.05)' }
+                },
+                x: {
+                    grid: { display: false }
+                }
+            }
+        },
+        plugins: [{
+            id: 'errorBars',
+            afterDraw: function(chart) {
+                const ctx = chart.ctx;
+                const meta = chart.getDatasetMeta(0);
+                meta.data.forEach((bar, index) => {
+                    const r = results[index];
+                    const yScale = chart.scales.y;
+                    const yCenter = yScale.getPixelForValue(r.mean);
+                    const yTop = yScale.getPixelForValue(r.mean + r.sd);
+                    const yBottom = yScale.getPixelForValue(r.mean - r.sd);
+                    const x = bar.x;
+
+                    ctx.save();
+                    ctx.strokeStyle = 'rgba(196, 125, 43, 0.9)';
+                    ctx.lineWidth = 2;
+
+                    /* 竖线 */
+                    ctx.beginPath();
+                    ctx.moveTo(x, yTop);
+                    ctx.lineTo(x, yBottom);
+                    ctx.stroke();
+
+                    /* 上横线 */
+                    ctx.beginPath();
+                    ctx.moveTo(x - 6, yTop);
+                    ctx.lineTo(x + 6, yTop);
+                    ctx.stroke();
+
+                    /* 下横线 */
+                    ctx.beginPath();
+                    ctx.moveTo(x - 6, yBottom);
+                    ctx.lineTo(x + 6, yBottom);
+                    ctx.stroke();
+
+                    ctx.restore();
+                });
+            }
+        }]
+    });
+
+    document.getElementById('chartBarEmpty').style.display = 'none';
+    document.getElementById('chartBarWrap').style.display = 'block';
+    document.getElementById('barExportBar').style.display = 'flex';
+}
+
+/* ============ Tab2: 标准曲线 ============ */
+function addCurvePoint() {
+    const tbody = document.getElementById('curveBody');
+    const idx = tbody.children.length;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+        <td><input type="text" value="标准${idx}" class="std-name"></td>
+        <td><input type="number" step="any" class="std-conc"></td>
+        <td><input type="number" step="any" class="std-od"></td>
+        <td><button class="d-inline-btn d-del-col" onclick="this.closest('tr').remove()">×</button></td>
+    `;
+    tbody.appendChild(tr);
+}
+
+function fitCurve() {
+    const rows = document.querySelectorAll('#curveBody tr');
+    const concs = [], ods = [], names = [];
+    rows.forEach(tr => {
+        const c = parseFloat(tr.querySelector('.std-conc').value);
+        const o = parseFloat(tr.querySelector('.std-od').value);
+        const n = tr.querySelector('.std-name').value;
+        if (!isNaN(c) && !isNaN(o)) {
+            concs.push(c);
+            ods.push(o);
+            names.push(n);
+        }
+    });
+
+    if (concs.length < 2) {
+        alert('至少需要2个有效标准点');
+        return;
+    }
+
+    /* 线性回归 */
+    const n = concs.length;
+    let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0, sumY2 = 0;
+    for (let i = 0; i < n; i++) {
+        sumX += concs[i];
+        sumY += ods[i];
+        sumXY += concs[i] * ods[i];
+        sumX2 += concs[i] ** 2;
+        sumY2 += ods[i] ** 2;
+    }
+
+    const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX ** 2);
+    const intercept = (sumY - slope * sumX) / n;
+
+    /* R² */
+    const yMean = sumY / n;
+    let ssRes = 0, ssTot = 0;
+    for (let i = 0; i < n; i++) {
+        const yPred = slope * concs[i] + intercept;
+        ssRes += (ods[i] - yPred) ** 2;
+        ssTot += (ods[i] - yMean) ** 2;
+    }
+    const r2 = ssTot === 0 ? 0 : 1 - ssRes / ssTot;
+
+    fittedSlope = slope;
+    fittedIntercept = intercept;
+    fittedR2 = r2;
+
+    /* 显示方程 */
+    const eqDiv = document.getElementById('curveEquation');
+    const sign = intercept >= 0 ? '+' : '-';
+    eqDiv.innerHTML = `
+        <div style="font-size:1.1rem;font-weight:700;margin-bottom:0.5rem;">
+            回归方程：y = ${slope.toFixed(6)}x ${sign} ${Math.abs(intercept).toFixed(6)}
+        </div>
+        <div style="display:flex;gap:2rem;flex-wrap:wrap;">
+            <span>斜率 a = <code>${slope.toFixed(6)}</code></span>
+            <span>截距 b = <code>${intercept.toFixed(6)}</code></span>
+            <span>R² = <code>${r2.toFixed(6)}</code></span>
+            <span style="color:${r2 >= 0.99 ? '#2E7D32' : r2 >= 0.95 ? '#F57F17' : '#F44336'};">
+                ${r2 >= 0.99 ? '✅ 拟合优秀' : r2 >= 0.95 ? '⚠️ 拟合良好' : '❌ 拟合较差，建议增加标准点'}
+            </span>
+        </div>
+    `;
+
+    /* 自动填入浓度计算Tab */
+    document.getElementById('slopeInput').value = slope.toFixed(6);
+    document.getElementById('interceptInput').value = intercept.toFixed(6);
+
+    /* 绘制标准曲线图 */
+    drawCurveChart(concs, ods, names, slope, intercept);
+    drawCurveChartDisplay(concs, ods, names, slope, intercept);
+
+    document.getElementById('curveResult').style.display = 'block';
+}
+
+function drawCurveChart(concs, ods, names, slope, intercept) {
+    const ctx = document.getElementById('curveChart').getContext('2d');
+    if (curveChartInstance) curveChartInstance.destroy();
+
+    /* 拟合线: 从最小到最大浓度画线 */
+    const minX = Math.min(...concs);
+    const maxX = Math.max(...concs);
+    const lineX = [];
+    const lineY = [];
+    const steps = 50;
+    for (let i = 0; i <= steps; i++) {
+        const x = minX + (maxX - minX) * i / steps;
+        lineX.push(x);
+        lineY.push(slope * x + intercept);
+    }
+
+    curveChartInstance = new Chart(ctx, {
+        type: 'scatter',
+        data: {
+            datasets: [
+                {
+                    label: '标准品',
+                    data: concs.map((c, i) => ({ x: c, y: ods[i] })),
+                    backgroundColor: 'rgba(107, 124, 78, 0.8)',
+                    borderColor: 'rgba(107, 124, 78, 1)',
+                    pointRadius: 6,
+                    pointHoverRadius: 8,
+                },
+                {
+                    label: '拟合线',
+                    data: lineX.map((x, i) => ({ x, y: lineY[i] })),
+                    type: 'line',
+                    borderColor: 'rgba(196, 125, 43, 0.8)',
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    fill: false,
+                    tension: 0,
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { position: 'top' },
+                tooltip: {
+                    callbacks: {
+                        label: function(ctx) {
+                            if (ctx.datasetIndex === 0) {
+                                const idx = ctx.dataIndex;
+                                return `${names[idx]}: (${concs[idx]}, ${ods[idx].toFixed(4)})`;
+                            }
+                            return '';
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    title: { display: true, text: '浓度', font: { weight: 'bold' } },
+                    grid: { color: 'rgba(0,0,0,0.05)' }
+                },
+                y: {
+                    title: { display: true, text: '吸光度 (OD)', font: { weight: 'bold' } },
+                    grid: { color: 'rgba(0,0,0,0.05)' },
+                    beginAtZero: true,
+                }
+            }
+        }
+    });
+
+    document.getElementById('chartCurveEmpty').style.display = 'none';
+    document.getElementById('chartCurveWrap').style.display = 'block';
+    document.getElementById('curveExportBar').style.display = 'flex';
+}
+
+function drawCurveChartDisplay(concs, ods, names, slope, intercept) {
+    const ctx = document.getElementById('curveChartDisplay').getContext('2d');
+    if (curveDisplayInstance) curveDisplayInstance.destroy();
+
+    const minX = Math.min(...concs);
+    const maxX = Math.max(...concs);
+    const lineX = [];
+    const lineY = [];
+    const steps = 50;
+    for (let i = 0; i <= steps; i++) {
+        const x = minX + (maxX - minX) * i / steps;
+        lineX.push(x);
+        lineY.push(slope * x + intercept);
+    }
+
+    curveDisplayInstance = new Chart(ctx, {
+        type: 'scatter',
+        data: {
+            datasets: [
+                {
+                    label: '标准品',
+                    data: concs.map((c, i) => ({ x: c, y: ods[i] })),
+                    backgroundColor: 'rgba(107, 124, 78, 0.8)',
+                    borderColor: 'rgba(107, 124, 78, 1)',
+                    pointRadius: 6,
+                },
+                {
+                    label: `y = ${slope.toFixed(4)}x ${intercept >= 0 ? '+' : '-'} ${Math.abs(intercept).toFixed(4)}  R²=${fittedR2.toFixed(4)}`,
+                    data: lineX.map((x, i) => ({ x, y: lineY[i] })),
+                    type: 'line',
+                    borderColor: 'rgba(196, 125, 43, 0.8)',
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    fill: false,
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { position: 'top' },
+            },
+            scales: {
+                x: {
+                    title: { display: true, text: '浓度', font: { weight: 'bold' } },
+                    grid: { color: 'rgba(0,0,0,0.05)' }
+                },
+                y: {
+                    title: { display: true, text: '吸光度 (OD)', font: { weight: 'bold' } },
+                    grid: { color: 'rgba(0,0,0,0.05)' },
+                    beginAtZero: true,
+                }
+            }
+        }
+    });
+}
+
+/* ============ Tab3: 浓度计算 ============ */
+function addUnknownRow() {
+    const tbody = document.getElementById('unknownBody');
+    const idx = tbody.children.length + 1;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+        <td><input type="text" value="样品${idx}" class="unk-name"></td>
+        <td><input type="number" step="any" class="unk-od"></td>
+        <td><input type="number" step="any" value="1" class="unk-df"></td>
+        <td><input type="number" step="any" value="0.2" class="unk-weight"></td>
+        <td><input type="number" step="any" value="5" class="unk-volume"></td>
+        <td><button class="d-inline-btn d-del-col" onclick="this.closest('tr').remove()">×</button></td>
+    `;
+    tbody.appendChild(tr);
+}
+
+function calcUnknown() {
+    const slope = parseFloat(document.getElementById('slopeInput').value);
+    const intercept = parseFloat(document.getElementById('interceptInput').value);
+    if (isNaN(slope) || isNaN(intercept)) {
+        alert('请先在标准曲线Tab中拟合曲线，或手动输入斜率和截距');
+        return;
+    }
+
+    const rows = document.querySelectorAll('#unknownBody tr');
+    const results = [];
+    rows.forEach(tr => {
+        const name = tr.querySelector('.unk-name').value || '未命名';
+        const od = parseFloat(tr.querySelector('.unk-od').value);
+        const df = parseFloat(tr.querySelector('.unk-df').value) || 1;
+        const weight = parseFloat(tr.querySelector('.unk-weight').value) || 1;
+        const volume = parseFloat(tr.querySelector('.unk-volume').value) || 1;
+
+        if (isNaN(od)) return;
+
+        /* y = ax + b  =>  x = (y - b) / a */
+        const concInDiluted = (od - intercept) / slope;
+        const concOriginal = concInDiluted * df;
+        const totalAmount = concOriginal * volume;
+        const perUnit = totalAmount / weight;
+
+        results.push({ name, od, df, concInDiluted, concOriginal, totalAmount, perUnit, weight, volume });
+    });
+
+    if (results.length === 0) return;
+
+    const t = document.getElementById('unknownResultTable');
+    let html = '<thead><tr><th>样品</th><th>OD值</th><th>稀释后浓度</th><th>稀释倍数</th><th>原液浓度</th><th>提取液总量</th><th>每g样品含量</th></tr></thead><tbody>';
+    results.forEach(r => {
+        html += `<tr>
+            <td><strong>${r.name}</strong></td>
+            <td>${r.od.toFixed(4)}</td>
+            <td>${r.concInDiluted.toFixed(4)}</td>
+            <td>${r.df}</td>
+            <td>${r.concOriginal.toFixed(4)}</td>
+            <td>${r.totalAmount.toFixed(4)}</td>
+            <td>${r.perUnit.toFixed(4)}</td>
+        </tr>`;
+    });
+    html += '</tbody>';
+    t.innerHTML = html;
+    document.getElementById('unknownResult').style.display = 'block';
+}
+
+/* ============ 导出功能 ============ */
+function copyStatsResult() {
+    const table = document.getElementById('statsResultTable');
+    copyTableToClipboard(table);
+}
+
+function copyUnknownResult() {
+    const table = document.getElementById('unknownResultTable');
+    copyTableToClipboard(table);
+}
+
+function copyTableToClipboard(table) {
+    let text = '';
+    table.querySelectorAll('tr').forEach(tr => {
+        const cells = [];
+        tr.querySelectorAll('th, td').forEach(td => cells.push(td.textContent.trim()));
+        text += cells.join('\t') + '\n';
+    });
+    navigator.clipboard.writeText(text).then(() => alert('已复制到剪贴板'));
+}
+
+function tableToExcelData(tableId, title) {
+    const table = document.getElementById(tableId);
+    const headers = [];
+    const rows = [];
+    table.querySelectorAll('tr').forEach((tr, i) => {
+        const cells = [];
+        tr.querySelectorAll('th, td').forEach(td => cells.push(td.textContent.trim()));
+        if (i === 0 && tr.querySelector('th')) {
+            headers.push(...cells);
+        } else {
+            rows.push(cells);
+        }
+    });
+    return { title, headers, rows };
+}
+
+function exportExcel(payload) {
+    fetch('/api/export-excel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    })
+    .then(r => {
+        if (!r.ok) throw new Error('导出失败');
+        return r.blob();
+    })
+    .then(blob => {
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = payload.sheetName + '.xlsx';
+        link.click();
+        URL.revokeObjectURL(link.href);
+    })
+    .catch(e => alert('导出出错：' + e.message));
+}
+
+function exportStatsExcel() {
+    const data = tableToExcelData('statsResultTable', '统计分析结果');
+    exportExcel({ ...data, sheetName: '统计分析结果' });
+}
+
+function exportUnknownExcel() {
+    const data = tableToExcelData('unknownResultTable', '浓度计算结果');
+    exportExcel({ ...data, sheetName: '浓度计算结果' });
+}
+
+/* ============ 保存数据 ============ */
+function saveData(type) {
+    let name = '', content = {};
+    if (type === 'stats') {
+        const table = document.getElementById('statsResultTable');
+        if (!table.querySelector('tbody')) { alert('请先计算统计量'); return; }
+        name = '统计分析 ' + new Date().toLocaleString('zh-CN');
+        content = tableToExcelData('statsResultTable', '统计分析结果');
+    } else if (type === 'curve') {
+        if (!fittedSlope && !fittedIntercept) { alert('请先拟合标准曲线'); return; }
+        name = '标准曲线 ' + new Date().toLocaleString('zh-CN');
+        content = { slope: fittedSlope, intercept: fittedIntercept, r2: fittedR2 };
+    } else if (type === 'unknown') {
+        const table = document.getElementById('unknownResultTable');
+        if (!table.querySelector('tbody')) { alert('请先计算浓度'); return; }
+        name = '浓度计算 ' + new Date().toLocaleString('zh-CN');
+        content = tableToExcelData('unknownResultTable', '浓度计算结果');
+    }
+
+    fetch('/api/user/save-data', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: type, name: name, content: content })
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (d.ok) alert('✅ 数据已保存到个人中心');
+        else alert('保存失败，请先登录');
+    })
+    .catch(e => alert('保存失败：' + e.message));
+}
+
+function downloadChart(canvasId, name) {
+    const canvas = document.getElementById(canvasId);
+    const link = document.createElement('a');
+    link.href = canvas.toDataURL('image/png');
+    link.download = name + '.png';
+    link.click();
+}
+
+/* ============ 初始化 ============ */
+window.addEventListener('DOMContentLoaded', function() {
+    buildStatsHead();
+    for (let i = 0; i < 3; i++) addSampleRow();
+});
+</script>
+{% endblock %}

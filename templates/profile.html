@@ -1,0 +1,327 @@
+{% extends "base.html" %}
+{% set active = "profile" %}
+
+{% block title %}个人中心 - 植研小白盒{% endblock %}
+
+{% block head %}
+<style>
+.dash-wrap { max-width: 1000px; margin: 0 auto; padding: 1.5rem; }
+
+/* 顶部欢迎区 */
+.dash-hero {
+    background: linear-gradient(135deg, #4A5635, #6B7C4E, #8FA465);
+    border-radius: 20px;
+    padding: 2rem 2.5rem;
+    color: white;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+.dash-hero-left h1 { font-size: 1.6rem; font-weight: 800; margin-bottom: 0.2rem; }
+.dash-hero-left p { opacity: 0.85; font-size: 0.9rem; }
+.dash-hero-avatar {
+    width: 72px; height: 72px; border-radius: 50%;
+    background: rgba(255,255,255,0.2); border: 3px solid rgba(255,255,255,0.4);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2rem; font-weight: 800;
+}
+.dash-hero-badge {
+    display: inline-block; padding: 0.2rem 0.8rem; border-radius: 12px;
+    font-size: 0.78rem; font-weight: 600; margin-top: 0.4rem;
+    background: rgba(255,255,255,0.2);
+}
+
+/* 统计卡片 */
+.dash-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+.dash-stat {
+    background: var(--card-bg); border: 1px solid var(--border); border-radius: 14px;
+    padding: 1.2rem; text-align: center; transition: all 0.25s;
+}
+.dash-stat:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+.dash-stat .icon { font-size: 1.8rem; margin-bottom: 0.4rem; }
+.dash-stat .num { font-size: 1.8rem; font-weight: 800; color: var(--primary); }
+.dash-stat .label { font-size: 0.8rem; color: var(--text-light); margin-top: 0.2rem; }
+
+/* 快捷入口 */
+.dash-shortcuts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.8rem; margin-bottom: 1.5rem; }
+.dash-shortcut {
+    display: flex; flex-direction: column; align-items: center; gap: 0.4rem;
+    padding: 1rem 0.5rem; background: var(--card-bg); border: 1px solid var(--border);
+    border-radius: 14px; text-decoration: none; color: var(--text);
+    transition: all 0.25s; font-size: 0.85rem; font-weight: 600;
+}
+.dash-shortcut:hover { border-color: var(--primary); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+.dash-shortcut .sc-icon { font-size: 1.6rem; }
+
+/* 主内容区 */
+.dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
+.dash-card {
+    background: var(--card-bg); border: 1px solid var(--border); border-radius: 14px;
+    padding: 1.3rem; overflow: hidden;
+}
+.dash-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.8rem; display: flex; align-items: center; gap: 0.4rem; }
+
+/* 数据列表 */
+.d-list { display: flex; flex-direction: column; gap: 0.4rem; max-height: 320px; overflow-y: auto; }
+.d-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.6rem 0.8rem; border: 1px solid var(--border); border-radius: 10px;
+    transition: all 0.2s; font-size: 0.85rem;
+}
+.d-item:hover { border-color: var(--primary); background: rgba(107,124,78,0.02); }
+.d-item-left { display: flex; align-items: center; gap: 0.5rem; flex: 1; min-width: 0; }
+.d-item-tag {
+    padding: 0.15rem 0.5rem; border-radius: 6px; font-size: 0.72rem;
+    font-weight: 600; flex-shrink: 0;
+}
+.d-item-tag-stats { background: #E8F5E9; color: #2E7D32; }
+.d-item-tag-curve { background: #E3F2FD; color: #1565C0; }
+.d-item-tag-unknown { background: #FFF3E0; color: #E65100; }
+.d-item-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.d-item-time { font-size: 0.75rem; color: var(--text-light); flex-shrink: 0; margin-left: 0.5rem; }
+.d-item-actions { display: flex; gap: 0.3rem; flex-shrink: 0; margin-left: 0.5rem; }
+.d-item-btn {
+    width: 26px; height: 26px; border-radius: 6px; border: none; font-size: 0.8rem;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+}
+.d-item-btn-view { background: rgba(107,124,78,0.1); color: var(--primary); }
+.d-item-btn-view:hover { background: var(--primary); color: white; }
+.d-item-btn-del { background: rgba(244,67,54,0.1); color: #F44336; }
+.d-item-btn-del:hover { background: #F44336; color: white; }
+
+/* 账户设置 */
+.dash-setting-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0.6rem 0; border-bottom: 1px solid var(--border); font-size: 0.88rem;
+}
+.dash-setting-row:last-child { border-bottom: none; }
+.dash-setting-label { color: var(--text-light); }
+.dash-setting-val { font-weight: 600; }
+
+.dash-empty { text-align: center; padding: 2rem 1rem; color: var(--text-light); font-size: 0.88rem; }
+.dash-empty a { color: var(--primary); font-weight: 600; text-decoration: none; }
+
+/* 数据详情弹窗 */
+.dash-modal-overlay {
+    display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;
+}
+.dash-modal-overlay.show { display: flex; }
+.dash-modal {
+    background: var(--card-bg); border-radius: 16px; padding: 1.5rem;
+    max-width: 700px; width: 90%; max-height: 80vh; overflow-y: auto;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+}
+.dash-modal h3 { margin-bottom: 1rem; }
+.dash-modal pre {
+    background: #f5f5f5; padding: 1rem; border-radius: 8px; font-size: 0.82rem;
+    overflow-x: auto; white-space: pre-wrap; word-break: break-all;
+}
+.dash-modal-close {
+    float: right; background: none; border: none; font-size: 1.3rem;
+    cursor: pointer; color: var(--text-light);
+}
+
+@media (max-width: 768px) {
+    .dash-stats { grid-template-columns: repeat(2, 1fr); }
+    .dash-shortcuts { grid-template-columns: repeat(2, 1fr); }
+    .dash-grid { grid-template-columns: 1fr; }
+    .dash-hero { padding: 1.5rem; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dash-wrap">
+    <!-- 欢迎区 -->
+    <div class="dash-hero">
+        <div class="dash-hero-left">
+            <h1>👋 你好，{{ user.username }}</h1>
+            <p>欢迎回到植研小白盒，今天也要好好做实验~</p>
+            <span class="dash-hero-badge">
+                {% if user.role == 'admin' %}🔧 管理员{% else %}🌱 科研用户{% endif %}
+            </span>
+        </div>
+        <div class="dash-hero-avatar">{{ user.username[0] | upper }}</div>
+    </div>
+
+    <!-- 统计卡片 -->
+    <div class="dash-stats">
+        <div class="dash-stat">
+            <div class="icon">📊</div>
+            <div class="num" id="statTotal">{{ history | length }}</div>
+            <div class="label">保存数据</div>
+        </div>
+        <div class="dash-stat">
+            <div class="icon">📈</div>
+            <div class="num" id="statStats">0</div>
+            <div class="label">统计分析</div>
+        </div>
+        <div class="dash-stat">
+            <div class="icon">📐</div>
+            <div class="num" id="statCurve">0</div>
+            <div class="label">标准曲线</div>
+        </div>
+        <div class="dash-stat">
+            <div class="icon">🔬</div>
+            <div class="num" id="statUnknown">0</div>
+            <div class="label">浓度计算</div>
+        </div>
+    </div>
+
+    <!-- 快捷入口 -->
+    <div class="dash-shortcuts">
+        <a href="/data" class="dash-shortcut"><span class="sc-icon">📊</span>数据处理</a>
+        <a href="/calculator" class="dash-shortcut"><span class="sc-icon">🧪</span>试剂计算器</a>
+        <a href="/ai" class="dash-shortcut"><span class="sc-icon">🤖</span>AI助手</a>
+        <a href="/search" class="dash-shortcut"><span class="sc-icon">📋</span>Protocol库</a>
+    </div>
+
+    <!-- 主内容 -->
+    <div class="dash-grid">
+        <!-- 我的数据 -->
+        <div class="dash-card" style="grid-column: 1 / -1;">
+            <h3>📂 我保存的数据</h3>
+            <div class="d-list" id="dataList">
+                {% if history %}
+                {% for h in history %}
+                <div class="d-item" id="data-{{ h.id }}">
+                    <div class="d-item-left">
+                        <span class="d-item-tag d-item-tag-{{ h.data_type }}">
+                            {% if h.data_type == 'stats' %}统计
+                            {% elif h.data_type == 'curve' %}标曲
+                            {% elif h.data_type == 'unknown' %}浓度
+                            {% else %}{{ h.data_type }}{% endif %}
+                        </span>
+                        <span class="d-item-name">{{ h.data_name }}</span>
+                        <span class="d-item-time">{{ h.created_at }}</span>
+                    </div>
+                    <div class="d-item-actions">
+                        <button class="d-item-btn d-item-btn-view" onclick="viewData('{{ h.id }}')" title="查看详情">👁</button>
+                        <button class="d-item-btn d-item-btn-del" onclick="deleteData({{ h.id }})" title="删除">×</button>
+                    </div>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="dash-empty">
+                    <p>还没有保存过数据</p>
+                    <p>去 <a href="/data">数据处理</a> 页面，计算后点击「保存数据」即可</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- 账户信息 -->
+        <div class="dash-card">
+            <h3>⚙️ 账户信息</h3>
+            <div class="dash-setting-row">
+                <span class="dash-setting-label">用户名</span>
+                <span class="dash-setting-val">{{ user.username }}</span>
+            </div>
+            <div class="dash-setting-row">
+                <span class="dash-setting-label">邮箱</span>
+                <span class="dash-setting-val">{{ user.email }}</span>
+            </div>
+            <div class="dash-setting-row">
+                <span class="dash-setting-label">角色</span>
+                <span class="dash-setting-val">{{ user.role }}</span>
+            </div>
+            <div class="dash-setting-row">
+                <span class="dash-setting-label">注册时间</span>
+                <span class="dash-setting-val">{{ user.created_at }}</span>
+            </div>
+            <div class="dash-setting-row">
+                <span class="dash-setting-label">最近登录</span>
+                <span class="dash-setting-val">{{ user.last_login or '首次登录' }}</span>
+            </div>
+        </div>
+
+        <!-- 快速操作 -->
+        <div class="dash-card">
+            <h3>⚡ 快速操作</h3>
+            <div style="display:flex;flex-direction:column;gap:0.6rem;">
+                <a href="/data" style="display:flex;align-items:center;gap:0.6rem;padding:0.8rem;border:1px solid var(--border);border-radius:10px;text-decoration:none;color:var(--text);transition:all 0.2s;" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'">
+                    <span style="font-size:1.3rem;">📊</span>
+                    <div><strong style="font-size:0.9rem;">新建数据分析</strong><br><span style="font-size:0.78rem;color:var(--text-light);">输入实验数据，自动统计计算</span></div>
+                </a>
+                <a href="/calculator" style="display:flex;align-items:center;gap:0.6rem;padding:0.8rem;border:1px solid var(--border);border-radius:10px;text-decoration:none;color:var(--text);transition:all 0.2s;" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'">
+                    <span style="font-size:1.3rem;">🧪</span>
+                    <div><strong style="font-size:0.9rem;">试剂计算器</strong><br><span style="font-size:0.78rem;color:var(--text-light);">稀释、摩尔浓度、复溶、比活力</span></div>
+                </a>
+                <a href="/ai" style="display:flex;align-items:center;gap:0.6rem;padding:0.8rem;border:1px solid var(--border);border-radius:10px;text-decoration:none;color:var(--text);transition:all 0.2s;" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'">
+                    <span style="font-size:1.3rem;">🤖</span>
+                    <div><strong style="font-size:0.9rem;">问AI助手</strong><br><span style="font-size:0.78rem;color:var(--text-light);">实验问题，试剂配方，失败排查</span></div>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 数据详情弹窗 -->
+<div class="dash-modal-overlay" id="dataModal">
+    <div class="dash-modal">
+        <button class="dash-modal-close" onclick="closeModal()">&times;</button>
+        <h3 id="modalTitle">数据详情</h3>
+        <pre id="modalContent"></pre>
+    </div>
+</div>
+
+<script>
+/* 统计分类计数 */
+document.addEventListener('DOMContentLoaded', function() {
+    const items = document.querySelectorAll('.d-item-tag');
+    let stats = 0, curve = 0, unknown = 0;
+    items.forEach(tag => {
+        if (tag.classList.contains('d-item-tag-stats')) stats++;
+        else if (tag.classList.contains('d-item-tag-curve')) curve++;
+        else if (tag.classList.contains('d-item-tag-unknown')) unknown++;
+    });
+    document.getElementById('statStats').textContent = stats;
+    document.getElementById('statCurve').textContent = curve;
+    document.getElementById('statUnknown').textContent = unknown;
+});
+
+function viewData(id) {
+    fetch('/api/user/history')
+        .then(r => r.json())
+        .then(data => {
+            const item = data.find(d => d.id == id);
+            if (!item) return;
+            document.getElementById('modalTitle').textContent = item.data_name;
+            try {
+                const parsed = JSON.parse(item.data_json);
+                document.getElementById('modalContent').textContent = JSON.stringify(parsed, null, 2);
+            } catch(e) {
+                document.getElementById('modalContent').textContent = item.data_json;
+            }
+            document.getElementById('dataModal').classList.add('show');
+        });
+}
+
+function closeModal() {
+    document.getElementById('dataModal').classList.remove('show');
+}
+
+document.getElementById('dataModal').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+});
+
+function deleteData(id) {
+    if (!confirm('确定删除这条数据？')) return;
+    fetch('/api/user/delete-data/' + id, { method: 'POST' })
+        .then(r => r.json())
+        .then(d => {
+            if (d.ok) {
+                const el = document.getElementById('data-' + id);
+                if (el) el.remove();
+                const total = document.getElementById('statTotal');
+                total.textContent = parseInt(total.textContent) - 1;
+            }
+        });
+}
+</script>
+{% endblock %}

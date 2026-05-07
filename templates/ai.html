@@ -1,0 +1,454 @@
+{% extends "base.html" %}
+{% set active = "ai" %}
+
+{% block title %}AI问答助手 - 植研小白盒{% endblock %}
+
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<style>
+/* AI页面专属样式 */
+.ai-wrap {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 1.5rem;
+    height: calc(100vh - 64px);
+    display: flex;
+    flex-direction: column;
+}
+
+.ai-header {
+    text-align: center;
+    margin-bottom: 1rem;
+    flex-shrink: 0;
+}
+
+.ai-header h2 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--text);
+    margin-bottom: 0.2rem;
+}
+
+.ai-header p {
+    font-size: 0.9rem;
+    color: var(--text-light);
+}
+
+/* 快捷按钮 */
+.ai-quick-actions {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+    flex-shrink: 0;
+}
+
+.ai-quick-btn {
+    padding: 0.45rem 1rem;
+    border: 1.5px solid var(--border);
+    background: var(--card-bg);
+    border-radius: 20px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--text-light);
+    cursor: pointer;
+    transition: all 0.25s;
+}
+
+.ai-quick-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: rgba(107,124,78,0.05);
+    transform: translateY(-1px);
+}
+
+/* 消息区域 */
+.ai-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0.5rem 0;
+    scroll-behavior: smooth;
+}
+
+.ai-msg {
+    display: flex;
+    gap: 0.7rem;
+    margin-bottom: 1.2rem;
+    animation: msgFadeIn 0.3s ease both;
+}
+
+.ai-msg.user { flex-direction: row-reverse; }
+
+@keyframes msgFadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.ai-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.ai-msg.bot .ai-avatar { background: rgba(107,124,78,0.1); }
+.ai-msg.user .ai-avatar { background: rgba(196,125,43,0.1); }
+
+.ai-bubble {
+    max-width: 80%;
+    padding: 0.8rem 1.2rem;
+    border-radius: 16px;
+    font-size: 0.92rem;
+    line-height: 1.7;
+}
+
+.ai-msg.bot .ai-bubble {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 16px 16px 16px 4px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+
+.ai-msg.user .ai-bubble {
+    background: var(--primary);
+    color: white;
+    border-radius: 16px 16px 4px 16px;
+}
+
+/* Markdown内容样式 */
+.ai-bubble h1, .ai-bubble h2, .ai-bubble h3 {
+    margin: 0.6rem 0 0.3rem;
+    font-weight: 700;
+    color: var(--text);
+}
+.ai-bubble h1 { font-size: 1.1rem; }
+.ai-bubble h2 { font-size: 1rem; }
+.ai-bubble h3 { font-size: 0.95rem; }
+
+.ai-bubble p { margin: 0.3rem 0; }
+
+.ai-bubble ul, .ai-bubble ol {
+    margin: 0.4rem 0;
+    padding-left: 1.5rem;
+}
+
+.ai-bubble li { margin: 0.2rem 0; }
+
+.ai-bubble code {
+    background: rgba(107,124,78,0.08);
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-family: "SF Mono", "Fira Code", monospace;
+}
+
+.ai-bubble pre {
+    background: #2D2D2D;
+    color: #F8F8F2;
+    padding: 0.8rem 1rem;
+    border-radius: 10px;
+    overflow-x: auto;
+    margin: 0.5rem 0;
+    font-size: 0.85rem;
+}
+
+.ai-bubble pre code {
+    background: none;
+    color: inherit;
+    padding: 0;
+}
+
+.ai-bubble table {
+    border-collapse: collapse;
+    margin: 0.5rem 0;
+    width: 100%;
+    font-size: 0.85rem;
+}
+
+.ai-bubble th, .ai-bubble td {
+    border: 1px solid var(--border);
+    padding: 0.4rem 0.6rem;
+    text-align: left;
+}
+
+.ai-bubble th {
+    background: rgba(107,124,78,0.06);
+    font-weight: 600;
+}
+
+.ai-bubble strong { color: var(--primary-dark); }
+
+.ai-bubble a {
+    color: var(--primary);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.ai-bubble a:hover { color: var(--primary-dark); }
+
+/* Protocol链接标记 */
+.protocol-link {
+    display: inline-block;
+    padding: 0.1rem 0.4rem;
+    background: rgba(107,124,78,0.1);
+    color: var(--primary);
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+.protocol-link:hover {
+    background: var(--primary);
+    color: white;
+}
+
+/* 打字机光标 */
+.typing-cursor {
+    display: inline-block;
+    width: 2px;
+    height: 1em;
+    background: var(--primary);
+    margin-left: 2px;
+    animation: blink 0.8s infinite;
+    vertical-align: text-bottom;
+}
+
+@keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
+}
+
+/* 输入区域 */
+.ai-input-area {
+    flex-shrink: 0;
+    padding: 1rem 0 0;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 0.6rem;
+}
+
+.ai-input-area input {
+    flex: 1;
+    padding: 0.75rem 1.2rem;
+    border: 2px solid var(--border);
+    border-radius: 24px;
+    font-size: 0.95rem;
+    outline: none;
+    transition: all 0.3s;
+    background: var(--card-bg);
+}
+
+.ai-input-area input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(107,124,78,0.08);
+}
+
+.ai-send-btn {
+    padding: 0.75rem 1.5rem;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 24px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    white-space: nowrap;
+}
+
+.ai-send-btn:hover {
+    background: var(--primary-dark);
+    transform: translateY(-1px);
+}
+
+.ai-send-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* 空状态 */
+.ai-empty {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--text-light);
+}
+
+.ai-empty-icon { font-size: 3rem; margin-bottom: 0.8rem; }
+.ai-empty h3 { font-size: 1.1rem; margin-bottom: 0.3rem; color: var(--text); }
+.ai-empty p { font-size: 0.9rem; }
+
+/* 响应式 */
+@media (max-width: 768px) {
+    .ai-wrap { padding: 1rem; }
+    .ai-bubble { max-width: 90%; }
+    .ai-quick-actions { gap: 0.3rem; }
+    .ai-quick-btn { font-size: 0.78rem; padding: 0.35rem 0.8rem; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="ai-wrap">
+    <div class="ai-header">
+        <h2>🤖 AI实验助手</h2>
+        <p>基于65个Protocol知识库 · 支持多轮对话 · 自动关联Protocol</p>
+    </div>
+
+    <!-- 快捷操作 -->
+    <div class="ai-quick-actions">
+        <button class="ai-quick-btn" onclick="quickAsk('帮我算试剂：配100mL 0.1mol/L Tris需要称多少克？')">🧪 算试剂</button>
+        <button class="ai-quick-btn" onclick="quickAsk('DNA提取没有条带怎么办？')">🔬 排查失败</button>
+        <button class="ai-quick-btn" onclick="quickAsk('可溶性糖测定的标准曲线怎么做？')">📋 实验步骤</button>
+        <button class="ai-quick-btn" onclick="quickAsk('离心机转速和rcf怎么换算？')">⚙️ 仪器操作</button>
+        <button class="ai-quick-btn" onclick="quickAsk('帮我比较CTAB法和盐溶法提取DNA的优缺点')">📊 方法对比</button>
+    </div>
+
+    <!-- 消息区域 -->
+    <div class="ai-messages" id="chatMessages">
+        <div class="ai-empty" id="aiEmpty">
+            <div class="ai-empty-icon">🌱</div>
+            <h3>有什么实验问题？</h3>
+            <p>问我试剂怎么配、实验怎么做、结果怎么看、失败怎么排查</p>
+        </div>
+    </div>
+
+    <!-- 输入区域 -->
+    <div class="ai-input-area">
+        <input type="text" id="chatInput" placeholder="输入你的实验问题..."
+               onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMsg();}"
+               autocomplete="off">
+        <button class="ai-send-btn" id="sendBtn" onclick="sendMsg()">发送</button>
+    </div>
+</div>
+
+<script>
+/* 对话历史 */
+const chatHistory = [];
+let isResponding = false;
+
+/* 配置 */
+const API_URL = '/api/chat';
+
+/* 初始化marked */
+if (typeof marked !== 'undefined') {
+    marked.setOptions({
+        breaks: true,
+        gfm: true,
+        headerIds: false,
+        mangle: false
+    });
+}
+
+function renderMd(text) {
+    if (typeof marked !== 'undefined') {
+        return marked.parse(text);
+    }
+    return text.replace(/\n/g, '<br>');
+}
+
+/* Protocol编号自动链接 */
+function linkProtocols(text) {
+    return text.replace(/\b(P0[0-5]\d|P06[0-5])\b/g,
+        '<a href="/protocol/$1" class="protocol-link" target="_blank">$1</a>');
+}
+
+function quickAsk(text) {
+    document.getElementById('chatInput').value = text;
+    sendMsg();
+}
+
+function sendMsg() {
+    if (isResponding) return;
+
+    const input = document.getElementById('chatInput');
+    const msg = input.value.trim();
+    if (!msg) return;
+
+    /* 隐藏空状态 */
+    const empty = document.getElementById('aiEmpty');
+    if (empty) empty.style.display = 'none';
+
+    /* 显示用户消息 */
+    addMsg('user', renderMd(msg));
+    input.value = '';
+
+    /* 保存历史 */
+    chatHistory.push({ role: 'user', content: msg });
+
+    /* 禁用输入 */
+    isResponding = true;
+    document.getElementById('sendBtn').disabled = true;
+    input.disabled = true;
+
+    /* 创建bot消息占位 */
+    const botId = addMsg('bot', '<span class="typing-cursor"></span>');
+
+    /* 发送请求 */
+    fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            message: msg,
+            history: chatHistory.slice(-10) /* 最近10轮 */
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        const el = document.getElementById(botId);
+        if (!el) return;
+
+        const bubble = el.querySelector('.ai-bubble');
+        if (data.error) {
+            bubble.innerHTML = '❌ ' + data.error;
+        } else {
+            let response = data.response || '抱歉，我没有理解你的问题。';
+            response = linkProtocols(response);
+            bubble.innerHTML = renderMd(response);
+            chatHistory.push({ role: 'assistant', content: data.response });
+        }
+    })
+    .catch(e => {
+        const el = document.getElementById(botId);
+        if (el) {
+            el.querySelector('.ai-bubble').innerHTML = '❌ 网络错误：' + e.message;
+        }
+    })
+    .finally(() => {
+        isResponding = false;
+        document.getElementById('sendBtn').disabled = false;
+        input.disabled = false;
+        input.focus();
+        scrollToBottom();
+    });
+}
+
+function addMsg(role, content) {
+    const container = document.getElementById('chatMessages');
+    const id = 'msg-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);
+    const avatar = role === 'user' ? '👤' : '🌿';
+    const div = document.createElement('div');
+    div.className = 'ai-msg ' + role;
+    div.id = id;
+    div.innerHTML =
+        '<div class="ai-avatar">' + avatar + '</div>' +
+        '<div class="ai-bubble">' + content + '</div>';
+    container.appendChild(div);
+    scrollToBottom();
+    return id;
+}
+
+function scrollToBottom() {
+    const container = document.getElementById('chatMessages');
+    requestAnimationFrame(() => {
+        container.scrollTop = container.scrollHeight;
+    });
+}
+</script>
+{% endblock %}

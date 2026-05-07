@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% set active = "pricing" %}
+
+{% block title %}定价方案 - 植研小白盒{% endblock %}
+
+{% block content %}
+<div class="pricing-wrap">
+    <div class="pricing-header">
+        <h1>🌿 植研小白盒</h1>
+        <p>所有功能免费开放，助力植物科研</p>
+    </div>
+
+    <div class="pricing-card pricing-card-free">
+        <div class="pricing-tag tag-free">当前方案</div>
+        <div class="pricing-price">¥0</div>
+        <div class="pricing-period">永久免费 · 全部功能开放</div>
+        <ul class="pricing-features">
+            <li class="included">✅ 浏览全部65个Protocol</li>
+            <li class="included">✅ 试剂计算器（4种）</li>
+            <li class="included">✅ 数据处理与统计分析</li>
+            <li class="included">✅ 标准曲线拟合</li>
+            <li class="included">✅ AI实验助手</li>
+            <li class="included">✅ Excel格式导出</li>
+            <li class="included">✅ 高级图表可视化</li>
+            <li class="included">✅ 仪器操作指南</li>
+        </ul>
+        {% if current_user %}
+        <a href="/profile" class="pricing-btn" style="text-decoration:none;text-align:center;display:block;">查看个人中心</a>
+        {% else %}
+        <a href="/register" class="pricing-btn" style="text-decoration:none;text-align:center;display:block;">免费注册</a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
