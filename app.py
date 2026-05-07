@@ -24,7 +24,8 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PROTOCOL_DIR = os.path.join(BASE_DIR, "protocol_docs")
 INSTRUMENT_DIR = os.path.join(BASE_DIR, "instrument_guides")
 DB_DIR = os.path.join(BASE_DIR, "chroma_db")
-USER_DB = os.path.join(BASE_DIR, "users.db")
+# Vercel 只读文件系统，数据库放 /tmp
+USER_DB = os.path.join("/tmp", "users.db") if os.environ.get("VERCEL") else os.path.join(BASE_DIR, "users.db")
 
 
 # ========== 用户数据库 ==========
@@ -98,7 +99,10 @@ def init_user_db():
     conn.close()
 
 
-init_user_db()
+try:
+    init_user_db()
+except Exception as e:
+    print(f"[WARN] 数据库初始化失败（Vercel环境可忽略）: {e}")
 
 
 def login_required(f):
