@@ -7,3 +7,10 @@ chroma_db/
 .DS_Store
 Thumbs.db
 *.tmp
+
+# 敏感文件（含token）
+push_github.py
+push_to_github.py
+upload.py
+upload.sh
+upload_all.sh

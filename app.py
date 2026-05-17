@@ -11,10 +11,35 @@ import math
 import re
 import sqlite3
 import secrets
+import threading
+import base64
 from datetime import datetime
 from functools import wraps
-from flask import Flask, render_template, request, jsonify, send_file, session, redirect, url_for, flash
+from flask import Flask, render_template, request, jsonify, send_file, send_from_directory, session, redirect, url_for, flash
 from werkzeug.security import generate_password_hash, check_password_hash
+
+# PDF解析
+try:
+    import pdfplumber
+    HAS_PDF = True
+except ImportError:
+    HAS_PDF = False
+    print("[WARN] pdfplumber未安装，PDF提取功能不可用。运行: pip install pdfplumber")
+
+# MinerU 高质量PDF解析（支持表格、公式、多栏排版）
+try:
+    from mineru.cli.common import do_parse as mineru_do_parse
+    HAS_MINERU = True
+except ImportError:
+    HAS_MINERU = False
+    print("[WARN] mineru未安装，将使用pdfplumber作为PDF解析后端。运行: pip install mineru")
+
+# Claude API
+try:
+    import anthropic
+    HAS_ANTHROPIC = True
+except ImportError:
+    HAS_ANTHROPIC = False
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', secrets.token_hex(32))
@@ -24,7 +49,8 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PROTOCOL_DIR = os.path.join(BASE_DIR, "protocol_docs")
 INSTRUMENT_DIR = os.path.join(BASE_DIR, "instrument_guides")
 DB_DIR = os.path.join(BASE_DIR, "chroma_db")
-USER_DB = os.path.join(BASE_DIR, "users.db")
+# Vercel 只读文件系统，数据库放 /tmp
+USER_DB = os.path.join("/tmp", "users.db") if os.environ.get("VERCEL") else os.path.join(BASE_DIR, "users.db")
 
 
 # ========== 用户数据库 ==========
@@ -86,7 +112,76 @@ def init_user_db():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users(id)
         );
+        CREATE TABLE IF NOT EXISTS user_api_settings (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL UNIQUE,
+            provider TEXT DEFAULT 'anthropic',
+            api_key TEXT DEFAULT '',
+            model TEXT DEFAULT 'claude-sonnet-4-20250514',
+            base_url TEXT DEFAULT '',
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        );
+        CREATE TABLE IF NOT EXISTS teams (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            owner_id INTEGER NOT NULL,
+            invite_code TEXT UNIQUE NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (owner_id) REFERENCES users(id)
+        );
+        CREATE TABLE IF NOT EXISTS team_members (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            team_id INTEGER NOT NULL,
+            user_id INTEGER NOT NULL,
+            role TEXT DEFAULT 'member',
+            joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(team_id, user_id),
+            FOREIGN KEY (team_id) REFERENCES teams(id),
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        );
+        CREATE TABLE IF NOT EXISTS team_protocols (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            team_id INTEGER NOT NULL,
+            protocol_id TEXT NOT NULL,
+            added_by INTEGER NOT NULL,
+            is_private INTEGER DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(team_id, protocol_id),
+            FOREIGN KEY (team_id) REFERENCES teams(id)
+        );
+        CREATE TABLE IF NOT EXISTS extract_tasks (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            task_type TEXT NOT NULL,
+            status TEXT DEFAULT 'pending',
+            file_name TEXT DEFAULT '',
+            file_data TEXT DEFAULT '',
+            structured_json TEXT DEFAULT '',
+            raw_text TEXT DEFAULT '',
+            issues_json TEXT DEFAULT '',
+            result_json TEXT DEFAULT '',
+            error_msg TEXT DEFAULT '',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            completed_at TIMESTAMP
+        );
     """)
+    # 数据库索引
+    for idx_sql in [
+        "CREATE INDEX IF NOT EXISTS idx_user_data_uid ON user_data(user_id)",
+        "CREATE INDEX IF NOT EXISTS idx_favorites_uid ON protocol_favorites(user_id)",
+        "CREATE INDEX IF NOT EXISTS idx_favorites_pid ON protocol_favorites(protocol_id)",
+        "CREATE INDEX IF NOT EXISTS idx_ratings_pid ON protocol_ratings(protocol_id)",
+        "CREATE INDEX IF NOT EXISTS idx_ratings_uid ON protocol_ratings(user_id)",
+        "CREATE INDEX IF NOT EXISTS idx_logs_uid ON experiment_logs(user_id)",
+        "CREATE INDEX IF NOT EXISTS idx_tasks_uid ON extract_tasks(user_id)",
+        "CREATE INDEX IF NOT EXISTS idx_tasks_status ON extract_tasks(status)",
+        "CREATE INDEX IF NOT EXISTS idx_teams_owner ON teams(owner_id)",
+        "CREATE INDEX IF NOT EXISTS idx_teams_code ON teams(invite_code)",
+        "CREATE INDEX IF NOT EXISTS idx_tm_team ON team_members(team_id)",
+        "CREATE INDEX IF NOT EXISTS idx_tm_user ON team_members(user_id)",
+    ]:
+        conn.execute(idx_sql)
     # 创建默认管理员
     admin = conn.execute("SELECT id FROM users WHERE username='admin'").fetchone()
     if not admin:
@@ -98,17 +193,47 @@ def init_user_db():
     conn.close()
 
 
-init_user_db()
+try:
+    init_user_db()
+except Exception as e:
+    print(f"[WARN] 数据库初始化失败（Vercel环境可忽略）: {e}")
 
 
 def login_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        if "user_id" not in session:
-            flash("请先登录", "warning")
-            return redirect(url_for("login"))
-        return f(*args, **kwargs)
+        # 先检查session
+        if "user_id" in session:
+            return f(*args, **kwargs)
+        # 再检查token（小程序用）
+        auth = request.headers.get("Authorization", "")
+        if auth.startswith("Bearer "):
+            token = auth[7:]
+            uid = _verify_token(token)
+            if uid:
+                session["user_id"] = uid
+                return f(*args, **kwargs)
+        flash("请先登录", "warning")
+        return redirect(url_for("login"))
     return decorated
+
+
+def _generate_token(user_id):
+    """生成简单token"""
+    payload = f"{user_id}:{secrets.token_hex(16)}"
+    return payload
+
+
+def _verify_token(token):
+    """验证token，返回user_id"""
+    try:
+        uid = int(token.split(":")[0])
+        conn = get_user_db()
+        row = conn.execute("SELECT id FROM users WHERE id=?", (uid,)).fetchone()
+        conn.close()
+        return uid if row else None
+    except:
+        return None
 
 
 def admin_required(f):
@@ -130,12 +255,14 @@ def admin_required(f):
 
 @app.context_processor
 def inject_user():
-    user = None
-    if "user_id" in session:
+    from flask import g
+    user = getattr(g, '_cached_user', None)
+    if user is None and "user_id" in session:
         conn = get_user_db()
         user = conn.execute("SELECT id, username, email, role, avatar FROM users WHERE id=?",
                             (session["user_id"],)).fetchone()
         conn.close()
+        g._cached_user = user
     return dict(current_user=user)
 
 # ========== Protocol元数据（卡片展示用） ==========
@@ -518,6 +645,23 @@ def get_instrument_svg(icon_type):
     return INSTRUMENT_SVG.get(icon_type, "")
 
 
+# ========== Protocol内容缓存 ==========
+_PROTOCOL_CONTENT_CACHE = {}
+
+def get_protocol_content(protocol_id):
+    """获取Protocol文本内容（带缓存）"""
+    if protocol_id not in _PROTOCOL_CONTENT_CACHE:
+        meta = next((p for p in PROTOCOL_META if p["id"] == protocol_id), None)
+        if not meta:
+            return ""
+        filepath = os.path.join(PROTOCOL_DIR, meta["file"])
+        if not os.path.exists(filepath):
+            return ""
+        with open(filepath, "r", encoding="utf-8") as f:
+            _PROTOCOL_CONTENT_CACHE[protocol_id] = f.read()
+    return _PROTOCOL_CONTENT_CACHE[protocol_id]
+
+
 # ========== 认证路由 ==========
 
 @app.route("/login", methods=["GET", "POST"])
@@ -582,6 +726,117 @@ def logout():
     return redirect(url_for("home"))
 
 
+# ========== 小程序API ==========
+@app.route("/api/wx-login", methods=["POST"])
+def wx_login():
+    """小程序登录 - 用户名密码方式"""
+    data = request.json or {}
+    username = data.get("username", "").strip()
+    password = data.get("password", "")
+    if not username or not password:
+        return jsonify({"error": "请输入用户名和密码"})
+    conn = get_user_db()
+    user = conn.execute("SELECT * FROM users WHERE username=?", (username,)).fetchone()
+    conn.close()
+    if not user or not check_password_hash(user["password_hash"], password):
+        return jsonify({"error": "用户名或密码错误"})
+    token = _generate_token(user["id"])
+    return jsonify({
+        "token": token,
+        "user": {"id": user["id"], "username": user["username"], "role": user["role"]}
+    })
+
+
+@app.route("/api/wx-register", methods=["POST"])
+def wx_register():
+    """小程序注册"""
+    data = request.json or {}
+    username = data.get("username", "").strip()
+    email = data.get("email", "").strip()
+    password = data.get("password", "")
+    if not username or not email or not password:
+        return jsonify({"error": "请填写完整信息"})
+    conn = get_user_db()
+    existing = conn.execute("SELECT id FROM users WHERE username=? OR email=?", (username, email)).fetchone()
+    if existing:
+        conn.close()
+        return jsonify({"error": "用户名或邮箱已存在"})
+    conn.execute("INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)",
+                 (username, email, generate_password_hash(password)))
+    conn.commit()
+    user = conn.execute("SELECT * FROM users WHERE username=?", (username,)).fetchone()
+    conn.close()
+    token = _generate_token(user["id"])
+    return jsonify({
+        "token": token,
+        "user": {"id": user["id"], "username": user["username"], "role": user["role"]}
+    })
+
+
+@app.route("/api/wx-data")
+@login_required
+def wx_data():
+    """获取用户所有数据"""
+    uid = session["user_id"]
+    conn = get_user_db()
+    # 收藏
+    favs = [r["protocol_id"] for r in conn.execute(
+        "SELECT protocol_id FROM protocol_favorites WHERE user_id=?", (uid,)).fetchall()]
+    # 评分
+    ratings = {}
+    for r in conn.execute("SELECT protocol_id, rating, comment FROM protocol_ratings WHERE user_id=?", (uid,)).fetchall():
+        ratings[r["protocol_id"]] = {"rating": r["rating"], "comment": r["comment"]}
+    # 日志
+    logs = []
+    for r in conn.execute("SELECT * FROM experiment_logs WHERE user_id=? ORDER BY id DESC", (uid,)).fetchall():
+        logs.append({"id": r["id"], "title": r["title"], "protocol_id": r["protocol_id"],
+                      "content": r["content"], "tags": r["tags"], "status": r["status"],
+                      "created_at": r["created_at"]})
+    conn.close()
+    return jsonify({"favorites": favs, "ratings": ratings, "logs": logs})
+
+
+@app.route("/api/wx-sync", methods=["POST"])
+@login_required
+def wx_sync():
+    """批量同步小程序数据到服务端"""
+    uid = session["user_id"]
+    data = request.json or {}
+    conn = get_user_db()
+    synced = {"favorites": 0, "ratings": 0, "logs": 0}
+
+    # 同步收藏
+    for pid in data.get("favorites", []):
+        try:
+            conn.execute("INSERT OR IGNORE INTO protocol_favorites (user_id, protocol_id) VALUES (?, ?)", (uid, pid))
+            synced["favorites"] += 1
+        except: pass
+
+    # 同步评分
+    for pid, info in data.get("ratings", {}).items():
+        try:
+            conn.execute(
+                "INSERT INTO protocol_ratings (user_id, protocol_id, rating, comment) VALUES (?, ?, ?, ?) "
+                "ON CONFLICT(user_id, protocol_id) DO UPDATE SET rating=excluded.rating, comment=excluded.comment",
+                (uid, pid, info.get("rating", 5), info.get("comment", "")))
+            synced["ratings"] += 1
+        except: pass
+
+    # 同步日志
+    for log in data.get("logs", []):
+        try:
+            conn.execute(
+                "INSERT INTO experiment_logs (user_id, title, protocol_id, content, tags, status) VALUES (?, ?, ?, ?, ?, ?)",
+                (uid, log.get("title", ""), log.get("protocolId", ""), log.get("content", ""),
+                 log.get("tags", ""), log.get("status", "done")))
+            synced["logs"] += 1
+        except: pass
+
+    conn.commit()
+    conn.close()
+    return jsonify({"synced": synced})
+
+
 @app.route("/profile")
 @login_required
 def profile():
@@ -591,8 +846,15 @@ def profile():
         "SELECT * FROM user_data WHERE user_id=? ORDER BY created_at DESC LIMIT 20",
         (session["user_id"],)
     ).fetchall()
+    api_row = conn.execute("SELECT * FROM user_api_settings WHERE user_id=?", (session["user_id"],)).fetchone()
     conn.close()
-    return render_template("profile.html", user=user, history=history)
+    api_settings = {
+        "provider": api_row["provider"] if api_row else "anthropic",
+        "api_key": api_row["api_key"] if api_row else "",
+        "model": api_row["model"] if api_row else "claude-sonnet-4-20250514",
+        "base_url": api_row["base_url"] if api_row else "",
+    } if api_row else None
+    return render_template("profile.html", user=user, history=history, api_settings=api_settings)
 
 
 @app.route("/api/user/save-data", methods=["POST"])
@@ -626,6 +888,120 @@ def user_history():
 def delete_user_data(data_id):
     conn = get_user_db()
     conn.execute("DELETE FROM user_data WHERE id=? AND user_id=?", (data_id, session["user_id"]))
+    conn.commit()
+    conn.close()
+    return jsonify({"ok": True})
+
+
+# ========== 用户API设置 ==========
+
+@app.route("/api/user/api-settings", methods=["GET"])
+@login_required
+def get_api_settings():
+    conn = get_user_db()
+    row = conn.execute("SELECT * FROM user_api_settings WHERE user_id=?", (session["user_id"],)).fetchone()
+    conn.close()
+    if row:
+        return jsonify({
+            "provider": row["provider"],
+            "api_key": row["api_key"],
+            "model": row["model"],
+            "base_url": row["base_url"] or "",
+        })
+    return jsonify({"provider": "anthropic", "api_key": "", "model": "claude-sonnet-4-20250514", "base_url": ""})
+
+
+@app.route("/api/user/api-settings", methods=["POST"])
+@login_required
+def save_api_settings():
+    data = request.json
+    provider = data.get("provider", "anthropic")
+    api_key = data.get("api_key", "")
+    model = data.get("model", "")
+    base_url = data.get("base_url", "")
+
+    # 根据provider设置默认模型
+    default_models = {
+        "anthropic": "claude-sonnet-4-20250514",
+        "openai": "gpt-4o",
+        "deepseek": "deepseek-v4-pro",
+        "custom": "",
+    }
+    if not model:
+        model = default_models.get(provider, "")
+
+    conn = get_user_db()
+    existing = conn.execute("SELECT id FROM user_api_settings WHERE user_id=?", (session["user_id"],)).fetchone()
+    if existing:
+        conn.execute(
+            "UPDATE user_api_settings SET provider=?, api_key=?, model=?, base_url=?, updated_at=? WHERE user_id=?",
+            (provider, api_key, model, base_url, datetime.now(), session["user_id"])
+        )
+    else:
+        conn.execute(
+            "INSERT INTO user_api_settings (user_id, provider, api_key, model, base_url) VALUES (?, ?, ?, ?, ?)",
+            (session["user_id"], provider, api_key, model, base_url)
+        )
+    conn.commit()
+    conn.close()
+    return jsonify({"ok": True})
+
+
+@app.route("/api/user/update-profile", methods=["POST"])
+@login_required
+def update_profile():
+    data = request.json
+    username = data.get("username", "").strip()
+    email = data.get("email", "").strip()
+
+    if len(username) < 2:
+        return jsonify({"error": "用户名至少2个字符"}), 400
+
+    conn = get_user_db()
+    # 检查用户名是否被其他人占用
+    existing = conn.execute(
+        "SELECT id FROM users WHERE username=? AND id!=?",
+        (username, session["user_id"])
+    ).fetchone()
+    if existing:
+        conn.close()
+        return jsonify({"error": "用户名已被占用"}), 400
+
+    # 检查邮箱是否被其他人占用
+    existing_email = conn.execute(
+        "SELECT id FROM users WHERE email=? AND id!=?",
+        (email, session["user_id"])
+    ).fetchone()
+    if existing_email:
+        conn.close()
+        return jsonify({"error": "邮箱已被占用"}), 400
+
+    conn.execute("UPDATE users SET username=?, email=? WHERE id=?",
+                 (username, email, session["user_id"]))
+    session["username"] = username
+    conn.commit()
+    conn.close()
+    return jsonify({"ok": True})
+
+
+@app.route("/api/user/change-password", methods=["POST"])
+@login_required
+def change_password():
+    data = request.json
+    old_pw = data.get("old_password", "")
+    new_pw = data.get("new_password", "")
+
+    if len(new_pw) < 6:
+        return jsonify({"error": "新密码至少6位"}), 400
+
+    conn = get_user_db()
+    user = conn.execute("SELECT password_hash FROM users WHERE id=?", (session["user_id"],)).fetchone()
+    if not user or not check_password_hash(user["password_hash"], old_pw):
+        conn.close()
+        return jsonify({"error": "原密码错误"}), 400
+
+    conn.execute("UPDATE users SET password_hash=? WHERE id=?",
+                 (generate_password_hash(new_pw), session["user_id"]))
     conn.commit()
     conn.close()
     return jsonify({"ok": True})
@@ -787,6 +1163,130 @@ def pricing():
     return render_template("pricing.html")
 
 
+@app.route("/teams")
+def teams_page():
+    return render_template("teams.html")
+
+
+# ========== 团队协作API ==========
+
+@app.route("/api/teams", methods=["GET"])
+@login_required
+def api_teams_list():
+    """获取用户的所有团队"""
+    uid = session["user_id"]
+    conn = get_user_db()
+    teams = conn.execute("""
+        SELECT t.*, (SELECT COUNT(*) FROM team_members WHERE team_id=t.id) as member_count
+        FROM teams t
+        WHERE t.owner_id=? OR t.id IN (SELECT team_id FROM team_members WHERE user_id=?)
+        ORDER BY t.created_at DESC
+    """, (uid, uid)).fetchall()
+    conn.close()
+    return jsonify({"teams": [dict(t) for t in teams]})
+
+
+@app.route("/api/teams", methods=["POST"])
+@login_required
+def api_teams_create():
+    """创建团队"""
+    data = request.json or {}
+    name = data.get("name", "").strip()
+    if len(name) < 2:
+        return jsonify({"error": "团队名称至少2个字符"}), 400
+    uid = session["user_id"]
+    invite_code = secrets.token_hex(4)
+    conn = get_user_db()
+    cur = conn.execute("INSERT INTO teams (name, owner_id, invite_code) VALUES (?, ?, ?)",
+                       (name, uid, invite_code))
+    team_id = cur.lastrowid
+    conn.execute("INSERT INTO team_members (team_id, user_id, role) VALUES (?, ?, 'owner')",
+                 (team_id, uid))
+    conn.commit()
+    conn.close()
+    return jsonify({"team_id": team_id, "invite_code": invite_code})
+
+
+@app.route("/api/teams/<int:team_id>/join", methods=["POST"])
+@login_required
+def api_teams_join(team_id):
+    """通过邀请码加入团队"""
+    data = request.json or {}
+    code = data.get("code", "").strip()
+    uid = session["user_id"]
+    conn = get_user_db()
+    team = conn.execute("SELECT * FROM teams WHERE id=? AND invite_code=?", (team_id, code)).fetchone()
+    if not team:
+        conn.close()
+        return jsonify({"error": "团队不存在或邀请码错误"}), 404
+    existing = conn.execute("SELECT id FROM team_members WHERE team_id=? AND user_id=?",
+                            (team_id, uid)).fetchone()
+    if existing:
+        conn.close()
+        return jsonify({"error": "你已在团队中"}), 400
+    conn.execute("INSERT INTO team_members (team_id, user_id, role) VALUES (?, ?, 'member')",
+                 (team_id, uid))
+    conn.commit()
+    conn.close()
+    return jsonify({"ok": True, "team_name": team["name"]})
+
+
+@app.route("/api/teams/<int:team_id>/members", methods=["GET"])
+@login_required
+def api_teams_members(team_id):
+    """获取团队成员"""
+    conn = get_user_db()
+    members = conn.execute("""
+        SELECT u.username, u.email, tm.role, tm.joined_at
+        FROM team_members tm JOIN users u ON tm.user_id=u.id
+        WHERE tm.team_id=? ORDER BY tm.role DESC, tm.joined_at ASC
+    """, (team_id,)).fetchall()
+    conn.close()
+    return jsonify({"members": [dict(m) for m in members]})
+
+
+@app.route("/api/teams/<int:team_id>/protocols", methods=["GET"])
+@login_required
+def api_teams_protocols(team_id):
+    """获取团队共享Protocol"""
+    uid = session["user_id"]
+    conn = get_user_db()
+    member = conn.execute("SELECT id FROM team_members WHERE team_id=? AND user_id=?",
+                          (team_id, uid)).fetchone()
+    if not member:
+        conn.close()
+        return jsonify({"error": "你不是该团队成员"}), 403
+    protocols = conn.execute("""
+        SELECT tp.protocol_id, tp.is_private, tp.created_at, u.username as added_by_name
+        FROM team_protocols tp JOIN users u ON tp.added_by=u.id
+        WHERE tp.team_id=?
+        ORDER BY tp.created_at DESC LIMIT 50
+    """, (team_id,)).fetchall()
+    conn.close()
+    return jsonify({"protocols": [dict(p) for p in protocols]})
+
+
+@app.route("/api/teams/<int:team_id>/protocols", methods=["POST"])
+@login_required
+def api_teams_add_protocol(team_id):
+    """向团队添加Protocol"""
+    data = request.json or {}
+    pid = data.get("protocol_id", "").strip()
+    uid = session["user_id"]
+    if not pid:
+        return jsonify({"error": "请提供protocol_id"}), 400
+    conn = get_user_db()
+    try:
+        conn.execute("INSERT INTO team_protocols (team_id, protocol_id, added_by) VALUES (?, ?, ?)",
+                     (team_id, pid, uid))
+        conn.commit()
+    except:
+        conn.close()
+        return jsonify({"error": "添加失败，可能已存在"}), 400
+    conn.close()
+    return jsonify({"ok": True})
+
+
 # ========== 管理后台 ==========
 
 @app.route("/admin")
@@ -823,6 +1323,11 @@ def reset_password(uid):
     conn.close()
     return jsonify({"ok": True, "new_password": new_pw})
 
+
+# ========== 静态文件路由（Vercel 兼容） ==========
+@app.route("/static/<path:filename>")
+def serve_static(filename):
+    return send_from_directory(os.path.join(BASE_DIR, "static"), filename)
 
 # ========== 路由 ==========
 
@@ -864,8 +1369,16 @@ def data_processing():
 @app.route("/api/calculate", methods=["POST"])
 def api_calculate():
     """计算器API"""
-    data = request.json
+    data = request.json or {}
     calc_type = data.get("type")
+
+    try:
+        return _calc_impl(data, calc_type)
+    except (KeyError, ValueError, TypeError, ZeroDivisionError) as e:
+        return jsonify({"error": f"参数错误: {str(e)}"}), 400
+
+
+def _calc_impl(data, calc_type):
 
     if calc_type == "molarity_to_mass":
         mw = float(data["mw"])
@@ -996,11 +1509,9 @@ def search_protocols_for_context(query, k=3):
     keywords = query.lower().split()
     scores = []
     for meta in PROTOCOL_META:
-        filepath = os.path.join(PROTOCOL_DIR, meta["file"])
-        if not os.path.exists(filepath):
+        content = get_protocol_content(meta["id"])
+        if not content:
             continue
-        with open(filepath, "r", encoding="utf-8") as f:
-            content = f.read()
         score = 0
         name_lower = meta["name"].lower()
         content_lower = content.lower()
@@ -1154,32 +1665,6 @@ def generate_local_answer(query, context):
 
 👉 试试问我：「配100mL 0.1mol/L Tris需要称多少克？」"""
 
-    # 默认回答
-    return """### 🌿 你好！我是植研小白盒AI助手
-
-我可以帮你解答植物实验相关的问题：
-
-**🧪 试剂配制**
-- 帮你计算摩尔浓度、稀释倍数
-- 告诉你具体称多少克、加多少溶剂
-
-**🔬 实验操作**
-- 解释实验原理
-- 指导操作步骤
-- 说明每步「做对了看到什么」
-
-**⚠️ 失败排查**
-- 分析实验失败的可能原因
-- 给出解决方案
-
-**📊 结果分析**
-- 帮你解读数据
-- 判断结果是否正常
-
-👉 直接问我问题，或者试试上方的快捷按钮！
-
-💡 你也可以在 [Protocol库](/) 中浏览65个标准化Protocol。"""
-
 
 @app.route("/search")
 def search_page():
@@ -1198,6 +1683,7 @@ def api_search():
 
     keywords = query.split() if query else []
 
+    conn = get_user_db()
     results = []
     for meta in PROTOCOL_META:
         # 分类筛选
@@ -1207,11 +1693,9 @@ def api_search():
         if difficulty and str(meta["difficulty"]) != str(difficulty):
             continue
 
-        filepath = os.path.join(PROTOCOL_DIR, meta["file"])
-        if not os.path.exists(filepath):
+        content = get_protocol_content(meta["id"])
+        if not content:
             continue
-        with open(filepath, "r", encoding="utf-8") as f:
-            content = f.read()
 
         score = 0
         content_lower = content.lower()
@@ -1243,7 +1727,6 @@ def api_search():
                     break
 
             # 获取收藏数和评分
-            conn = get_user_db()
             fav_cnt = conn.execute(
                 "SELECT COUNT(*) as c FROM protocol_favorites WHERE protocol_id=?",
                 (meta["id"],)
@@ -1253,7 +1736,6 @@ def api_search():
                 (meta["id"],)
             ).fetchone()
             avg_rating = round(rating_row["avg_r"], 1) if rating_row["avg_r"] else 0
-            conn.close()
 
             results.append({
                 "protocol_id": meta["id"],
@@ -1266,6 +1748,8 @@ def api_search():
                 "favorites": fav_cnt,
                 "avg_rating": avg_rating,
             })
+
+    conn.close()
 
     # 排序
     if sort_by == "favorites":
@@ -1289,6 +1773,201 @@ import io
 from openpyxl import Workbook
 from openpyxl.styles import Font, Alignment, Border, Side, PatternFill
 
+
+
+
+# ========== AI数据分析 ==========
+
+@app.route("/api/user/test-api-key", methods=["POST"])
+@login_required
+def api_user_test_api_key():
+    """测试API Key是否可用"""
+    data = request.json or {}
+    provider = data.get("provider", "anthropic")
+    api_key = data.get("api_key", "").strip()
+    model = data.get("model", "").strip()
+    base_url = data.get("base_url", "").strip()
+
+    if not api_key:
+        return jsonify({"error": "请先输入API Key"}), 400
+
+    settings = {"provider": provider, "api_key": api_key, "model": model, "base_url": base_url}
+
+    import urllib.request, urllib.error
+
+    try:
+        if provider == "anthropic":
+            url = "https://api.anthropic.com/v1/messages"
+            req_data = json.dumps({
+                "model": model or "claude-sonnet-4-20250514",
+                "max_tokens": 10,
+                "messages": [{"role": "user", "content": "Hi"}],
+            }).encode("utf-8")
+            req = urllib.request.Request(url, data=req_data, headers={
+                "Content-Type": "application/json",
+                "x-api-key": api_key,
+                "anthropic-version": "2023-06-01",
+            })
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                result = json.loads(resp.read().decode("utf-8"))
+            model_used = result.get("model", model)
+            return jsonify({"ok": True, "message": f"Anthropic连接成功 √ | 模型: {model_used}", "model": model_used})
+        else:
+            default_urls = {
+                "deepseek": "https://api.deepseek.com/v1",
+                "openai": "https://api.openai.com/v1",
+            }
+            api_base = base_url or default_urls.get(provider, "https://api.openai.com/v1")
+            url = api_base.rstrip("/") + "/chat/completions"
+            req_data = json.dumps({
+                "model": model,
+                "messages": [{"role": "user", "content": "Hi"}],
+                "max_tokens": 10,
+            }).encode("utf-8")
+            req = urllib.request.Request(url, data=req_data, headers={
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {api_key}",
+            })
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                result = json.loads(resp.read().decode("utf-8"))
+            model_used = result.get("model", model)
+            tokens = result.get("usage", {}).get("total_tokens", 0)
+            return jsonify({"ok": True, "message": f"{provider}连接成功 √ | 模型: {model_used} | 消耗{tokens}tokens", "model": model_used})
+
+    except urllib.error.HTTPError as e:
+        err_body = ""
+        try:
+            err_body = e.read().decode("utf-8")[:300]
+        except:
+            pass
+        error_msg = f"连接失败: HTTP {e.code}"
+        if e.code == 401:
+            error_msg = "API Key无效 (401 Unauthorized)，请检查Key是否正确"
+        elif e.code == 403:
+            error_msg = "权限不足 (403 Forbidden)，请检查API Key权限或账户余额"
+        elif e.code == 429:
+            error_msg = "请求频率超限 (429)，请稍后重试"
+        elif e.code == 404:
+            error_msg = f"接口不存在 (404)，请检查Base URL是否正确: {url}"
+        return jsonify({"error": error_msg, "detail": err_body}), 200
+
+    except Exception as e:
+        error_msg = str(e)
+        if "Name or service not known" in error_msg or "getaddrinfo" in error_msg.lower():
+            error_msg = f"无法解析域名，请检查Base URL: {base_url or default_urls.get(provider, '')}"
+        elif "timed out" in error_msg.lower():
+            error_msg = "连接超时，请检查网络"
+        return jsonify({"error": f"连接异常: {error_msg}"}), 200
+
+
+@app.route("/api/user/has-api-key")
+def api_user_has_api_key():
+    """检查用户是否配置了API Key"""
+    settings = get_user_api_settings()
+    return jsonify({
+        "has_api_key": bool(settings and settings.get("api_key")),
+        "provider": settings.get("provider") if settings else None,
+    })
+
+
+@app.route("/api/data/ai-analyze", methods=["POST"])
+def api_data_ai_analyze():
+    """AI智能分析数据：异步执行，返回task_id"""
+    data = request.json or {}
+    headers = data.get("headers", [])
+    rows = data.get("rows", [])[:20]
+    col_types = data.get("col_types", [])
+
+    if not rows:
+        return jsonify({"error": "没有数据可供分析"}), 400
+
+    api_settings = get_user_api_settings()
+    form_api_key = data.get("api_key", "")
+    if form_api_key and not api_settings:
+        api_settings = {"provider": "anthropic", "api_key": form_api_key, "model": "claude-sonnet-4-20250514", "base_url": ""}
+
+    if not api_settings or not api_settings.get("api_key"):
+        return jsonify({"error": "请先配置API Key", "need_api_key": True, "message": "AI分析需要调用大模型，请在个人中心配置API Key"})
+
+    user_id = session.get("user_id")
+    conn = get_user_db()
+    cur = conn.execute(
+        "INSERT INTO extract_tasks (user_id, task_type, status, file_name, raw_text) VALUES (?, 'ai_analyze', 'pending', 'data-analysis', ?)",
+        (user_id, json.dumps({"headers": headers, "col_types": col_types, "row_count": len(rows)}, ensure_ascii=False))
+    )
+    task_id = cur.lastrowid
+    conn.commit()
+    conn.close()
+
+    threading.Thread(target=_run_ai_analyze_task, args=(task_id, headers, rows, col_types, api_settings), daemon=True).start()
+    return jsonify({"task_id": task_id, "status": "pending", "message": "AI正在分析..."})
+
+
+def _build_data_summary(headers, rows, col_types):
+    """构建数据摘要供AI分析"""
+    parts = []
+    parts.append(f"表头: {headers}")
+    parts.append(f"总行数: {len(rows)}, 总列数: {len(headers)}")
+    parts.append(f"列类型: {json.dumps([{'idx': c.get('index', i), 'header': c.get('header', ''), 'type': c.get('type', 'unknown')} for i, c in enumerate(col_types)], ensure_ascii=False)}")
+    for ci in range(len(headers)):
+        col_vals = []
+        for row in rows:
+            if ci < len(row):
+                val = row[ci]
+                if isinstance(val, (int, float)): col_vals.append(val)
+        if col_vals:
+            avg = sum(col_vals) / len(col_vals)
+            srt = sorted(col_vals)
+            parts.append(f"列{ci}[{headers[ci] if ci < len(headers) else ''}]: n={len(col_vals)}, mean={avg:.3f}, min={srt[0]:.3f}, max={srt[-1]:.3f}")
+    parts.append(f"前{min(5, len(rows))}行:")
+    for i, row in enumerate(rows[:5]):
+        parts.append(f"  行{i}: {row}")
+    return "\\n".join(parts)
+
+
+def _run_ai_analyze_task(task_id, headers, rows, col_types, api_settings):
+    try:
+        conn = get_user_db()
+        conn.execute("UPDATE extract_tasks SET status='processing' WHERE id=?", (task_id,))
+        conn.commit()
+        conn.close()
+
+        data_summary = _build_data_summary(headers, rows, col_types)
+        prompt = f"""植物科研数据分析专家。分析以下数据，返回JSON配置。
+
+{data_summary}
+
+返回JSON（不要markdown）:
+{{"data_structure":"standard或group_indicator","experiment_type":"chlorophyll/soluble_protein/.../generic_stats/group_indicator_stats","confidence":0.8,"column_analysis":[{{"col_index":0,"suggested_type":"类型"}}],"column_mapping":{{"groupCol":0,"indicatorCol":1}},"suggested_params":{{}},"insights":[],"warnings":[],"recommended_actions":[]}}
+列类型: sample_name/od_value/concentration/weight/group_col/indicator_col/numeric"""
+
+        result_text, usage = call_llm(prompt, api_settings)
+        structured = _extract_json_from_llm(result_text) if result_text else None
+
+        conn = get_user_db()
+        if structured:
+            conn.execute("UPDATE extract_tasks SET status='completed', structured_json=?, result_json=?, completed_at=CURRENT_TIMESTAMP WHERE id=?", (json.dumps({"ai_analysis": structured}, ensure_ascii=False), json.dumps({"raw": result_text[:500] if result_text else ""}, ensure_ascii=False), task_id))
+        else:
+            conn.execute("UPDATE extract_tasks SET status='completed', structured_json=?, completed_at=CURRENT_TIMESTAMP WHERE id=?", (json.dumps({"error": "AI解析失败"}, ensure_ascii=False), task_id))
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        conn = get_user_db()
+        conn.execute("UPDATE extract_tasks SET status='failed', error_msg=?, completed_at=CURRENT_TIMESTAMP WHERE id=?", (str(e)[:500], task_id))
+        conn.commit()
+        conn.close()
+
+
+@app.route("/api/data/ai-analyze/status/<int:task_id>")
+def api_ai_analyze_status(task_id):
+    conn = get_user_db()
+    row = conn.execute("SELECT * FROM extract_tasks WHERE id=? AND task_type='ai_analyze'", (task_id,)).fetchone()
+    conn.close()
+    if not row: return jsonify({"error": "任务不存在"}), 404
+    result = {"task_id": row["id"], "status": row["status"]}
+    if row["status"] == "completed": result["ai_analysis"] = json.loads(row["structured_json"]) if row["structured_json"] else {}
+    elif row["status"] == "failed": result["error"] = row["error_msg"]
+    return jsonify(result)
 
 @app.route("/api/export-excel", methods=["POST"])
 def export_excel():
@@ -1588,6 +2267,1236 @@ def create_docx(content, meta):
     set_run_font(run, 10.5)
 
     return doc
+
+# ========== 文献提取 ==========
+
+# OpenAI兼容SDK（可选）
+try:
+    import openai as openai_sdk
+    HAS_OPENAI = True
+except ImportError:
+    HAS_OPENAI = False
+
+
+def call_llm(prompt, settings):
+    """通用LLM调用，返回 (text, token_usage)"""
+    import ssl
+    provider = settings.get("provider", "anthropic")
+    api_key = settings.get("api_key", "")
+    model = settings.get("model", "")
+    base_url = settings.get("base_url", "")
+
+    if not api_key:
+        return None, {}
+
+    usage = {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}
+
+    # Python 3.6 SSL兼容：创建不验证证书的context以兼容旧版OpenSSL
+    ssl_context = None
+    try:
+        ssl_context = ssl.create_default_context()
+    except:
+        try:
+            ssl_context = ssl._create_unverified_context()
+        except:
+            pass
+
+    try:
+        import urllib.request
+        import urllib.error
+
+        if provider == "anthropic":
+            url = "https://api.anthropic.com/v1/messages"
+            req_data = json.dumps({
+                "model": model or "claude-sonnet-4-20250514",
+                "max_tokens": 8192,
+                "messages": [{"role": "user", "content": prompt}],
+            }).encode("utf-8")
+            req = urllib.request.Request(url, data=req_data, headers={
+                "Content-Type": "application/json",
+                "x-api-key": api_key,
+                "anthropic-version": "2023-06-01",
+            })
+            try:
+                with urllib.request.urlopen(req, timeout=120, context=ssl_context) as resp:
+                    result = json.loads(resp.read().decode("utf-8"))
+                if "usage" in result:
+                    usage = {
+                        "prompt_tokens": result["usage"].get("input_tokens", 0),
+                        "completion_tokens": result["usage"].get("output_tokens", 0),
+                        "total_tokens": result["usage"].get("input_tokens", 0) + result["usage"].get("output_tokens", 0),
+                    }
+                return result["content"][0]["text"], usage
+            except urllib.error.HTTPError as e:
+                err_body = ""
+                try: err_body = e.read().decode("utf-8")[:300]
+                except: pass
+                print(f"[ERROR] Anthropic API错误 ({model}): HTTP {e.code}")
+                return None, usage
+            except Exception as e:
+                print(f"[ERROR] Anthropic请求异常: {e}")
+                return None, usage
+        else:
+            default_urls = {
+                "deepseek": "https://api.deepseek.com/v1",
+                "openai": "https://api.openai.com/v1",
+            }
+            api_base = base_url or default_urls.get(provider, "https://api.openai.com/v1")
+            url = api_base.rstrip("/") + "/chat/completions"
+
+            req_data = json.dumps({
+                "model": model,
+                "messages": [{"role": "user", "content": prompt}],
+                "max_tokens": 8192,
+            }).encode("utf-8")
+
+            req = urllib.request.Request(url, data=req_data, headers={
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {api_key}",
+            })
+
+            try:
+                with urllib.request.urlopen(req, timeout=120, context=ssl_context) as resp:
+                    result = json.loads(resp.read().decode("utf-8"))
+                if "usage" in result:
+                    usage = {
+                        "prompt_tokens": result["usage"].get("prompt_tokens", 0),
+                        "completion_tokens": result["usage"].get("completion_tokens", 0),
+                        "total_tokens": result["usage"].get("total_tokens", 0),
+                    }
+                return result["choices"][0]["message"]["content"], usage
+            except urllib.error.HTTPError as e:
+                err_body = ""
+                try: err_body = e.read().decode("utf-8")[:300]
+                except: pass
+                print(f"[ERROR] API HTTP错误 ({provider}/{model}): {e.code}")
+                return None, usage
+            except Exception as e:
+                print(f"[ERROR] API请求异常 ({provider}): {e}")
+                return None, usage
+    except Exception as e:
+        print(f"[ERROR] LLM调用失败 ({provider}/{model}): {e}")
+        return None, usage
+
+
+def get_user_api_settings(user_id=None):
+    """获取用户API设置，返回settings dict"""
+    uid = user_id or session.get("user_id")
+    if not uid:
+        return None
+    conn = get_user_db()
+    row = conn.execute("SELECT * FROM user_api_settings WHERE user_id=?", (uid,)).fetchone()
+    conn.close()
+    if row and row["api_key"]:
+        return {
+            "provider": row["provider"],
+            "api_key": row["api_key"],
+            "model": row["model"],
+            "base_url": row["base_url"] or "",
+        }
+    return None
+
+
+@app.route("/extract")
+def extract_page():
+    """文献实验过程提取页面"""
+    has_api = False
+    if "user_id" in session:
+        settings = get_user_api_settings()
+        has_api = bool(settings and settings.get("api_key"))
+    return render_template("extract.html", has_api=has_api)
+
+
+def extract_structured_sections(text):
+    """从论文全文中提取结构化实验内容 - 返回新格式"""
+    # 找到"材料与方法"部分
+    text_lower = text.lower()
+    method_start = 0
+    method_markers = ["材料与方法", "材料和方法", "实验方法", "实验材料与方法",
+                       "materials and methods", "materials & methods",
+                       "experimental procedures", "methods and materials"]
+    for marker in method_markers:
+        idx = text_lower.find(marker.lower())
+        if idx >= 0:
+            method_start = idx
+            break
+
+    # 找到方法部分的结束位置
+    method_end = len(text)
+    if method_start > 0:
+        end_patterns = [
+            r"\n(?:结果|讨论|结论|参考文献|致谢|acknowledgment|discussion|results|references)",
+        ]
+        for pat in end_patterns:
+            m = re.search(pat, text[method_start + 10:], re.IGNORECASE)
+            if m:
+                method_end = method_start + 10 + m.start()
+                break
+
+    method_text = text[method_start:method_end]
+
+    # 提取标题（方法部分之前的文本）
+    title = ""
+    before_method = text[:method_start] if method_start > 0 else text[:200]
+    for line in before_method.split("\n"):
+        line = line.strip()
+        if line and len(line) > 5:
+            title = line[:100]
+            break
+
+    # 按行解析方法部分
+    lines = method_text.split("\n")
+
+    # 识别子标题（如 "1. 实验材料" "2. RNA提取"）
+    sub_sections = []
+    current_section = None
+    section_buffer = []
+
+    for line in lines:
+        stripped = line.strip()
+        if not stripped:
+            continue
+
+        # 检测子标题：数字开头 + 中文标题
+        sub_title_match = re.match(r"^(\d+)[.、．]\s*(.{2,30})", stripped)
+        if sub_title_match:
+            if current_section:
+                sub_sections.append({"title": current_section, "lines": section_buffer})
+            current_section = sub_title_match.group(2).strip()
+            section_buffer = []
+            continue
+
+        if current_section:
+            section_buffer.append(stripped)
+
+    if current_section:
+        sub_sections.append({"title": current_section, "lines": section_buffer})
+
+    # 如果没有子标题，把整个方法文本当作一个section
+    if not sub_sections:
+        all_lines = [l.strip() for l in lines if l.strip()]
+        if all_lines:
+            sub_sections.append({"title": "方法", "lines": all_lines})
+
+    # 分类各子section
+    result = {
+        "title": title,
+        "method_name": "",
+        "principle": "",
+        "steps": [],
+        "reagents": [],
+        "instruments": [],
+        "conditions": {},
+        "risks": [],
+    }
+
+    material_kw = ["材料", "试剂", "reagent", "material", "药品", "溶液"]
+    instrument_kw = ["仪器", "设备", "instrument", "apparatus", "equipment"]
+    condition_kw = ["条件", "condition", "培养", "生长条件"]
+    note_kw = ["注意", "安全", "note", "warning", "caution", "避坑"]
+    step_kw = ["步骤", "操作", "procedure", "protocol", "step", "方法", "测定", "提取", "检测", "分析"]
+
+    for sec in sub_sections:
+        sec_title_lower = sec["title"].lower()
+        matched = None
+
+        for kw in material_kw:
+            if kw in sec_title_lower:
+                matched = "reagents"
+                break
+        if not matched:
+            for kw in instrument_kw:
+                if kw in sec_title_lower:
+                    matched = "instruments"
+                    break
+        if not matched:
+            for kw in condition_kw:
+                if kw in sec_title_lower:
+                    matched = "conditions"
+                    break
+        if not matched:
+            for kw in note_kw:
+                if kw in sec_title_lower:
+                    matched = "risks"
+                    break
+        if not matched:
+            for kw in step_kw:
+                if kw in sec_title_lower:
+                    matched = "steps"
+                    break
+
+        # 如果标题没匹配上，用内容判断
+        if not matched:
+            content = " ".join(sec["lines"])
+            if any(kw in content for kw in ["mg", "mL", "μL", "g/L", "mol/L", "mM", "浓度", "配制"]):
+                matched = "reagents"
+            elif any(kw in content for kw in ["rpm", "离心", "℃", "°C", "温度", "培养"]):
+                matched = "conditions"
+            elif any(kw in content for kw in ["仪器", "设备", "型号"]):
+                matched = "instruments"
+            else:
+                matched = "steps"
+
+        if matched == "reagents":
+            for line in sec["lines"]:
+                if len(line) < 3:
+                    continue
+                conc = ""
+                cm = re.search(r"(\d+\.?\d*\s*(?:mol/L|mM|μM|mg/mL|g/L|%|mol·L))", line)
+                if cm:
+                    conc = cm.group(1)
+                result["reagents"].append({
+                    "name": line[:80],
+                    "concentration": conc,
+                    "amount": "",
+                    "prep": "",
+                    "source_confidence": "部分",
+                })
+
+        elif matched == "steps":
+            for line in sec["lines"]:
+                if len(line) < 5:
+                    continue
+                params = ""
+                # 提取数字参数
+                pm = re.search(r"(\d+\.?\d*\s*(?:rpm|°C|℃|min|h|μL|mL|g|mg))", line, re.IGNORECASE)
+                if pm:
+                    params = pm.group(1)
+                result["steps"].append({
+                    "step": len(result["steps"]) + 1,
+                    "action": line,
+                    "params": params,
+                    "reagent": "",
+                    "warning": "",
+                    "source_confidence": "部分",
+                })
+
+        elif matched == "instruments":
+            for line in sec["lines"]:
+                if len(line) > 2:
+                    # 按逗号或顿号分割
+                    for inst in re.split(r"[,，、;；]", line):
+                        inst = inst.strip()
+                        if inst and len(inst) > 1:
+                            result["instruments"].append(inst[:40])
+
+        elif matched == "conditions":
+            cond_text = " ".join(sec["lines"])
+            temp_m = re.search(r"(\d+)\s*[°℃]", cond_text)
+            if temp_m:
+                result["conditions"]["temperature"] = temp_m.group(0)
+            if "光" in cond_text:
+                light_m = re.search(r"(\d+\s*h[^。]*光[^。]*)", cond_text)
+                result["conditions"]["light"] = light_m.group(1)[:60] if light_m else cond_text[:60]
+            if not result["conditions"]:
+                result["conditions"]["other"] = cond_text[:100]
+
+        elif matched == "risks":
+            for line in sec["lines"]:
+                if len(line) > 5:
+                    result["risks"].append({
+                        "point": line[:120],
+                        "solution": "",
+                        "severity": "中",
+                    })
+
+    # 如果没有提取到步骤，尝试从全文提取带数字的行
+    if not result["steps"]:
+        step_num = 0
+        for line in lines:
+            stripped = line.strip()
+            if not stripped or len(stripped) < 5:
+                continue
+            # 匹配 "取..." "加..." "离心..." "混合..." 等操作动词开头的行
+            if re.match(r"^(取|加|加入|混|离心|称|配|溶|稀释|测定|检测|提取|分离|纯化|孵育|静置|震荡|摇|过滤|洗涤|晾干|溶解|定容|滴加|吸取|转移|置于|放入|打开|关闭|设置)", stripped):
+                step_num += 1
+                pm = re.search(r"(\d+\.?\d*\s*(?:rpm|°C|℃|min|h|μL|mL|g|mg))", stripped, re.IGNORECASE)
+                result["steps"].append({
+                    "step": step_num,
+                    "action": stripped,
+                    "params": pm.group(1) if pm else "",
+                    "reagent": "",
+                    "warning": "",
+                    "source_confidence": "部分",
+                })
+
+    # 从全文提取仪器（如果还没找到）
+    if not result["instruments"]:
+        for line in lines:
+            if "仪器" in line or "设备" in line:
+                for inst in re.split(r"[,，、;；]", line):
+                    inst = inst.strip()
+                    if inst and len(inst) > 1 and "仪器" not in inst and "设备" not in inst:
+                        result["instruments"].append(inst[:40])
+
+    return result
+
+
+def extract_text_with_mineru(pdf_bytes):
+    """使用MinerU解析PDF，返回高质量Markdown文本（支持表格、公式、多栏排版）"""
+    import tempfile
+    import os
+    import glob as _glob
+
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        mineru_do_parse(
+            output_dir=tmp_dir,
+            pdf_file_names=["paper.pdf"],
+            pdf_bytes_list=[pdf_bytes],
+            p_lang_list=["ch"],
+            backend="pipeline",
+            parse_method="auto",
+            formula_enable=True,
+            table_enable=True,
+            f_draw_layout_bbox=False,
+            f_draw_span_bbox=False,
+            f_dump_md=True,
+            f_dump_middle_json=False,
+            f_dump_model_output=False,
+            f_dump_orig_pdf=False,
+            f_dump_content_list=False,
+        )
+        # 读取生成的markdown文件
+        md_files = _glob.glob(os.path.join(tmp_dir, "**", "*.md"), recursive=True)
+        if md_files:
+            with open(md_files[0], "r", encoding="utf-8") as f:
+                return f.read()
+    return ""
+
+
+@app.route("/api/extract", methods=["POST"])
+def api_extract():
+    """PDF文献提取API - 后台异步执行"""
+    if not HAS_PDF and not HAS_MINERU:
+        return jsonify({"error": "PDF解析库未安装，请联系管理员"}), 500
+
+    if "file" not in request.files:
+        return jsonify({"error": "请上传文件"}), 400
+
+    file = request.files["file"]
+    if not file.filename:
+        return jsonify({"error": "请选择文件"}), 400
+
+    if not file.filename.lower().endswith(".pdf"):
+        return jsonify({"error": "仅支持PDF格式"}), 400
+
+    file.seek(0, 2)
+    size = file.tell()
+    file.seek(0)
+    if size > 20 * 1024 * 1024:
+        return jsonify({"error": "文件大小不能超过20MB"}), 400
+
+    try:
+        pdf_bytes = file.read()
+        full_text = ""
+
+        # 优先使用MinerU（高质量解析，支持表格、公式、多栏排版）
+        if HAS_MINERU:
+            try:
+                full_text = extract_text_with_mineru(pdf_bytes)
+            except Exception as e:
+                print(f"[WARN] MinerU解析失败，回退到pdfplumber: {e}")
+
+        # MinerU不可用或失败时，回退到pdfplumber
+        if not full_text.strip() and HAS_PDF:
+            import io
+            text_parts = []
+            with pdfplumber.open(io.BytesIO(pdf_bytes)) as pdf:
+                for i, page in enumerate(pdf.pages):
+                    page_text = page.extract_text()
+                    if page_text:
+                        text_parts.append(page_text)
+                    tables = page.extract_tables()
+                    for table in tables:
+                        for row in table:
+                            if row:
+                                cells = [str(c).strip() if c else "" for c in row]
+                                text_parts.append(" | ".join(cells))
+            full_text = "\n".join(text_parts)
+
+        if not full_text.strip():
+            return jsonify({"error": "无法从PDF中提取文本，可能是扫描件。请使用文本型PDF。"}), 400
+
+        api_settings = None
+        if "user_id" in session:
+            api_settings = get_user_api_settings()
+        form_api_key = request.form.get("api_key", "")
+        if form_api_key and not api_settings:
+            api_settings = {"provider": "anthropic", "api_key": form_api_key, "model": "claude-sonnet-4-20250514", "base_url": ""}
+
+        # 无API时同步返回（关键词模式很快）
+        if not api_settings or not api_settings.get("api_key"):
+            structured, usage = extract_structured_sections(full_text), {}
+            return jsonify({
+                "text": full_text, "structured": structured,
+                "pages": len(text_parts), "ai_powered": False, "usage": usage,
+            })
+
+        # 有API时后台异步执行
+        user_id = session.get("user_id")
+        file_data_b64 = base64.b64encode(full_text.encode("utf-8")).decode("utf-8")
+        conn = get_user_db()
+        cur = conn.execute(
+            "INSERT INTO extract_tasks (user_id, task_type, status, file_name, file_data, raw_text) VALUES (?, 'extract', 'pending', ?, ?, ?)",
+            (user_id, file.filename, file_data_b64, full_text[:50000])
+        )
+        task_id = cur.lastrowid
+        conn.commit()
+        conn.close()
+
+        threading.Thread(
+            target=_run_extract_task,
+            args=(task_id, api_settings),
+            daemon=True
+        ).start()
+
+        return jsonify({"task_id": task_id, "status": "pending"})
+
+    except Exception as e:
+        return jsonify({"error": f"解析失败: {str(e)}"}), 500
+
+
+def _run_extract_task(task_id, api_settings):
+    """后台执行提取任务"""
+    try:
+        conn = get_user_db()
+        conn.execute("UPDATE extract_tasks SET status='processing' WHERE id=?", (task_id,))
+        conn.commit()
+
+        row = conn.execute("SELECT file_data, raw_text FROM extract_tasks WHERE id=?", (task_id,)).fetchone()
+        conn.close()
+
+        full_text = base64.b64decode(row["file_data"]).decode("utf-8")
+        structured, usage = extract_with_llm(full_text, api_settings)
+
+        conn = get_user_db()
+        conn.execute(
+            "UPDATE extract_tasks SET status='completed', structured_json=?, result_json=?, completed_at=CURRENT_TIMESTAMP WHERE id=?",
+            (json.dumps(structured, ensure_ascii=False), json.dumps({"usage": usage}, ensure_ascii=False), task_id)
+        )
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        conn = get_user_db()
+        conn.execute(
+            "UPDATE extract_tasks SET status='failed', error_msg=?, completed_at=CURRENT_TIMESTAMP WHERE id=?",
+            (str(e), task_id)
+        )
+        conn.commit()
+        conn.close()
+
+
+@app.route("/api/extract/task/<int:task_id>")
+@login_required
+def api_extract_task_status(task_id):
+    """查询提取任务状态"""
+    conn = get_user_db()
+    row = conn.execute("SELECT * FROM extract_tasks WHERE id=? AND user_id=?", (task_id, session["user_id"])).fetchone()
+    conn.close()
+    if not row:
+        return jsonify({"error": "任务不存在"}), 404
+    result = {
+        "task_id": row["id"],
+        "task_type": row["task_type"],
+        "status": row["status"],
+        "file_name": row["file_name"],
+        "created_at": row["created_at"],
+        "completed_at": row["completed_at"],
+    }
+    if row["status"] == "completed":
+        result["structured"] = json.loads(row["structured_json"]) if row["structured_json"] else {}
+        result["raw_text"] = row["raw_text"] or ""
+        result["usage"] = json.loads(row["result_json"]) if row["result_json"] else {}
+        if row["issues_json"]:
+            result["issues"] = json.loads(row["issues_json"])
+    elif row["status"] == "failed":
+        result["error"] = row["error_msg"]
+    return jsonify(result)
+
+
+@app.route("/api/extract/tasks")
+@login_required
+def api_extract_tasks():
+    """获取用户的提取任务列表"""
+    conn = get_user_db()
+    rows = conn.execute(
+        "SELECT id, task_type, status, file_name, created_at, completed_at FROM extract_tasks WHERE user_id=? ORDER BY id DESC LIMIT 20",
+        (session["user_id"],)
+    ).fetchall()
+    conn.close()
+    return jsonify({"tasks": [
+        {"task_id": r["id"], "task_type": r["task_type"], "status": r["status"],
+         "file_name": r["file_name"], "created_at": r["created_at"], "completed_at": r["completed_at"]}
+        for r in rows
+    ]})
+
+
+def _extract_json_from_llm(text):
+    """从LLM输出中健壮地提取JSON，处理markdown代码块、多余文字等"""
+    if not text:
+        return None
+    # 先尝试提取 ```json ... ``` 代码块
+    m = re.search(r'```(?:json)?\s*\n?(.*?)\n?```', text, re.DOTALL)
+    if m:
+        try:
+            return json.loads(m.group(1).strip())
+        except json.JSONDecodeError:
+            pass
+    # 尝试找最外层 { ... }
+    start = text.find("{")
+    if start < 0:
+        return None
+    depth = 0
+    in_string = False
+    escape = False
+    for i in range(start, len(text)):
+        c = text[i]
+        if escape:
+            escape = False
+            continue
+        if c == '\\' and in_string:
+            escape = True
+            continue
+        if c == '"' and not escape:
+            in_string = not in_string
+            continue
+        if in_string:
+            continue
+        if c == '{':
+            depth += 1
+        elif c == '}':
+            depth -= 1
+            if depth == 0:
+                try:
+                    return json.loads(text[start:i+1])
+                except json.JSONDecodeError:
+                    # 尝试修复常见问题：尾逗号
+                    candidate = text[start:i+1]
+                    candidate = re.sub(r',\s*([}\]])', r'\1', candidate)
+                    try:
+                        return json.loads(candidate)
+                    except json.JSONDecodeError:
+                        return None
+    return None
+
+
+def _preprocess_methods_section(text):
+    """预处理PDF文本，只保留材料与方法部分，减少token消耗"""
+    text_lower = text.lower()
+
+    # 找到方法部分的起始位置
+    method_start = -1
+    markers = ["材料与方法", "材料和方法", "实验方法", "实验材料与方法",
+                "materials and methods", "materials & methods",
+                "experimental procedures", "methods and materials",
+                "materials and methods"]
+    for marker in markers:
+        idx = text_lower.find(marker.lower())
+        if idx >= 0:
+            method_start = idx
+            break
+
+    if method_start < 0:
+        # 没找到方法部分，尝试用关键词密度判断
+        # 找包含最多实验关键词的连续段落
+        return text[:30000] if len(text) > 30000 else text
+
+    # 找到方法部分的结束位置
+    method_end = len(text)
+    end_markers = [
+        r"\n(?:结果|讨论|结论|参考文献|致谢|acknowledgment|discussion|results|references|图表|figure|table)",
+        r"\n\d+\.\s*(?:结果|讨论|结论|Result|Discussion|Conclusion)",
+    ]
+    for pat in end_markers:
+        m = re.search(pat, text[method_start:], re.IGNORECASE)
+        if m:
+            method_end = method_start + m.start()
+            break
+
+    # 提取标题（方法部分之前的文本，取前200字）
+    title_area = text[:method_start][:300]
+
+    # 组合：标题 + 方法部分
+    methods_text = text[method_start:method_end]
+    combined = title_area + "\n\n" + methods_text
+
+    return combined
+
+
+def extract_with_llm(text, api_settings):
+    """用LLM API精准提取实验方法、步骤、试剂、参数"""
+    # 预处理：只保留方法部分，减少token消耗
+    text = _preprocess_methods_section(text)
+    if len(text) > 30000:
+        text = text[:30000] + "\n\n[...文本过长，已截断...]"
+
+    prompt = f"""你是一个专业的植物科研实验助手。你的任务是从学术论文中精准提取"材料与方法"（Materials and Methods）部分，将其转化为一份**可直接执行的实验方案**。
+
+请仔细阅读论文全文，找到"材料与方法"/"Materials and Methods"/"实验方法"部分，然后提取以下信息：
+
+**要求：**
+1. 步骤必须是**可执行的**——一个从未做过这个实验的人看了就能动手操作
+2. 每个步骤必须包含：具体操作 + 关键参数（温度、时间、转速、体积、质量等）
+3. 试剂要列出完整配方（名称、浓度、用量、配制方法）
+4. 标注每个信息的来源可信度
+
+**返回JSON格式（严格按此格式）：**
+```json
+{{
+  "title": "论文完整标题",
+  "method_name": "实验方法名称（如：TRIzol法提取总RNA）",
+  "principle": "实验原理（1-2句话说明这个方法的原理）",
+  "steps": [
+    {{
+      "step": 1,
+      "action": "详细操作描述，包含所有动作和参数。例如：取0.1g新鲜叶片放入1.5mL离心管中，加入1mL TRIzol试剂，用液氮研磨至粉末状",
+      "params": "关键参数摘要，如：0.1g, 1mL, 液氮",
+      "reagent": "本步骤使用的试剂名称",
+      "warning": "本步骤的注意事项（没有则留空字符串）",
+      "source_confidence": "明确"
+    }}
+  ],
+  "reagents": [
+    {{
+      "name": "试剂全称",
+      "concentration": "工作浓度",
+      "amount": "用量（如：1mL/样品）",
+      "prep": "配制方法（如：TRIzol直接使用，无需配制）",
+      "source_confidence": "明确"
+    }}
+  ],
+  "instruments": ["仪器名称及型号（如有）"],
+  "conditions": {{
+    "temperature": "温度条件",
+    "light": "光照条件（如有）",
+    "other": "其他重要条件"
+  }},
+  "risks": [
+    {{
+      "point": "具体风险描述",
+      "solution": "解决方案或替代方法",
+      "severity": "高/中/低"
+    }}
+  ]
+}}
+```
+
+**source_confidence 判断标准：**
+- "明确"：论文中**明确写了**这个数值/操作（如"12000rpm离心10min"）
+- "部分"：论文提到了但**参数不完整**（如只写了"离心"但没写转速）
+- "推断"：论文**没有明确写**，你根据实验常识推断的（如"室温"推断为25°C）
+- "缺失"：论文**完全没有提及**这个信息
+
+**风险点（risks）应包括：**
+- 论文中明确提到的注意事项
+- 你根据实验经验判断的常见出错点
+- 关键步骤中容易忽略的操作细节
+
+**重要原则：**
+- 只提取论文中**实际存在的**实验操作，不要编造
+- 步骤要**完整、详细、按顺序**，不要遗漏
+- 每个参数都要**保留原文数值**，不要修改
+- 用中文返回（术语可保留英文）
+- 严格返回JSON，不要有其他文字
+
+论文内容：
+{text}"""
+
+    try:
+        result_text, usage = call_llm(prompt, api_settings)
+        if not result_text:
+            print("[WARN] LLM返回空结果，回退到关键词模式")
+            return extract_structured_sections(text), {}
+
+        structured = _extract_json_from_llm(result_text)
+        if structured:
+            if "steps" in structured and isinstance(structured["steps"], str):
+                structured = _convert_old_format(structured)
+            return structured, usage
+        else:
+            print(f"[WARN] LLM返回的JSON解析失败，回退到关键词模式。原文前200字: {result_text[:200]}")
+            return extract_structured_sections(text), {}
+
+    except Exception as e:
+        print(f"[WARN] LLM API提取失败，回退到关键词模式: {e}")
+        return extract_structured_sections(text), {}
+
+
+def _convert_old_format(data):
+    """将旧格式（steps为字符串）转换为新格式（steps为数组）"""
+    result = {
+        "title": data.get("title", ""),
+        "method_name": data.get("methods", ""),
+        "principle": "",
+        "steps": [],
+        "reagents": [],
+        "instruments": [i.strip() for i in data.get("instruments", "").split(",") if i.strip()] if data.get("instruments") else [],
+        "conditions": {},
+        "risks": [],
+    }
+    # 解析旧格式的steps字符串
+    steps_text = data.get("steps", "")
+    if isinstance(steps_text, str):
+        for i, line in enumerate(steps_text.split("\n"), 1):
+            line = line.strip()
+            if line and len(line) > 5:
+                result["steps"].append({
+                    "step": i,
+                    "action": line,
+                    "params": "",
+                    "reagent": "",
+                    "warning": "",
+                    "source_confidence": "部分",
+                })
+    # 解析旧格式的materials
+    mats = data.get("materials", "")
+    if isinstance(mats, str) and mats.strip():
+        for line in mats.split("\n"):
+            line = line.strip()
+            if line and len(line) > 3:
+                result["reagents"].append({
+                    "name": line,
+                    "concentration": "",
+                    "amount": "",
+                    "prep": "",
+                    "source_confidence": "部分",
+                })
+    if data.get("conditions"):
+        result["conditions"] = {"other": data["conditions"]}
+    if data.get("notes"):
+        result["risks"].append({"point": data["notes"], "solution": "", "severity": "中"})
+    return result
+
+
+@app.route("/api/extract/review", methods=["POST"])
+@login_required
+def api_extract_review():
+    """AI审查提取结果 - 后台异步执行"""
+    data = request.json
+    structured = data.get("structured", {})
+    raw_text = data.get("raw_text", "")
+
+    api_settings = get_user_api_settings()
+    form_api_key = data.get("api_key", "")
+    if form_api_key and not api_settings:
+        api_settings = {"provider": "anthropic", "api_key": form_api_key, "model": "claude-sonnet-4-20250514", "base_url": ""}
+
+    if not api_settings or not api_settings.get("api_key"):
+        return jsonify({"error": "请先在个人中心配置API Key"})
+
+    user_id = session["user_id"]
+    conn = get_user_db()
+    cur = conn.execute(
+        "INSERT INTO extract_tasks (user_id, task_type, status, structured_json, raw_text) VALUES (?, 'review', 'pending', ?, ?)",
+        (user_id, json.dumps(structured, ensure_ascii=False), raw_text[:50000])
+    )
+    task_id = cur.lastrowid
+    conn.commit()
+    conn.close()
+
+    threading.Thread(
+        target=_run_review_task,
+        args=(task_id, api_settings),
+        daemon=True
+    ).start()
+
+    return jsonify({"task_id": task_id, "status": "pending"})
+
+
+def _run_review_task(task_id, api_settings):
+    """后台执行审查任务"""
+    try:
+        conn = get_user_db()
+        conn.execute("UPDATE extract_tasks SET status='processing' WHERE id=?", (task_id,))
+        conn.commit()
+        row = conn.execute("SELECT structured_json, raw_text FROM extract_tasks WHERE id=?", (task_id,)).fetchone()
+        conn.close()
+
+        structured = json.loads(row["structured_json"]) if row["structured_json"] else {}
+        raw_text = row["raw_text"] or ""
+        structured_str = json.dumps(structured, ensure_ascii=False, indent=2)
+
+        prompt = f"""你是一个严谨的植物科研实验助手。请审查以下从论文中提取的实验方案，找出其中可能存在的问题。
+
+提取的实验方案：
+{structured_str}
+
+原始论文片段（用于交叉验证）：
+{raw_text[:15000]}
+
+请逐项检查：
+1. **步骤完整性**：是否有遗漏的关键步骤？顺序是否正确？
+2. **参数准确性**：温度、时间、转速、浓度等参数是否与原文一致？
+3. **试剂信息**：试剂名称、浓度、用量是否正确？配制方法是否完整？
+4. **仪器匹配**：仪器设备是否与实验方法匹配？
+5. **逻辑一致性**：步骤之间是否有逻辑矛盾？
+6. **可执行性**：一个新手看了能否直接操作？是否有模糊不清的描述？
+
+返回JSON格式：
+{{
+  "issues": [
+    {{
+      "field": "steps/reagents/instruments/conditions/risks",
+      "description": "具体问题描述",
+      "suggestion": "修复建议"
+    }}
+  ]
+}}
+
+如果没有问题，返回 {{"issues": []}}
+
+注意：
+- 只报告**确实存在的问题**，不要吹毛求疵
+- 问题描述要**具体**，指出是哪个步骤/试剂/参数有问题
+- 修复建议要**可操作**
+- 用中文返回"""
+
+        result_text, usage = call_llm(prompt, api_settings)
+        if not result_text:
+            raise Exception("AI调用失败，请检查API Key和模型配置是否正确")
+
+        result = _extract_json_from_llm(result_text)
+        issues = result.get("issues", []) if result else []
+
+        conn = get_user_db()
+        conn.execute(
+            "UPDATE extract_tasks SET status='completed', issues_json=?, result_json=?, completed_at=CURRENT_TIMESTAMP WHERE id=?",
+            (json.dumps(issues, ensure_ascii=False), json.dumps({"usage": usage}, ensure_ascii=False), task_id)
+        )
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        conn = get_user_db()
+        conn.execute(
+            "UPDATE extract_tasks SET status='failed', error_msg=?, completed_at=CURRENT_TIMESTAMP WHERE id=?",
+            (str(e), task_id)
+        )
+        conn.commit()
+        conn.close()
+
+
+@app.route("/api/extract/fix", methods=["POST"])
+@login_required
+def api_extract_fix():
+    """根据审查问题修复提取结果 - 后台异步执行"""
+    data = request.json
+    structured = data.get("structured", {})
+    issues = data.get("issues", [])
+    raw_text = data.get("raw_text", "")
+
+    api_settings = get_user_api_settings()
+    form_api_key = data.get("api_key", "")
+    if form_api_key and not api_settings:
+        api_settings = {"provider": "anthropic", "api_key": form_api_key, "model": "claude-sonnet-4-20250514", "base_url": ""}
+
+    if not api_settings or not api_settings.get("api_key"):
+        return jsonify({"error": "请先在个人中心配置API Key"})
+
+    user_id = session["user_id"]
+    conn = get_user_db()
+    cur = conn.execute(
+        "INSERT INTO extract_tasks (user_id, task_type, status, structured_json, issues_json, raw_text) VALUES (?, 'fix', 'pending', ?, ?, ?)",
+        (user_id, json.dumps(structured, ensure_ascii=False), json.dumps(issues, ensure_ascii=False), raw_text[:50000])
+    )
+    task_id = cur.lastrowid
+    conn.commit()
+    conn.close()
+
+    threading.Thread(
+        target=_run_fix_task,
+        args=(task_id, api_settings),
+        daemon=True
+    ).start()
+
+    return jsonify({"task_id": task_id, "status": "pending"})
+
+
+def _run_fix_task(task_id, api_settings):
+    """后台执行修复任务"""
+    try:
+        conn = get_user_db()
+        conn.execute("UPDATE extract_tasks SET status='processing' WHERE id=?", (task_id,))
+        conn.commit()
+        row = conn.execute("SELECT structured_json, issues_json, raw_text FROM extract_tasks WHERE id=?", (task_id,)).fetchone()
+        conn.close()
+
+        structured = json.loads(row["structured_json"]) if row["structured_json"] else {}
+        issues = json.loads(row["issues_json"]) if row["issues_json"] else []
+        raw_text = row["raw_text"] or ""
+
+        structured_str = json.dumps(structured, ensure_ascii=False, indent=2)
+        issues_str = json.dumps(issues, ensure_ascii=False, indent=2)
+
+        prompt = f"""你是一个植物科研实验助手。请根据审查发现的问题，修正实验方案。
+
+当前实验方案：
+{structured_str}
+
+需要修复的问题：
+{issues_str}
+
+原始论文片段（参考）：
+{raw_text[:15000]}
+
+请修正上述问题，返回**完整**的修正后JSON（格式与输入一致）：
+{{
+  "title": "...",
+  "method_name": "...",
+  "principle": "...",
+  "steps": [{{"step": 1, "action": "...", "params": "...", "reagent": "...", "warning": "...", "source_confidence": "明确"}}],
+  "reagents": [{{"name": "...", "concentration": "...", "amount": "...", "prep": "...", "source_confidence": "明确"}}],
+  "instruments": ["..."],
+  "conditions": {{"temperature": "...", "light": "...", "other": "..."}},
+  "risks": [{{"point": "...", "solution": "...", "severity": "高/中/低"}}]
+}}
+
+注意：
+- 只修正有问题的部分，没问题的保持不变
+- 修正要基于原文，不要编造新内容
+- 保留所有原始参数
+- 返回完整JSON，不要只返回修改部分
+- 用中文返回"""
+
+        result_text, usage = call_llm(prompt, api_settings)
+        if not result_text:
+            raise Exception("AI调用失败，请检查API Key和模型配置是否正确")
+
+        fixed = _extract_json_from_llm(result_text)
+        if not fixed:
+            raise Exception("AI返回格式异常，请重试。如反复失败可尝试更换模型。")
+
+        conn = get_user_db()
+        conn.execute(
+            "UPDATE extract_tasks SET status='completed', structured_json=?, result_json=?, completed_at=CURRENT_TIMESTAMP WHERE id=?",
+            (json.dumps(fixed, ensure_ascii=False), json.dumps({"usage": usage}, ensure_ascii=False), task_id)
+        )
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        conn = get_user_db()
+        conn.execute(
+            "UPDATE extract_tasks SET status='failed', error_msg=?, completed_at=CURRENT_TIMESTAMP WHERE id=?",
+            (str(e), task_id)
+        )
+        conn.commit()
+        conn.close()
+
+
+@app.route("/api/extract/export", methods=["POST"])
+def api_extract_export():
+    """导出提取的实验方案为Word文档"""
+    data = request.json
+    structured = data.get("structured", {})
+    fmt = data.get("format", "docx")
+
+    doc = DocxDocument()
+
+    # 页面边距
+    for section in doc.sections:
+        section.top_margin = Cm(2)
+        section.bottom_margin = Cm(2)
+        section.left_margin = Cm(2.5)
+        section.right_margin = Cm(2.5)
+
+    # 设置Normal样式
+    style = doc.styles["Normal"]
+    style.font.name = "Times New Roman"
+    style.font.size = Pt(10.5)
+    style.element.rPr.rFonts.set(qn('w:eastAsia'), '宋体')
+
+    # 标题
+    method_name = structured.get("method_name", "") or structured.get("title", "")
+    if method_name:
+        title_p = doc.add_paragraph()
+        title_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        title_p.paragraph_format.space_after = Pt(6)
+        run = title_p.add_run(method_name)
+        set_run_font(run, 16, bold=True)
+
+    # 来源
+    src_p = doc.add_paragraph()
+    src_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    src_p.paragraph_format.space_after = Pt(12)
+    run = src_p.add_run("植研小白盒 · 文献实验提取")
+    set_run_font(run, 9)
+    run.font.color.rgb = RGBColor(0x90, 0x90, 0x90)
+
+    # 原理
+    if structured.get("principle"):
+        p = doc.add_paragraph()
+        p.paragraph_format.space_before = Pt(6)
+        p.paragraph_format.space_after = Pt(8)
+        run = p.add_run("实验原理：")
+        set_run_font(run, 11, bold=True)
+        run = p.add_run(structured["principle"])
+        set_run_font(run, 11)
+
+    # 实验步骤
+    steps = structured.get("steps", [])
+    if steps and isinstance(steps, list):
+        p = doc.add_paragraph()
+        p.paragraph_format.space_before = Pt(12)
+        pPr = p._element.get_or_add_pPr()
+        pBdr = pPr.makeelement(qn('w:pBdr'), {})
+        bottom = pBdr.makeelement(qn('w:bottom'), {
+            qn('w:val'): 'single', qn('w:sz'): '4', qn('w:space'): '1', qn('w:color'): '2D9D78',
+        })
+        pBdr.append(bottom)
+        pPr.append(pBdr)
+        run = p.add_run("实验步骤")
+        set_run_font(run, 13, bold=True)
+        run.font.color.rgb = RGBColor(0x2D, 0x9D, 0x78)
+
+        for s in steps:
+            step_num = s.get("step", "")
+            action = s.get("action", "")
+            params = s.get("params", "")
+            warning = s.get("warning", "")
+            reagent = s.get("reagent", "")
+            confidence = s.get("source_confidence", "")
+
+            # 步骤标题
+            p = doc.add_paragraph()
+            p.paragraph_format.space_before = Pt(6)
+            p.paragraph_format.space_after = Pt(2)
+            run = p.add_run(f"步骤{step_num}：{action}")
+            set_run_font(run, 10.5)
+
+            # 参数标签
+            if params:
+                p = doc.add_paragraph()
+                p.paragraph_format.space_before = Pt(0)
+                p.paragraph_format.space_after = Pt(2)
+                p.paragraph_format.left_indent = Cm(0.8)
+                run = p.add_run(f"关键参数：{params}")
+                set_run_font(run, 10)
+                run.font.color.rgb = RGBColor(0x15, 0x65, 0xC0)
+
+            # 试剂
+            if reagent:
+                p = doc.add_paragraph()
+                p.paragraph_format.space_before = Pt(0)
+                p.paragraph_format.space_after = Pt(2)
+                p.paragraph_format.left_indent = Cm(0.8)
+                run = p.add_run(f"使用试剂：{reagent}")
+                set_run_font(run, 10)
+                run.font.color.rgb = RGBColor(0xE6, 0x51, 0x00)
+
+            # 注意事项
+            if warning:
+                p = doc.add_paragraph()
+                p.paragraph_format.space_before = Pt(0)
+                p.paragraph_format.space_after = Pt(4)
+                p.paragraph_format.left_indent = Cm(0.8)
+                run = p.add_run(f"⚠ {warning}")
+                set_run_font(run, 10)
+                run.font.color.rgb = RGBColor(0xC6, 0x28, 0x28)
+
+    # 试剂配方
+    reagents = structured.get("reagents", [])
+    if reagents and isinstance(reagents, list):
+        p = doc.add_paragraph()
+        p.paragraph_format.space_before = Pt(12)
+        pPr = p._element.get_or_add_pPr()
+        pBdr = pPr.makeelement(qn('w:pBdr'), {})
+        bottom = pBdr.makeelement(qn('w:bottom'), {
+            qn('w:val'): 'single', qn('w:sz'): '4', qn('w:space'): '1', qn('w:color'): '2D9D78',
+        })
+        pBdr.append(bottom)
+        pPr.append(pBdr)
+        run = p.add_run("试剂配方")
+        set_run_font(run, 13, bold=True)
+        run.font.color.rgb = RGBColor(0x2D, 0x9D, 0x78)
+
+        # 表格
+        table = doc.add_table(rows=1, cols=4)
+        table.style = "Table Grid"
+        headers = ["试剂名称", "浓度", "用量", "配制方法"]
+        for i, h in enumerate(headers):
+            cell = table.rows[0].cells[i]
+            cell.text = ""
+            run = cell.paragraphs[0].add_run(h)
+            set_run_font(run, 10, bold=True)
+            from docx.oxml import OxmlElement
+            shading = OxmlElement('w:shd')
+            shading.set(qn('w:fill'), 'D9E2C8')
+            cell.paragraphs[0].paragraph_format.space_after = Pt(0)
+            tc = cell._tc
+            tcPr = tc.get_or_add_tcPr()
+            tcPr.append(shading)
+
+        for r in reagents:
+            row = table.add_row()
+            vals = [r.get("name", ""), r.get("concentration", ""), r.get("amount", ""), r.get("prep", "")]
+            for i, v in enumerate(vals):
+                row.cells[i].text = ""
+                run = row.cells[i].paragraphs[0].add_run(v or "-")
+                set_run_font(run, 9)
+                row.cells[i].paragraphs[0].paragraph_format.space_after = Pt(0)
+
+    # 仪器设备
+    instruments = structured.get("instruments", [])
+    if instruments and isinstance(instruments, list):
+        add_paragraph(doc, "")
+        p = doc.add_paragraph()
+        run = p.add_run("仪器设备：")
+        set_run_font(run, 11, bold=True)
+        run = p.add_run("、".join(instruments))
+        set_run_font(run, 11)
+
+    # 实验条件
+    conditions = structured.get("conditions", {})
+    if conditions and isinstance(conditions, dict):
+        p = doc.add_paragraph()
+        p.paragraph_format.space_before = Pt(6)
+        run = p.add_run("实验条件：")
+        set_run_font(run, 11, bold=True)
+        cond_parts = []
+        if conditions.get("temperature"):
+            cond_parts.append(f"温度 {conditions['temperature']}")
+        if conditions.get("light"):
+            cond_parts.append(f"光照 {conditions['light']}")
+        if conditions.get("other"):
+            cond_parts.append(conditions["other"])
+        run = p.add_run("；".join(cond_parts))
+        set_run_font(run, 11)
+
+    # 风险清单
+    risks = structured.get("risks", [])
+    if risks and isinstance(risks, list):
+        p = doc.add_paragraph()
+        p.paragraph_format.space_before = Pt(12)
+        run = p.add_run("风险清单")
+        set_run_font(run, 13, bold=True)
+        run.font.color.rgb = RGBColor(0xC6, 0x28, 0x28)
+        for r in risks:
+            severity = r.get("severity", "中")
+            point = r.get("point", "")
+            solution = r.get("solution", "")
+            text = f"[{severity}] {point}"
+            if solution:
+                text += f" → {solution}"
+            add_paragraph(doc, text, size=10)
+
+    # 底部
+    doc.add_paragraph()
+    sign_p = doc.add_paragraph()
+    sign_p.paragraph_format.space_before = Pt(20)
+    run = sign_p.add_run("实验日期：____________    操作人：____________    复核人：____________")
+    set_run_font(run, 10.5)
+
+    buf = io.BytesIO()
+    doc.save(buf)
+    buf.seek(0)
+
+    title = method_name or "实验方案"
+    return send_file(
+        buf,
+        mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        as_attachment=True,
+        download_name=f"{title}.docx",
+    )
+
 
 # ========== 启动 ==========
 if __name__ == "__main__":

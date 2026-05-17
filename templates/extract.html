@@ -1,0 +1,889 @@
+{% extends "base.html" %}
+{% set active = 'extract' %}
+{% block title %}文献提取 - 植研小白盒{% endblock %}
+
+{% block head %}
+<style>
+.extract-hero {
+  background: linear-gradient(135deg, #A85C25 0%, #D4793A 30%, #E89B5E 60%, #F0B87A 100%);
+  color: white; padding: 2.5rem 2rem 2rem; text-align: center;
+}
+.extract-hero h1 { font-size: 1.8rem; font-weight: 800; margin-bottom: 0.3rem; }
+.extract-hero p { opacity: 0.9; font-size: 1rem; }
+.extract-hero .hero-stat { margin-top: 0.8rem; display: flex; justify-content: center; gap: 2rem; }
+.extract-hero .hero-stat-item { text-align: center; }
+.extract-hero .hero-stat-num { font-size: 1.3rem; font-weight: 800; }
+.extract-hero .hero-stat-label { font-size: 0.8rem; opacity: 0.8; }
+
+.extract-page { max-width: 960px; margin: 0 auto; padding: 24px 24px; }
+
+/* API 状态提示 */
+.api-hint {
+  text-align: center; margin-bottom: 16px; padding: 10px 16px;
+  border-radius: 10px; font-size: 13px; font-weight: 500;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.api-hint.configured { background: #E8F5E9; color: #D4793A; border: 1px solid rgba(212,121,58,0.2); }
+.api-hint.not-configured { background: #FFF8E1; color: #B8860B; border: 1px solid rgba(255,193,7,0.2); }
+.api-hint a { color: #D4793A; font-weight: 600; text-decoration: none; }
+.api-hint a:hover { text-decoration: underline; }
+
+/* Token用量条 */
+.token-bar {
+  display: none; margin-bottom: 16px; padding: 10px 16px;
+  background: #F5F7FA; border: 1px solid #E8ECF1; border-radius: 10px;
+  font-size: 13px; color: #555; align-items: center; gap: 12px; flex-wrap: wrap;
+}
+.token-bar.active { display: flex; }
+.token-label { font-weight: 600; color: var(--primary); }
+.token-item { display: inline-flex; align-items: center; gap: 4px; }
+.token-num { font-weight: 700; color: #333; font-variant-numeric: tabular-nums; }
+.token-dot { width: 4px; height: 4px; border-radius: 50%; background: #CCC; }
+
+/* 上传区 */
+.upload-zone {
+  border: 2px dashed #D0D5DD; border-radius: 16px; padding: 50px 40px;
+  text-align: center; cursor: pointer; transition: border-color 0.2s;
+  background: #FAFBFC; margin-bottom: 24px;
+}
+.upload-zone:hover, .upload-zone.dragover { border-color: #D4793A; background: #F0FAF6; }
+.upload-zone .upload-icon { font-size: 42px; margin-bottom: 12px; display: block; }
+.upload-zone .upload-text { font-size: 15px; color: #3D3D3D; font-weight: 600; }
+.upload-zone .upload-hint { font-size: 13px; color: #8E95A5; margin-top: 6px; }
+.upload-zone input[type="file"] { display: none; }
+
+/* 进度条 */
+.progress-bar { display: none; margin-bottom: 24px; }
+.progress-bar.active { display: block; }
+.progress-track { height: 5px; background: #E8ECF1; border-radius: 3px; overflow: hidden; }
+.progress-fill { height: 100%; background: #D4793A; border-radius: 3px; width: 0%; transition: width 0.3s; }
+.progress-text { font-size: 13px; color: #8E95A5; margin-top: 6px; text-align: center; }
+
+/* 结果区 */
+.result-section { display: none; margin-top: 24px; }
+.result-section.active { display: block; }
+
+/* 卡片通用 */
+.r-card {
+  background: #fff; border: 1px solid #E8ECF1; border-radius: 12px;
+  padding: 20px; margin-bottom: 16px;
+}
+.r-card h3 {
+  font-size: 15px; color: #1A1D26; margin-bottom: 12px;
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+}
+.r-card h3 .badge {
+  font-size: 12px; background: rgba(212,121,58,0.1); color: #D4793A;
+  padding: 2px 10px; border-radius: 12px; font-weight: 600;
+}
+
+/* 方法标题区 */
+.method-header {
+  background: linear-gradient(135deg, #f0f7f0, #e8f5e9);
+  border-radius: 12px; padding: 20px 24px; margin-bottom: 20px;
+  border-left: 4px solid #D4793A;
+}
+.method-header .m-title { font-size: 18px; font-weight: 700; color: #1A1D26; margin-bottom: 6px; }
+.method-header .m-principle { font-size: 14px; color: #555; line-height: 1.6; }
+
+/* 步骤列表 */
+.step-list { display: flex; flex-direction: column; gap: 0; }
+.step-item {
+  display: flex; gap: 16px; padding: 16px 0;
+  border-bottom: 1px solid #F0F0F0;
+  transition: background 0.2s;
+}
+.step-item:last-child { border-bottom: none; }
+.step-item:hover { background: #FAFBFC; border-radius: 8px; padding-left: 8px; padding-right: 8px; margin-left: -8px; margin-right: -8px; }
+.step-num {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: #D4793A; color: #fff; font-size: 14px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px;
+}
+.step-body { flex: 1; min-width: 0; }
+.step-action { font-size: 14px; color: #333; line-height: 1.7; margin-bottom: 6px; }
+.step-meta { display: flex; flex-wrap: wrap; gap: 8px; }
+.step-tag {
+  font-size: 12px; padding: 3px 10px; border-radius: 6px; font-weight: 500;
+}
+.step-tag-params { background: #E3F2FD; color: #1565C0; }
+.step-tag-reagent { background: #FFF3E0; color: #E65100; }
+.step-tag-warning { background: #FFEBEE; color: #C62828; }
+.step-tag-check { background: #E8F5E9; color: #2E7D32; cursor: pointer; user-select: none; }
+.step-tag-check.done { text-decoration: line-through; opacity: 0.5; }
+
+/* 可信度标签 */
+.confidence {
+  font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 600; flex-shrink: 0;
+}
+.confidence-明确 { background: #E8F5E9; color: #2E7D32; }
+.confidence-部分 { background: #FFF8E1; color: #F57F17; }
+.confidence-推断 { background: #FFF3E0; color: #E65100; }
+.confidence-缺失 { background: #FFEBEE; color: #C62828; }
+
+/* 试剂表 */
+.reagent-table {
+  width: 100%; border-collapse: collapse; font-size: 13px;
+}
+.reagent-table th {
+  text-align: left; padding: 10px 12px; background: #F5F7FA;
+  border-bottom: 2px solid #E8ECF1; font-weight: 600; color: #555;
+}
+.reagent-table td {
+  padding: 10px 12px; border-bottom: 1px solid #F0F0F0; color: #333;
+}
+.reagent-table tr:hover td { background: #FAFBFC; }
+
+/* 仪器标签 */
+.instrument-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+.instrument-tag {
+  padding: 6px 14px; background: #F5F7FA; border: 1px solid #E8ECF1;
+  border-radius: 8px; font-size: 13px; color: #333; font-weight: 500;
+}
+
+/* 风险清单 */
+.risk-item {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 12px 16px; border-radius: 8px; margin-bottom: 8px;
+  border: 1px solid #F0F0F0; transition: all 0.2s;
+}
+.risk-item:hover { border-color: #FFC107; background: #FFFDE7; }
+.risk-severity {
+  font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 700; flex-shrink: 0;
+}
+.risk-高 { background: #FFEBEE; color: #C62828; }
+.risk-中 { background: #FFF8E1; color: #F57F17; }
+.risk-低 { background: #E8F5E9; color: #2E7D32; }
+.risk-text { flex: 1; font-size: 13px; line-height: 1.6; }
+.risk-solution { font-size: 12px; color: #D4793A; margin-top: 4px; }
+
+/* 审查结果 */
+.review-card {
+  background: #fff; border: 1px solid #E8ECF1; border-radius: 12px;
+  padding: 20px; margin-bottom: 16px;
+}
+.review-card h3 { font-size: 15px; color: #1A1D26; margin-bottom: 12px; }
+.issue-list { list-style: none; padding: 0; margin: 0; }
+.issue-item {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 12px 16px; border-radius: 8px; margin-bottom: 8px;
+  transition: background 0.2s; cursor: pointer;
+}
+.issue-item:hover { background: #F5F7FA; }
+.issue-item input[type="checkbox"] { margin-top: 3px; accent-color: #D4793A; flex-shrink: 0; }
+.issue-item .issue-text { flex: 1; font-size: 14px; line-height: 1.6; color: #3D3D3D; }
+.issue-item .issue-field {
+  font-size: 11px; background: rgba(255,118,117,0.1); color: #FF7675;
+  padding: 2px 8px; border-radius: 4px; font-weight: 600; flex-shrink: 0; margin-top: 2px;
+}
+.issue-item .issue-fix { font-size: 12px; color: #D4793A; margin-top: 4px; font-style: italic; }
+.review-empty { text-align: center; padding: 32px; color: #8E95A5; font-size: 14px; }
+.review-empty .empty-icon { font-size: 36px; display: block; margin-bottom: 8px; }
+
+/* 操作栏 */
+.action-bar { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+.btn {
+  padding: 9px 20px; border-radius: 8px; font-size: 14px;
+  font-weight: 600; cursor: pointer; border: none; transition: background 0.2s;
+}
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-primary { background: #D4793A; color: #fff; }
+.btn-primary:hover:not(:disabled) { background: #258A68; }
+.btn-secondary { background: #F5F7FA; color: #3D3D3D; border: 1px solid #E8ECF1; }
+.btn-secondary:hover:not(:disabled) { background: #E8ECF1; }
+.btn-warn { background: #FFC107; color: #1A1D26; }
+.btn-warn:hover:not(:disabled) { background: #FFB300; }
+
+.raw-text-toggle {
+  font-size: 13px; color: #8E95A5; cursor: pointer; border: none; background: none;
+  padding: 4px 8px; border-radius: 4px; margin-bottom: 12px;
+}
+.raw-text-toggle:hover { background: #F5F7FA; color: #D4793A; }
+.raw-text {
+  background: #F5F7FA; border-radius: 8px; padding: 16px; font-size: 13px;
+  line-height: 1.8; color: #3D3D3D; max-height: 300px; overflow-y: auto;
+  white-space: pre-wrap; word-break: break-all; display: none;
+}
+
+/* Toast */
+.toast {
+  position: fixed; bottom: 40px; left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  background: #1A1D26; color: #fff; padding: 10px 24px;
+  border-radius: 8px; font-size: 14px; opacity: 0; transition: opacity 0.2s;
+  pointer-events: none; z-index: 999;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+.spinner {
+  display: inline-block; width: 16px; height: 16px;
+  border: 2px solid #E8ECF1; border-top-color: #D4793A;
+  border-radius: 50%; animation: spin 0.6s linear infinite;
+  margin-right: 8px; vertical-align: middle;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero区域 -->
+<section class="extract-hero">
+  <h1>📄 文献实验过程提取</h1>
+  <p>上传PDF论文，AI自动提取实验步骤、试剂配方、关键参数</p>
+</section>
+
+<div class="extract-page">
+  <!-- Token用量条 -->
+  <div class="token-bar" id="tokenBar">
+    <span class="token-label">📊 Token用量</span>
+    <span class="token-dot"></span>
+    <span class="token-item">输入 <span class="token-num" id="tokenPrompt">0</span></span>
+    <span class="token-dot"></span>
+    <span class="token-item">输出 <span class="token-num" id="tokenCompletion">0</span></span>
+    <span class="token-dot"></span>
+    <span class="token-item">总计 <span class="token-num" id="tokenTotal">0</span></span>
+  </div>
+
+  {% if has_api %}
+  <div class="api-hint configured"><span>✅</span> AI模型已配置，将使用精准提取模式</div>
+  {% else %}
+  <div class="api-hint not-configured">
+    <span>⚠️</span> 未配置AI模型，将使用关键词匹配模式（精度较低）。
+    <a href="/profile">去个人中心配置 →</a>
+  </div>
+  {% endif %}
+
+  <div class="upload-zone" id="uploadZone">
+    <span class="upload-icon">📤</span>
+    <div class="upload-text">点击或拖拽PDF文件到此处</div>
+    <div class="upload-hint">支持 .pdf 格式，文件大小不超过 20MB</div>
+    <input type="file" id="fileInput" accept=".pdf" />
+  </div>
+
+  <div class="progress-bar" id="progressBar">
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-text" id="progressText">正在解析PDF...</div>
+  </div>
+
+  <!-- 任务历史 -->
+  <div id="taskHistorySection" style="display:none;margin-bottom:20px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <h3 style="font-size:14px;color:#555;font-weight:600;">📋 最近任务</h3>
+      <button onclick="toggleTaskHistory()" style="font-size:12px;color:#8E95A5;background:none;border:none;cursor:pointer;">收起</button>
+    </div>
+    <div id="taskHistoryList" style="display:flex;flex-direction:column;gap:6px;"></div>
+  </div>
+
+  <div class="result-section" id="resultSection">
+    <!-- 方法标题 -->
+    <div id="methodHeader" style="display:none"></div>
+
+    <!-- 实验步骤 -->
+    <div class="r-card" id="stepsCard" style="display:none">
+      <h3>📝 实验步骤 <span class="badge" id="stepsCount">0 步</span></h3>
+      <div id="stepsContent" class="step-list"></div>
+    </div>
+
+    <!-- 试剂配方 -->
+    <div class="r-card" id="reagentsCard" style="display:none">
+      <h3>🧪 试剂配方</h3>
+      <div id="reagentsContent"></div>
+    </div>
+
+    <!-- 仪器设备 -->
+    <div class="r-card" id="instrumentsCard" style="display:none">
+      <h3>🔧 仪器设备</h3>
+      <div id="instrumentsContent" class="instrument-tags"></div>
+    </div>
+
+    <!-- 实验条件 -->
+    <div class="r-card" id="conditionsCard" style="display:none">
+      <h3>🌡️ 实验条件</h3>
+      <div id="conditionsContent"></div>
+    </div>
+
+    <!-- 风险清单 -->
+    <div class="r-card" id="risksCard" style="display:none">
+      <h3>⚠️ 风险清单 <span class="badge" id="risksCount" style="background:rgba(255,193,7,0.15);color:#B8860B;">0 项</span></h3>
+      <div id="risksContent"></div>
+    </div>
+
+    <!-- PDF原文（折叠） -->
+    <div class="r-card">
+      <button class="raw-text-toggle" onclick="toggleRawText()">📃 展开PDF原文</button>
+      <div class="raw-text" id="rawText"></div>
+    </div>
+
+    <!-- 审查结果 -->
+    <div class="review-card" id="reviewSection" style="display:none">
+      <h3>🔍 自动审查 <span class="badge" id="reviewBadge">待审查</span></h3>
+      <div id="reviewContent">
+        <div class="review-empty"><span class="empty-icon">⏳</span>点击「自动审查」，AI将检查提取内容的准确性</div>
+      </div>
+      <div class="action-bar" id="reviewActions" style="display:none">
+        <button class="btn btn-warn" onclick="fixSelectedIssues()">🔧 修复选中问题</button>
+        <button class="btn btn-secondary" onclick="selectAllIssues()">全选</button>
+        <button class="btn btn-secondary" onclick="deselectAllIssues()">取消全选</button>
+      </div>
+    </div>
+
+    <!-- 操作按钮 -->
+    <div class="action-bar">
+      <button class="btn btn-primary" id="reviewBtn" onclick="startReview()">🔍 自动审查</button>
+      <button class="btn btn-primary" onclick="exportWord()" style="background:linear-gradient(135deg,#1565C0,#42A5F5);box-shadow:0 4px 14px rgba(21,101,192,0.3);">📄 导出Word</button>
+      <button class="btn btn-secondary" onclick="copyText()">📋 复制</button>
+      <button class="btn btn-secondary" onclick="downloadText()">💾 下载</button>
+      <button class="btn btn-secondary" onclick="resetUpload()">🔄 重新上传</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const uploadZone = document.getElementById('uploadZone');
+const fileInput = document.getElementById('fileInput');
+const progressBar = document.getElementById('progressBar');
+const progressFill = document.getElementById('progressFill');
+const progressText = document.getElementById('progressText');
+const resultSection = document.getElementById('resultSection');
+let extractedText = '';
+let structuredData = {};
+let reviewIssues = [];
+let hasApiConfig = {{ 'true' if has_api else 'false' }};
+let completedSteps = {};
+
+// ===== localStorage 持久化 =====
+const LS_KEY = 'extract_data';
+function saveToStorage() {
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify({
+      extractedText, structuredData, reviewIssues,
+      ts: Date.now()
+    }));
+  } catch(e) {}
+}
+function loadFromStorage() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return false;
+    const d = JSON.parse(raw);
+    if (!d || !d.structuredData || Object.keys(d.structuredData).length === 0) return false;
+    // 超过2小时自动清除
+    if (Date.now() - (d.ts || 0) > 7200000) { localStorage.removeItem(LS_KEY); return false; }
+    extractedText = d.extractedText || '';
+    structuredData = d.structuredData || {};
+    reviewIssues = d.reviewIssues || [];
+    return true;
+  } catch(e) { return false; }
+}
+
+// 页面加载时恢复数据
+document.addEventListener('DOMContentLoaded', function() {
+  if (loadFromStorage()) {
+    uploadZone.style.display = 'none';
+    resultSection.classList.add('active');
+    document.getElementById('rawText').textContent = extractedText;
+    renderStructured();
+    if (reviewIssues.length > 0) renderIssues();
+  }
+  loadTaskHistory();
+});
+
+// ===== 任务历史 =====
+function loadTaskHistory() {
+  fetch('/api/extract/tasks').then(r => r.json()).then(data => {
+    if (!data.tasks || data.tasks.length === 0) return;
+    const section = document.getElementById('taskHistorySection');
+    const list = document.getElementById('taskHistoryList');
+    section.style.display = 'block';
+    const typeLabels = { extract: '📄 提取', review: '🔍 审查', fix: '🔧 修复' };
+    const statusLabels = { pending: '⏳ 等待中', processing: '⚙️ 处理中', completed: '✅ 完成', failed: '❌ 失败' };
+    list.innerHTML = data.tasks.map(t => {
+      const st = t.status === 'completed' ? 'color:#D4793A' : t.status === 'failed' ? 'color:#F44336' : 'color:#8E95A5';
+      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#FAFBFC;border:1px solid #E8ECF1;border-radius:8px;font-size:13px;cursor:${t.status==='completed'?'pointer':'default'};" ${t.status==='completed'?`onclick="loadTaskResult(${t.task_id})"`:''}>
+        <span>${typeLabels[t.task_type]||t.task_type} ${escapeHtml(t.file_name||'')}</span>
+        <span style="${st};font-weight:600;">${statusLabels[t.status]||t.status}</span>
+      </div>`;
+    }).join('');
+  }).catch(() => {});
+}
+
+function loadTaskResult(taskId) {
+  fetch('/api/extract/task/' + taskId).then(r => r.json()).then(data => {
+    if (data.error) { showToast(data.error); return; }
+    if (data.status !== 'completed') { showToast('任务尚未完成'); return; }
+    if (data.task_type === 'extract') {
+      showResults({ text: data.raw_text, structured: data.structured, usage: data.usage });
+    } else if (data.task_type === 'review') {
+      reviewIssues = data.issues || [];
+      renderIssues();
+      saveToStorage();
+    } else if (data.task_type === 'fix') {
+      if (data.structured && Object.keys(data.structured).length > 0) {
+        structuredData = data.structured; renderStructured(); saveToStorage(); showToast('已加载修复结果');
+      }
+    }
+  }).catch(err => showToast('加载失败'));
+}
+
+function toggleTaskHistory() {
+  const list = document.getElementById('taskHistoryList');
+  const btn = list.previousElementSibling.querySelector('button');
+  if (list.style.display === 'none') { list.style.display = 'flex'; btn.textContent = '收起'; }
+  else { list.style.display = 'none'; btn.textContent = '展开'; }
+}
+
+// ===== 文件上传 =====
+uploadZone.addEventListener('click', () => fileInput.click());
+uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+uploadZone.addEventListener('drop', (e) => {
+  e.preventDefault(); uploadZone.classList.remove('dragover');
+  if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener('change', (e) => { if (e.target.files[0]) handleFile(e.target.files[0]); });
+
+function handleFile(file) {
+  if (!file.name.toLowerCase().endsWith('.pdf')) { showToast('请上传PDF格式文件'); return; }
+  if (file.size > 20 * 1024 * 1024) { showToast('文件大小不能超过20MB'); return; }
+  uploadZone.style.display = 'none';
+  progressBar.classList.add('active');
+  progressFill.style.width = '30%';
+  progressText.textContent = '正在上传并解析PDF...';
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  fetch('/api/extract', { method: 'POST', body: formData })
+    .then(res => { progressFill.style.width = '60%'; return res.json(); })
+    .then(data => {
+      if (data.error) {
+        progressBar.classList.remove('active');
+        uploadZone.style.display = '';
+        showToast(data.error);
+        return;
+      }
+      // 同步返回（无API的关键词模式）
+      if (data.structured) {
+        progressFill.style.width = '100%';
+        progressText.textContent = '解析完成！';
+        setTimeout(() => showResults(data), 500);
+        return;
+      }
+      // 异步模式：轮询任务状态
+      if (data.task_id) {
+        progressFill.style.width = '80%';
+        progressText.textContent = 'AI正在后台提取，请稍候...';
+        pollTaskStatus(data.task_id, 'extract');
+      }
+    })
+    .catch(err => {
+      progressBar.classList.remove('active');
+      uploadZone.style.display = '';
+      showToast('上传失败：' + err.message);
+    });
+}
+
+function pollTaskStatus(taskId, taskType, onDone) {
+  const poll = () => {
+    fetch('/api/extract/task/' + taskId)
+      .then(r => r.json())
+      .then(data => {
+        if (data.status === 'completed') {
+          progressFill.style.width = '100%';
+          if (taskType === 'extract') {
+            progressText.textContent = 'AI提取完成！';
+            setTimeout(() => showResults({
+              text: data.raw_text,
+              structured: data.structured,
+              usage: data.usage
+            }), 500);
+          } else if (taskType === 'review') {
+            const btn = document.getElementById('reviewBtn');
+            btn.disabled = false; btn.innerHTML = '🔍 自动审查';
+            if (data.usage) showTokenUsage(data.usage);
+            reviewIssues = data.issues || [];
+            renderIssues();
+            saveToStorage();
+          } else if (taskType === 'fix') {
+            const btn = document.getElementById('fixBtn');
+            if (btn) { btn.disabled = false; btn.innerHTML = '🔧 修复选中问题'; }
+            if (data.structured && Object.keys(data.structured).length > 0) {
+              structuredData = data.structured;
+              renderStructured();
+              saveToStorage();
+              showToast('修复完成');
+              startReview();
+            }
+          }
+          if (onDone) onDone(data);
+          loadTaskHistory();
+          return;
+        }
+        if (data.status === 'failed') {
+          progressBar.classList.remove('active');
+          showToast('任务失败：' + (data.error || '未知错误'));
+          const btn = document.getElementById('reviewBtn');
+          if (btn) { btn.disabled = false; btn.innerHTML = '🔍 自动审查'; }
+          return;
+        }
+        // 还在处理中，继续轮询
+        if (progressText.textContent.indexOf('...') === -1) {
+          progressFill.style.width = '90%';
+          progressText.textContent = 'AI正在处理，请稍候...';
+        }
+        setTimeout(poll, 2000);
+      })
+      .catch(() => setTimeout(poll, 3000));
+  };
+  poll();
+}
+
+function showResults(data) {
+  progressBar.classList.remove('active');
+  resultSection.classList.add('active');
+  if (data.error) { showToast(data.error); return; }
+
+  extractedText = data.text || '';
+  structuredData = data.structured || {};
+  completedSteps = {};
+  document.getElementById('rawText').textContent = extractedText;
+
+  renderStructured();
+
+  document.getElementById('reviewSection').style.display = 'none';
+  document.getElementById('reviewContent').innerHTML =
+    '<div class="review-empty"><span class="empty-icon">⏳</span>点击「自动审查」，AI将检查提取内容的准确性</div>';
+  document.getElementById('reviewActions').style.display = 'none';
+  document.getElementById('reviewBadge').textContent = '待审查';
+  reviewIssues = [];
+  saveToStorage();
+}
+
+function renderStructured() {
+  const d = structuredData;
+
+  // 方法标题
+  const header = document.getElementById('methodHeader');
+  if (d.title || d.method_name) {
+    header.style.display = 'block';
+    header.innerHTML = `<div class="method-header">
+      <div class="m-title">${escapeHtml(d.method_name || d.title || '')}</div>
+      ${d.principle ? '<div class="m-principle">' + escapeHtml(d.principle) + '</div>' : ''}
+    </div>`;
+  } else { header.style.display = 'none'; }
+
+  // 步骤
+  const stepsCard = document.getElementById('stepsCard');
+  const steps = d.steps || [];
+  if (Array.isArray(steps) && steps.length > 0) {
+    stepsCard.style.display = 'block';
+    document.getElementById('stepsCount').textContent = steps.length + ' 步';
+    const container = document.getElementById('stepsContent');
+    container.innerHTML = steps.map((s, i) => `
+      <div class="step-item" id="step-${i}">
+        <div class="step-num">${s.step || i + 1}</div>
+        <div class="step-body">
+          <div class="step-action">${escapeHtml(s.action || '')}</div>
+          <div class="step-meta">
+            ${s.params ? '<span class="step-tag step-tag-params">📐 ' + escapeHtml(s.params) + '</span>' : ''}
+            ${s.reagent ? '<span class="step-tag step-tag-reagent">🧪 ' + escapeHtml(s.reagent) + '</span>' : ''}
+            ${s.warning ? '<span class="step-tag step-tag-warning">⚠️ ' + escapeHtml(s.warning) + '</span>' : ''}
+            ${s.source_confidence ? '<span class="confidence confidence-' + escapeHtml(s.source_confidence) + '">' + escapeHtml(s.source_confidence) + '</span>' : ''}
+            <span class="step-tag step-tag-check" onclick="toggleStepDone(${i}, this)">☐ 完成</span>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  } else { stepsCard.style.display = 'none'; }
+
+  // 试剂
+  const reagentsCard = document.getElementById('reagentsCard');
+  const reagents = d.reagents || [];
+  if (Array.isArray(reagents) && reagents.length > 0) {
+    reagentsCard.style.display = 'block';
+    document.getElementById('reagentsContent').innerHTML = `
+      <table class="reagent-table">
+        <thead><tr>
+          <th>试剂名称</th><th>浓度</th><th>用量</th><th>配制方法</th><th>可信度</th>
+        </tr></thead>
+        <tbody>${reagents.map(r => `<tr>
+          <td><strong>${escapeHtml(r.name || '')}</strong></td>
+          <td>${escapeHtml(r.concentration || '-')}</td>
+          <td>${escapeHtml(r.amount || '-')}</td>
+          <td>${escapeHtml(r.prep || '-')}</td>
+          <td>${r.source_confidence ? '<span class="confidence confidence-' + escapeHtml(r.source_confidence) + '">' + escapeHtml(r.source_confidence) + '</span>' : '-'}</td>
+        </tr>`).join('')}</tbody>
+      </table>`;
+  } else { reagentsCard.style.display = 'none'; }
+
+  // 仪器
+  const instrumentsCard = document.getElementById('instrumentsCard');
+  const instruments = d.instruments || [];
+  if (Array.isArray(instruments) && instruments.length > 0) {
+    instrumentsCard.style.display = 'block';
+    document.getElementById('instrumentsContent').innerHTML =
+      instruments.map(i => '<span class="instrument-tag">' + escapeHtml(i) + '</span>').join('');
+  } else { instrumentsCard.style.display = 'none'; }
+
+  // 条件
+  const conditionsCard = document.getElementById('conditionsCard');
+  const conditions = d.conditions || {};
+  if (typeof conditions === 'object' && Object.keys(conditions).length > 0) {
+    conditionsCard.style.display = 'block';
+    const labels = { temperature: '🌡️ 温度', light: '☀️ 光照', other: '📋 其他' };
+    document.getElementById('conditionsContent').innerHTML = Object.entries(conditions)
+      .filter(([k, v]) => v && v.trim())
+      .map(([k, v]) => `<div style="display:flex;gap:8px;padding:8px 0;border-bottom:1px solid #F0F0F0;">
+        <span style="font-weight:600;color:#555;min-width:80px;">${labels[k] || k}</span>
+        <span style="color:#333;">${escapeHtml(v)}</span>
+      </div>`).join('');
+  } else { conditionsCard.style.display = 'none'; }
+
+  // 风险
+  const risksCard = document.getElementById('risksCard');
+  const risks = d.risks || [];
+  if (Array.isArray(risks) && risks.length > 0) {
+    risksCard.style.display = 'block';
+    document.getElementById('risksCount').textContent = risks.length + ' 项';
+    document.getElementById('risksContent').innerHTML = risks.map(r => `
+      <div class="risk-item">
+        <span class="risk-severity risk-${r.severity || '中'}">${r.severity || '中'}</span>
+        <div class="risk-text">
+          ${escapeHtml(r.point || '')}
+          ${r.solution ? '<div class="risk-solution">💡 ' + escapeHtml(r.solution) + '</div>' : ''}
+        </div>
+      </div>
+    `).join('');
+  } else { risksCard.style.display = 'none'; }
+}
+
+function toggleStepDone(i, el) {
+  completedSteps[i] = !completedSteps[i];
+  el.classList.toggle('done');
+  el.textContent = completedSteps[i] ? '☑ 已完成' : '☐ 完成';
+}
+
+function toggleRawText() {
+  const el = document.getElementById('rawText');
+  const btn = el.previousElementSibling;
+  if (el.style.display === 'none' || !el.style.display) {
+    el.style.display = 'block';
+    btn.textContent = '📃 收起PDF原文';
+  } else {
+    el.style.display = 'none';
+    btn.textContent = '📃 展开PDF原文';
+  }
+}
+
+// ===== 自动审查 =====
+function startReview() {
+  if (!hasApiConfig) { showToast('请先在个人中心配置AI模型'); return; }
+  if (Object.keys(structuredData).length === 0) { showToast('请先上传PDF并提取内容'); return; }
+
+  const btn = document.getElementById('reviewBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>审查中...';
+  document.getElementById('reviewSection').style.display = 'block';
+  document.getElementById('reviewContent').innerHTML =
+    '<div class="review-empty"><span class="spinner"></span> AI正在后台审查，请稍候...</div>';
+  document.getElementById('reviewActions').style.display = 'none';
+
+  fetch('/api/extract/review', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ structured: structuredData, raw_text: extractedText.substring(0, 30000) })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.error) {
+      btn.disabled = false; btn.innerHTML = '🔍 自动审查';
+      showToast(data.error);
+      document.getElementById('reviewContent').innerHTML =
+        '<div class="review-empty"><span class="empty-icon">❌</span>' + data.error + '</div>';
+      return;
+    }
+    if (data.task_id) {
+      pollTaskStatus(data.task_id, 'review');
+    }
+  })
+  .catch(err => { btn.disabled = false; btn.innerHTML = '🔍 自动审查'; showToast('审查失败：' + err.message); });
+}
+
+function renderIssues() {
+  const container = document.getElementById('reviewContent');
+  const badge = document.getElementById('reviewBadge');
+  const actions = document.getElementById('reviewActions');
+
+  if (reviewIssues.length === 0) {
+    badge.textContent = '通过'; badge.style.background = 'rgba(212,121,58,0.15)'; badge.style.color = '#D4793A';
+    container.innerHTML = '<div class="review-empty"><span class="empty-icon">✅</span>未发现明显问题，提取质量良好！</div>';
+    actions.style.display = 'none'; return;
+  }
+
+  badge.textContent = reviewIssues.length + ' 个问题';
+  badge.style.background = 'rgba(255,118,117,0.15)'; badge.style.color = '#FF7675';
+  actions.style.display = 'flex';
+
+  const fieldLabels = { steps: '步骤', reagents: '试剂', instruments: '仪器', conditions: '条件', risks: '风险', methods: '方法' };
+  container.innerHTML = '<ul class="issue-list">' + reviewIssues.map((issue, i) => `
+    <li class="issue-item" onclick="toggleIssueCheck(${i})">
+      <input type="checkbox" id="issue-${i}" checked />
+      <div class="issue-text">
+        ${escapeHtml(issue.description)}
+        ${issue.suggestion ? '<div class="issue-fix">建议：' + escapeHtml(issue.suggestion) + '</div>' : ''}
+      </div>
+      <span class="issue-field">${fieldLabels[issue.field] || issue.field || '综合'}</span>
+    </li>
+  `).join('') + '</ul>';
+}
+
+function toggleIssueCheck(i) { document.getElementById('issue-' + i).checked = !document.getElementById('issue-' + i).checked; }
+function selectAllIssues() { reviewIssues.forEach((_, i) => document.getElementById('issue-' + i).checked = true); }
+function deselectAllIssues() { reviewIssues.forEach((_, i) => document.getElementById('issue-' + i).checked = false); }
+
+function fixSelectedIssues() {
+  if (!hasApiConfig) { showToast('请先在个人中心配置AI模型'); return; }
+  const selected = reviewIssues.filter((_, i) => document.getElementById('issue-' + i).checked);
+  if (selected.length === 0) { showToast('请勾选要修复的问题'); return; }
+
+  const btn = event.target; btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>修复中...';
+  btn.id = 'fixBtn';
+
+  fetch('/api/extract/fix', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ structured: structuredData, issues: selected, raw_text: extractedText.substring(0, 30000) })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.error) { btn.disabled = false; btn.innerHTML = '🔧 修复选中问题'; showToast(data.error); return; }
+    if (data.task_id) {
+      pollTaskStatus(data.task_id, 'fix');
+    }
+  })
+  .catch(err => { btn.disabled = false; btn.innerHTML = '🔧 修复选中问题'; showToast('修复失败：' + err.message); });
+}
+
+// ===== 工具函数 =====
+function copyText() {
+  const d = structuredData;
+  let text = '';
+  if (d.title || d.method_name) text += `【标题】${d.method_name || d.title}\n\n`;
+  if (d.principle) text += `【原理】${d.principle}\n\n`;
+  if (Array.isArray(d.steps)) {
+    text += '【实验步骤】\n';
+    d.steps.forEach(s => { text += `步骤${s.step || ''}: ${s.action || ''}`; if (s.params) text += ` [${s.params}]`; text += '\n'; });
+    text += '\n';
+  }
+  if (Array.isArray(d.reagents)) {
+    text += '【试剂配方】\n';
+    d.reagents.forEach(r => { text += `${r.name} ${r.concentration || ''} ${r.amount || ''}`; if (r.prep) text += ` (${r.prep})`; text += '\n'; });
+    text += '\n';
+  }
+  if (Array.isArray(d.instruments)) text += `【仪器设备】${d.instruments.join(', ')}\n\n`;
+  if (d.conditions && typeof d.conditions === 'object') {
+    text += '【实验条件】\n';
+    Object.entries(d.conditions).filter(([k,v]) => v).forEach(([k,v]) => text += `${k}: ${v}\n`);
+    text += '\n';
+  }
+  if (Array.isArray(d.risks)) {
+    text += '【风险清单】\n';
+    d.risks.forEach(r => { text += `[${r.severity || '中'}] ${r.point || ''}`; if (r.solution) text += ` → ${r.solution}`; text += '\n'; });
+  }
+  if (!text) text = extractedText;
+  navigator.clipboard.writeText(text).then(() => showToast('已复制到剪贴板')).catch(() => {
+    const ta = document.createElement('textarea'); ta.value = text;
+    document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+    document.body.removeChild(ta); showToast('已复制到剪贴板');
+  });
+}
+
+function downloadText() {
+  copyText(); // 复制格式化文本
+  const d = structuredData;
+  let text = '';
+  if (d.title || d.method_name) text += `【标题】${d.method_name || d.title}\n\n`;
+  if (d.principle) text += `【原理】${d.principle}\n\n`;
+  if (Array.isArray(d.steps)) {
+    text += '【实验步骤】\n';
+    d.steps.forEach(s => { text += `步骤${s.step || ''}: ${s.action || ''}`; if (s.params) text += ` [${s.params}]`; text += '\n'; });
+    text += '\n';
+  }
+  if (Array.isArray(d.reagents)) {
+    text += '【试剂配方】\n';
+    d.reagents.forEach(r => { text += `${r.name} ${r.concentration || ''} ${r.amount || ''}`; if (r.prep) text += ` (${r.prep})`; text += '\n'; });
+    text += '\n';
+  }
+  if (Array.isArray(d.instruments)) text += `【仪器设备】${d.instruments.join(', ')}\n\n`;
+  if (d.conditions && typeof d.conditions === 'object') {
+    text += '【实验条件】\n';
+    Object.entries(d.conditions).filter(([k,v]) => v).forEach(([k,v]) => text += `${k}: ${v}\n`);
+    text += '\n';
+  }
+  if (Array.isArray(d.risks)) {
+    text += '【风险清单】\n';
+    d.risks.forEach(r => { text += `[${r.severity || '中'}] ${r.point || ''}`; if (r.solution) text += ` → ${r.solution}`; text += '\n'; });
+  }
+  if (!text) text = extractedText;
+  const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = '实验方法提取.txt'; a.click();
+}
+
+function resetUpload() {
+  uploadZone.style.display = ''; resultSection.classList.remove('active');
+  progressBar.classList.remove('active'); fileInput.value = '';
+  extractedText = ''; structuredData = {}; reviewIssues = []; completedSteps = {};
+  localStorage.removeItem(LS_KEY);
+}
+
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg; toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2500);
+}
+
+function escapeHtml(str) {
+  if (!str) return ''; const div = document.createElement('div'); div.textContent = str; return div.innerHTML;
+}
+
+// ===== Token用量显示 =====
+function showTokenUsage(usage) {
+  if (!usage || !usage.total_tokens) return;
+  const bar = document.getElementById('tokenBar');
+  document.getElementById('tokenPrompt').textContent = (usage.prompt_tokens || 0).toLocaleString();
+  document.getElementById('tokenCompletion').textContent = (usage.completion_tokens || 0).toLocaleString();
+  document.getElementById('tokenTotal').textContent = (usage.total_tokens || 0).toLocaleString();
+  bar.classList.add('active');
+}
+
+// ===== 导出Word =====
+function exportWord() {
+  if (Object.keys(structuredData).length === 0) { showToast('请先上传PDF并提取内容'); return; }
+  const btn = event.target; btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>生成中...';
+
+  fetch('/api/extract/export', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ structured: structuredData })
+  })
+  .then(res => {
+    if (!res.ok) throw new Error('导出失败');
+    return res.blob();
+  })
+  .then(blob => {
+    btn.disabled = false; btn.innerHTML = '📄 导出Word';
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url;
+    a.download = (structuredData.method_name || structuredData.title || '实验方法') + '.docx';
+    a.click(); URL.revokeObjectURL(url);
+    showToast('Word文档已生成');
+  })
+  .catch(err => { btn.disabled = false; btn.innerHTML = '📄 导出Word'; showToast('导出失败：' + err.message); });
+}
+</script>
+{% endblock %}

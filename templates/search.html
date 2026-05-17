@@ -4,10 +4,13 @@
 {% block title %}Protocol检索 - 植研小白盒{% endblock %}
 
 {% block content %}
-<div class="search-container">
-    <h1 class="page-title" style="text-align:center;">Protocol检索</h1>
-    <p class="page-subtitle" style="text-align:center;">输入实验关键词，匹配最相关的Protocol</p>
+<!-- Hero区域 -->
+<section style="background:linear-gradient(135deg,#A85C25 0%,#D4793A 30%,#E89B5E 60%,#F0B87A 100%);color:white;padding:2rem 2rem 1.5rem;text-align:center;">
+  <h1 style="font-size:1.8rem;font-weight:800;margin-bottom:0.3rem;">🔍 Protocol检索</h1>
+  <p style="opacity:0.9;font-size:1rem;">输入实验关键词，匹配最相关的Protocol</p>
+</section>
 
+<div class="search-container">
     <div class="search-box">
         <input type="text" id="searchInput" placeholder="例：可溶性糖 叶绿素 SOD 酶活性 DNA提取 呼吸速率..."
                onkeydown="if(event.key==='Enter')doSearch()" autofocus>
@@ -76,10 +79,10 @@
     border-radius: 20px;
     font-size: 0.85rem;
     cursor: pointer;
-    transition: all 0.3s;
+    transition: all 0.2s;
     color: #8C7E6E;
 }
-.quick-btn:hover { border-color: #8FA465; color: #6B7C4E; background: #F0EDE6; }
+.quick-btn:hover { border-color: #E89B5E; color: #D4793A; background: #F0EDE6; }
 
 .browse-tag {
     display: inline-block;
@@ -92,7 +95,7 @@
     text-decoration: none;
     transition: all 0.2s;
 }
-.browse-tag:hover { background: #F0EDE6; border-color: #8FA465; color: #6B7C4E; }
+.browse-tag:hover { background: #F0EDE6; border-color: #E89B5E; color: #D4793A; }
 
 .search-result-card {
     display: block;
@@ -103,13 +106,12 @@
     box-shadow: 0 1px 6px rgba(80,65,45,0.06);
     text-decoration: none;
     color: #3D3225;
-    transition: all 0.2s;
+    transition: box-shadow 0.2s;
     border-left: 4px solid transparent;
 }
 .search-result-card:hover {
     box-shadow: 0 4px 16px rgba(80,65,45,0.12);
-    border-left-color: #8FA465;
-    transform: translateX(2px);
+    border-left-color: #E89B5E;
 }
 .result-header {
     display: flex;
@@ -120,12 +122,12 @@
 .result-name {
     font-weight: 700;
     font-size: 1rem;
-    color: #6B7C4E;
+    color: #D4793A;
 }
 .result-category {
     font-size: 0.75rem;
-    background: rgba(107,124,78,0.1);
-    color: #6B7C4E;
+    background: rgba(212,121,58,0.1);
+    color: #D4793A;
     padding: 0.15rem 0.5rem;
     border-radius: 10px;
 }

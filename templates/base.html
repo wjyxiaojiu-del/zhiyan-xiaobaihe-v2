@@ -12,14 +12,17 @@
     <nav class="navbar">
         <a href="/" class="logo">
             <span class="icon">🌿</span>
-            <span style="color:#6B7C4E;">植研小白盒</span>
+            <span style="color:#D4793A;">植研小白盒</span>
         </a>
+        <button class="nav-toggle" onclick="document.querySelector('.nav-links').classList.toggle('open')">☰</button>
         <div class="nav-links">
             <a href="/" class="{% if active == 'home' %}active{% endif %}">首页</a>
             <a href="/search" class="{% if active == 'search' %}active{% endif %}">Protocol检索</a>
             <a href="/calculator" class="{% if active == 'calc' %}active{% endif %}">试剂计算器</a>
             <a href="/data" class="{% if active == 'data' %}active{% endif %}">数据处理</a>
+            <a href="/extract" class="{% if active == 'extract' %}active{% endif %}">文献提取</a>
             <a href="/journal" class="{% if active == 'journal' %}active{% endif %}">实验日志</a>
+            <a href="/teams" class="{% if active == 'teams' %}active{% endif %}">课题组</a>
             <a href="/instruments" class="{% if active == 'instruments' %}active{% endif %}">仪器指南</a>
             <a href="/ai" class="{% if active == 'ai' %}active{% endif %}">AI助手</a>
             <a href="/export" class="{% if active == 'export' %}active{% endif %}">导出</a>
@@ -29,6 +32,7 @@
                 {% if current_user.role == 'admin' %}
                 <a href="/admin" class="nav-admin-link">🔧 管理</a>
                 {% endif %}
+                <span class="nav-notify" id="navNotify" style="display:none;cursor:pointer;position:relative;font-size:1.1rem;margin-right:4px;" onclick="window.location='/extract'">🔔<span id="navNotifyBadge" style="position:absolute;top:-4px;right:-6px;background:#F44336;color:#fff;font-size:10px;padding:1px 5px;border-radius:8px;display:none;">0</span></span>
                 <a href="/profile" class="nav-user-link">
                     <span class="nav-avatar">{{ current_user.username[0] | upper }}</span>
                     {{ current_user.username }}
@@ -47,5 +51,29 @@
     </main>
 
     {% block scripts %}{% endblock %}
+    {% if current_user %}
+    <script>
+    (function() {
+      let lastCheck = 0;
+      function checkNotifications() {
+        if (Date.now() - lastCheck < 30000) return;
+        lastCheck = Date.now();
+        fetch('/api/extract/tasks').then(r => r.json()).then(data => {
+          if (!data.tasks) return;
+          const recent = data.tasks.filter(t => t.status === 'completed' && t.completed_at);
+          const bell = document.getElementById('navNotify');
+          const badge = document.getElementById('navNotifyBadge');
+          if (bell && recent.length > 0) {
+            bell.style.display = 'inline';
+            badge.textContent = recent.length;
+            badge.style.display = 'inline';
+          }
+        }).catch(() => {});
+      }
+      checkNotifications();
+      setInterval(checkNotifications, 60000);
+    })();
+    </script>
+    {% endif %}
 </body>
 </html>

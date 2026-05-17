@@ -14,6 +14,11 @@
 </section>
 
 <div class="calc-wrap">
+    <div style="display:flex;justify-content:flex-end;gap:0.5rem;margin-bottom:0.5rem;">
+        <button class="d-btn d-btn-outline d-btn-sm" onclick="showCalcHistory()" style="font-size:0.8rem;">📜 计算历史</button>
+        <button class="d-btn d-btn-outline d-btn-sm" onclick="loadFormulaTemplate()" style="font-size:0.8rem;">📋 配方模板</button>
+        <button class="d-btn d-btn-outline d-btn-sm" onclick="saveFormulaTemplate()" style="font-size:0.8rem;">💾 保存当前配方</button>
+    </div>
     <!-- Tab导航 -->
     <div class="calc-tabs" id="calcTabs">
         <button class="calc-tab active" onclick="switchCalc('dilution')">
@@ -657,6 +662,99 @@ function row(label, value) {
 }
 function tip(text) {
     return '<div class="result-tip">' + text + '</div>';
+}
+
+/* ===== 计算历史 ===== */
+const CALC_HISTORY_KEY = 'zhiyan_calc_history';
+const FORMULA_TEMPLATES_KEY = 'zhiyan_formula_templates';
+
+function saveCalcToHistory(type, inputs, result) {
+    const h = JSON.parse(localStorage.getItem(CALC_HISTORY_KEY) || '[]');
+    h.unshift({type, inputs, result, time: new Date().toLocaleString('zh-CN')});
+    if (h.length > 30) h.length = 30;
+    localStorage.setItem(CALC_HISTORY_KEY, JSON.stringify(h));
+}
+
+function showCalcHistory() {
+    const h = JSON.parse(localStorage.getItem(CALC_HISTORY_KEY) || '[]');
+    if (h.length === 0) { alert('暂无计算历史'); return; }
+    let html = '<div style="max-height:400px;overflow-y:auto;text-align:left;">';
+    h.forEach((entry,i) => {
+        html += `<div style="padding:0.5rem;border-bottom:1px solid var(--border);cursor:pointer;" onclick="restoreCalcHistory(${i})">
+            <strong>${entry.type}</strong> <span style="font-size:0.78rem;color:var(--text-light);float:right;">${entry.time}</span>
+            <br><span style="font-size:0.82rem;">${JSON.stringify(entry.inputs).replace(/\"/g,'')} → ${JSON.stringify(entry.result).replace(/\"/g,'')}</span>
+        </div>`;
+    });
+    html += '</div>';
+    const div = document.createElement('div');
+    div.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;border-radius:14px;padding:1.5rem;box-shadow:0 10px 40px rgba(0,0,0,0.2);z-index:9999;max-width:500px;width:90%;';
+    div.innerHTML = '<h3>📜 计算历史</h3>' + html + '<button class="d-btn d-btn-outline d-btn-sm" style="margin-top:0.8rem;" onclick="this.parentElement.remove()">关闭</button>';
+    document.body.appendChild(div);
+}
+
+function restoreCalcHistory(idx) {
+    document.querySelectorAll('div[style*=\"z-index:9999\"]').forEach(d => d.remove());
+    const h = JSON.parse(localStorage.getItem(CALC_HISTORY_KEY) || '[]')[idx];
+    if (!h) return;
+    // 恢复输入参数
+    Object.entries(h.inputs).forEach(([k,v]) => {
+        const el = document.querySelector(`[data-history-key=\"${k}\"]`) || document.getElementById(k);
+        if (el) el.value = v;
+    });
+}
+
+/* ===== 配方模板 ===== */
+function saveFormulaTemplate(name) {
+    if (!name) { name = prompt('配方名称（如：Tris-HCl 50mM pH8.0）：'); if (!name) return; }
+    const templates = JSON.parse(localStorage.getItem(FORMULA_TEMPLATES_KEY) || '[]');
+    // 收集当前所有输入框的值
+    const inputs = {};
+    document.querySelectorAll('.calc-panel.active input, .calc-panel.active select').forEach(el => {
+        if (el.value && el.id) inputs[el.id] = el.value;
+    });
+    if (Object.keys(inputs).length === 0) { alert('没有可保存的参数'); return; }
+    templates.push({name, inputs, time: new Date().toLocaleString('zh-CN')});
+    localStorage.setItem(FORMULA_TEMPLATES_KEY, JSON.stringify(templates));
+    showParseStatus('success', `✅ 配方"${name}"已保存`);
+}
+
+function loadFormulaTemplate() {
+    const templates = JSON.parse(localStorage.getItem(FORMULA_TEMPLATES_KEY) || '[]');
+    if (templates.length === 0) { alert('暂无保存的配方'); return; }
+    let html = '<div style="max-height:400px;overflow-y:auto;text-align:left;">';
+    templates.forEach((t,i) => {
+        html += `<div style="padding:0.5rem;border-bottom:1px solid var(--border);cursor:pointer;" onclick="applyTemplate(${i})">
+            <strong>${t.name}</strong> <span style="font-size:0.78rem;color:var(--text-light);float:right;">${t.time}</span>
+        </div>`;
+    });
+    html += '<div style="margin-top:0.5rem;"><button class="d-btn d-btn-danger d-btn-sm" onclick="clearTemplates()">清空所有模板</button></div></div>';
+    const div = document.createElement('div');
+    div.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;border-radius:14px;padding:1.5rem;box-shadow:0 10px 40px rgba(0,0,0,0.2);z-index:9999;max-width:500px;width:90%;';
+    div.innerHTML = '<h3>📋 配方模板</h3>' + html + '<button class="d-btn d-btn-outline d-btn-sm" style="margin-top:0.8rem;" onclick="this.parentElement.remove()">关闭</button>';
+    document.body.appendChild(div);
+}
+
+function applyTemplate(idx) {
+    document.querySelectorAll('div[style*=\"z-index:9999\"]').forEach(d => d.remove());
+    const t = JSON.parse(localStorage.getItem(FORMULA_TEMPLATES_KEY) || '[]')[idx];
+    if (!t) return;
+    Object.entries(t.inputs).forEach(([k,v]) => {
+        const el = document.getElementById(k);
+        if (el) el.value = v;
+    });
+    showParseStatus('success', `✅ 已加载配方"${t.name}"`);
+}
+
+function clearTemplates() {
+    if (confirm('确定清空所有配方模板？')) { localStorage.removeItem(FORMULA_TEMPLATES_KEY); document.querySelectorAll('div[style*=\"z-index:9999\"]').forEach(d=>d.remove()); }
+}
+
+function showParseStatus(type, msg) {
+    // 计算器页面的提示
+    const el = document.getElementById('calc-status') || (()=>{const d=document.createElement('div');d.id='calc-status';document.querySelector('.calc-wrap').prepend(d);return d;})();
+    el.style.cssText = `padding:0.5rem 1rem;margin-bottom:0.8rem;border-radius:8px;font-size:0.85rem;${type==='success'?'background:#E8F5E9;color:#2E7D32;':type==='error'?'background:#FFEBEE;color:#C62828;':'background:#E3F2FD;color:#1565C0;'}`;
+    el.textContent = msg;
+    setTimeout(()=>el.remove(), 3000);
 }
 </script>
 {% endblock %}

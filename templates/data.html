@@ -100,7 +100,7 @@
 }
 
 .d-input-table th {
-    background: rgba(107,124,78,0.06);
+    background: rgba(212,121,58,0.06);
     padding: 0.5rem;
     text-align: center;
     font-weight: 600;
@@ -129,7 +129,7 @@
 
 .d-input-table input:focus {
     border-color: var(--primary);
-    box-shadow: 0 0 0 2px rgba(107,124,78,0.1);
+    box-shadow: 0 0 0 2px rgba(212,121,58,0.1);
 }
 
 /* 按钮 */
@@ -160,7 +160,7 @@
 }
 
 .d-btn-outline:hover {
-    background: rgba(107,124,78,0.06);
+    background: rgba(212,121,58,0.06);
 }
 
 .d-btn-sm {
@@ -199,7 +199,7 @@
 }
 
 .d-result-table th {
-    background: rgba(107,124,78,0.08);
+    background: rgba(212,121,58,0.08);
     padding: 0.5rem 0.6rem;
     font-weight: 600;
     color: var(--text);
@@ -214,12 +214,12 @@
 }
 
 .d-result-table tr:nth-child(even) {
-    background: rgba(107,124,78,0.02);
+    background: rgba(212,121,58,0.02);
 }
 
 /* 公式栏 */
 .d-formula-bar {
-    background: linear-gradient(135deg, rgba(107,124,78,0.08), rgba(196,125,43,0.06));
+    background: linear-gradient(135deg, rgba(212,121,58,0.08), rgba(196,125,43,0.06));
     border-radius: 10px;
     padding: 0.8rem 1.2rem;
     margin-bottom: 1rem;
@@ -230,7 +230,7 @@
 }
 
 .d-formula-bar code {
-    background: rgba(107,124,78,0.1);
+    background: rgba(212,121,58,0.1);
     padding: 0.15rem 0.4rem;
     border-radius: 4px;
     font-family: "SF Mono", "Fira Code", monospace;
@@ -279,7 +279,7 @@
 }
 
 .d-add-col {
-    background: rgba(107,124,78,0.1);
+    background: rgba(212,121,58,0.1);
     color: var(--primary);
 }
 
@@ -320,6 +320,345 @@
     margin-top: 1rem;
     flex-wrap: wrap;
 }
+
+/* 文件上传区 */
+.d-upload-zone {
+    border: 2px dashed var(--border);
+    border-radius: 14px;
+    padding: 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.25s;
+    background: var(--card-bg);
+    position: relative;
+}
+
+.d-upload-zone:hover,
+.d-upload-zone.dragover {
+    border-color: var(--primary);
+    background: rgba(212,121,58,0.04);
+}
+
+.d-upload-zone input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.d-upload-zone .upload-icon {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.d-upload-zone .upload-text {
+    font-size: 0.95rem;
+    color: var(--text);
+    font-weight: 600;
+}
+
+.d-upload-zone .upload-hint {
+    font-size: 0.8rem;
+    color: var(--text-light);
+    margin-top: 0.3rem;
+}
+
+/* 解析状态 */
+.d-parse-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.8rem 1rem;
+    border-radius: 10px;
+    font-size: 0.88rem;
+    margin-bottom: 1rem;
+}
+
+.d-parse-status.info {
+    background: rgba(33,150,243,0.08);
+    color: #1565C0;
+    border: 1px solid rgba(33,150,243,0.2);
+}
+
+.d-parse-status.success {
+    background: rgba(76,175,80,0.08);
+    color: #2E7D32;
+    border: 1px solid rgba(76,175,80,0.2);
+}
+
+.d-parse-status.error {
+    background: rgba(244,67,54,0.08);
+    color: #C62828;
+    border: 1px solid rgba(244,67,54,0.2);
+}
+
+/* Sheet选择 */
+.d-sheet-tabs {
+    display: flex;
+    gap: 0.3rem;
+    margin-bottom: 0.8rem;
+    flex-wrap: wrap;
+}
+
+.d-sheet-tab {
+    padding: 0.4rem 0.9rem;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    background: var(--card-bg);
+    color: var(--text-light);
+    transition: all 0.2s;
+}
+
+.d-sheet-tab:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.d-sheet-tab.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+/* 数据预览表 */
+.d-preview-table {
+    width: max-content;
+    min-width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+    margin-bottom: 0.8rem;
+}
+
+.d-preview-table th {
+    background: rgba(212,121,58,0.1);
+    padding: 0.45rem 0.5rem;
+    text-align: center;
+    font-weight: 600;
+    color: var(--text);
+    border: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+
+.d-preview-table th:first-child,
+.d-preview-table td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background: var(--card-bg);
+    min-width: 100px;
+}
+
+.d-preview-table th:first-child {
+    z-index: 3;
+    background: rgba(212,121,58,0.12);
+}
+
+.d-preview-table td {
+    padding: 0.3rem 0.5rem;
+    border: 1px solid var(--border);
+    text-align: center;
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.d-preview-table td:first-child {
+    font-weight: 600;
+}
+
+.d-preview-table tr:nth-child(even) td:first-child {
+    background: rgba(212,121,58,0.02);
+}
+
+.d-preview-table tr:nth-child(even) {
+    background: rgba(212,121,58,0.02);
+}
+
+/* 列类型标签 */
+.d-col-tag {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    margin-left: 0.3rem;
+}
+
+.d-col-tag.sample { background: #E8F5E9; color: #2E7D32; }
+.d-col-tag.od { background: #E3F2FD; color: #1565C0; }
+.d-col-tag.numeric { background: #FFF3E0; color: #E65100; }
+.d-col-tag.unknown { background: #F5F5F5; color: #757575; }
+
+/* 文件信息 */
+.d-file-info {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0.6rem 1rem;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 0.8rem;
+    font-size: 0.85rem;
+}
+
+.d-file-info .file-icon {
+    font-size: 1.5rem;
+}
+
+.d-file-info .file-name {
+    font-weight: 600;
+    color: var(--text);
+}
+
+.d-file-info .file-meta {
+    font-size: 0.78rem;
+    color: var(--text-light);
+}
+
+.d-file-info .file-remove {
+    margin-left: auto;
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    color: var(--text-light);
+    padding: 0.2rem 0.5rem;
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+
+.d-file-info .file-remove:hover {
+    background: rgba(244,67,54,0.1);
+    color: #F44336;
+}
+
+/* 实验类型选择 */
+.d-experiment-select {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 0.6rem;
+    margin-top: 0.8rem;
+}
+
+.d-exp-option {
+    padding: 0.7rem 0.9rem;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: var(--card-bg);
+}
+
+.d-exp-option:hover {
+    border-color: var(--primary);
+    background: rgba(212,121,58,0.04);
+}
+
+.d-exp-option.selected {
+    border-color: var(--primary);
+    background: rgba(212,121,58,0.08);
+    box-shadow: 0 0 0 1px var(--primary);
+}
+
+.d-exp-option .exp-name {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 0.2rem;
+}
+
+.d-exp-option .exp-desc {
+    font-size: 0.75rem;
+    color: var(--text-light);
+}
+
+/* 列映射区 */
+.d-mapping-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 0.8rem;
+    margin: 1rem 0;
+}
+
+.d-mapping-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.d-mapping-item label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.d-mapping-item label .required {
+    color: #F44336;
+}
+
+.d-mapping-item select,
+.d-mapping-item input {
+    padding: 0.45rem 0.6rem;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.85rem;
+    background: white;
+    outline: none;
+    transition: border 0.2s;
+}
+
+.d-mapping-item select:focus,
+.d-mapping-item input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(212,121,58,0.1);
+}
+
+/* 校验消息 */
+.d-issues {
+    margin: 1rem 0;
+}
+
+.d-issue {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    padding: 0.6rem 0.9rem;
+    border-radius: 8px;
+    margin-bottom: 0.4rem;
+    font-size: 0.85rem;
+    line-height: 1.5;
+}
+
+.d-issue.error {
+    background: rgba(244,67,54,0.06);
+    border: 1px solid rgba(244,67,54,0.15);
+    color: #C62828;
+}
+
+.d-issue.warning {
+    background: rgba(255,152,0,0.06);
+    border: 1px solid rgba(255,152,0,0.15);
+    color: #E65100;
+}
+
+.d-issue.success {
+    background: rgba(76,175,80,0.06);
+    border: 1px solid rgba(76,175,80,0.15);
+    color: #2E7D32;
+}
+
+.d-issue .issue-icon {
+    font-size: 1rem;
+    flex-shrink: 0;
+    margin-top: 0.1rem;
+}
 </style>
 {% endblock %}
 
@@ -330,6 +669,100 @@
         <p>输入实验数据 · 自动统计分析 · 标准曲线拟合 · 图表可视化</p>
     </div>
 
+    <!-- ===== 文件上传区 ===== -->
+    <div class="d-card" id="uploadSection">
+        <h3>📁 上传数据文件</h3>
+        <div class="d-formula-bar">
+            上传 Excel 或 Word 文件，系统自动识别表格数据、识别列类型，支持 <code>.xlsx</code> <code>.xls</code> <code>.docx</code> 格式。
+        </div>
+
+        <div class="d-upload-zone" id="uploadZone">
+            <input type="file" id="fileInput" accept=".xlsx,.xls,.docx">
+            <div class="upload-icon">📤</div>
+            <div class="upload-text">点击上传或拖拽文件到此处</div>
+            <div class="upload-hint">支持 .xlsx / .xls / .docx，最大 20MB</div>
+        </div>
+
+        <div id="parseStatus" style="display:none;"></div>
+
+        <div id="fileInfoBar" style="display:none;"></div>
+
+        <div id="previewArea" style="display:none;">
+            <div class="d-sheet-tabs" id="sheetTabs"></div>
+            <div class="d-table-scroll" id="previewTableWrap" style="max-height:70vh;overflow:auto;"></div>
+            <div class="d-btn-row">
+                <button class="d-btn d-btn-primary" id="importConfirmBtn" onclick="confirmImport()">✅ 确认导入数据</button>
+                <button class="d-btn d-btn-outline" onclick="clearUpload()">重新上传</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 实验计算区（导入后显示） ===== -->
+    <div class="d-card" id="experimentSection" style="display:none;">
+        <h3>🔬 选择实验类型
+            <button class="d-btn d-btn-primary d-btn-sm" onclick="runAIAnalysis()" style="margin-left:1rem;background:linear-gradient(135deg,#667eea,#764ba2);">
+                🤖 AI智能分析
+            </button>
+        </h3>
+        <div class="d-formula-bar" id="expFormulaBar">
+            选择实验类型后，系统自动匹配计算公式和所需列。点击"AI智能分析"让AI帮你识别数据结构并给出建议。
+        </div>
+
+        <!-- AI分析结果 -->
+        <div id="aiResultSection" style="display:none;">
+            <div class="d-parse-status info" id="aiStatus" style="margin-bottom:0.5rem;"></div>
+            <div id="aiInsights" style="margin-bottom:0.5rem;"></div>
+            <div id="aiWarnings" style="margin-bottom:0.5rem;"></div>
+            <div id="aiActions" style="margin-bottom:0.5rem;"></div>
+            <div class="d-btn-row" style="margin-bottom:0.8rem;">
+                <button class="d-btn d-btn-primary d-btn-sm" onclick="applyAISuggestions()">✅ 应用AI建议</button>
+            </div>
+        </div>
+
+        <div class="d-experiment-select" id="experimentOptions"></div>
+
+        <!-- 列映射 -->
+        <div id="mappingSection" style="display:none;">
+            <div style="display:flex;align-items:center;gap:0.8rem;margin-top:1.2rem;">
+                <h3 style="margin:0;">📋 列映射</h3>
+                <button class="d-btn d-btn-outline d-btn-sm" onclick="toggleMappingDetail()" style="margin-left:auto;">展开调整</button>
+            </div>
+            <div class="d-formula-bar" id="mappingSummary"></div>
+            <div class="d-mapping-grid" id="mappingGrid" style="display:none;"></div>
+        </div>
+
+        <!-- 通用参数 -->
+        <div id="paramsSection" style="display:none;">
+            <h3 style="margin-top:1rem;">⚙️ 实验参数</h3>
+            <div class="d-mapping-grid" id="paramsGrid"></div>
+        </div>
+
+        <!-- 校验结果 -->
+        <div id="issuesSection" class="d-issues" style="display:none;"></div>
+
+        <!-- 计算按钮 -->
+        <div class="d-btn-row" id="calcBtnRow" style="display:none;">
+            <button class="d-btn d-btn-primary" onclick="runExperimentCalc()">🚀 开始计算</button>
+            <button class="d-btn d-btn-primary" onclick="runSignificanceTest()" style="background:#2E7D32;">📊 显著性分析</button>
+        </div>
+
+        <!-- 计算结果 -->
+        <div id="calcResultSection" style="display:none;">
+            <h3 style="margin-top:1.2rem;">📊 计算结果</h3>
+            <div class="d-formula-bar" id="resultFormula"></div>
+            <div class="d-table-scroll">
+                <table class="d-result-table" id="calcResultTable"></table>
+            </div>
+            <div id="resultStats" style="margin-top:0.8rem;"></div>
+            <div class="d-btn-row">
+                <button class="d-btn d-btn-outline d-btn-sm" onclick="copyCalcResult()">复制结果</button>
+                <button class="d-btn d-btn-primary d-btn-sm" onclick="exportCalcExcel()">📥 导出Excel</button>
+                <button class="d-btn d-btn-outline d-btn-sm" onclick="saveData('calc')">💾 保存数据</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== Tab导航 ===== -->
     <div class="data-tab-nav">
         <button class="data-tab-btn active" onclick="switchDataTab('stats')">📈 统计分析</button>
         <button class="data-tab-btn" onclick="switchDataTab('curve')">📐 标准曲线</button>
@@ -429,6 +862,15 @@
                         </tr>
                     </tbody>
                 </table>
+            </div>
+            <div style="display:flex;align-items:center;gap:0.8rem;margin:0.5rem 0;">
+                <label style="font-size:0.85rem;font-weight:600;">拟合模型：</label>
+                <select id="curveModel" class="d-unit-select" style="font-size:0.85rem;">
+                    <option value="linear">线性 y=ax+b</option>
+                    <option value="quadratic">二次 y=ax²+bx+c</option>
+                    <option value="cubic">三次 y=ax³+bx²+cx+d</option>
+                    <option value="logistic4p">Logistic四参数</option>
+                </select>
             </div>
             <div class="d-btn-row">
                 <button class="d-btn d-btn-outline d-btn-sm" onclick="addCurvePoint()">+ 添加标准点</button>
@@ -549,11 +991,1783 @@
 <script>
 /* ============ 全局状态 ============ */
 let replicateCount = 3;
-let sampleRows = [];
 let barChartInstance = null;
 let curveChartInstance = null;
 let curveDisplayInstance = null;
 let fittedSlope = 0, fittedIntercept = 0, fittedR2 = 0;
+let parsedSheets = [];      // 解析出的所有sheet
+let activeSheetIdx = 0;     // 当前显示的sheet索引
+let activeSheetData = null; // 当前活跃sheet数据引用
+let selectedExperiment = null;
+let lastCalcResult = null;
+
+/* ============ 实验类型定义 ============ */
+const EXPERIMENT_TYPES = [
+    {
+        id: "chlorophyll",
+        name: "叶绿素含量测定 - 分光光度法",
+        icon: "🌿",
+        category: "植物生理",
+        description: "用乙醇提取叶绿素，测665nm和649nm吸光度，用Arnon公式计算叶绿素a、b和类胡萝卜素含量。",
+        formula: [
+            "Ca = 12.72×A₆₆₅ − 2.59×A₆₄₉",
+            "Cb = 22.88×A₆₄₉ − 4.67×A₆₆₅",
+            "CT = Ca + Cb = 8.05×A₆₆₅ + 20.29×A₆₄₉",
+            "最终含量 = C × V提取液 / (W样品 × 1000)"
+        ],
+        requiredCols: [
+            { key: "sampleName", label: "样品名称", type: "sample_name", required: true },
+            { key: "a665", label: "A665 (吸光度)", type: "od_value", required: true },
+            { key: "a649", label: "A649 (吸光度)", type: "od_value", required: true },
+        ],
+        params: [
+            { key: "weight", label: "样品鲜重 (g)", type: "number", defaultValue: 0.2 },
+            { key: "volume", label: "提取液总体积 (mL)", type: "number", defaultValue: 5 },
+        ],
+        validation: {
+            odMin: 0, odMax: 1.5,
+            odWarning: "OD值应控制在 0.1 - 0.8 之间，超出范围请稀释或浓缩样品后重测",
+            ratioCheck: true,
+            ratioDesc: "A665/A649 比值应在 2.5-2.9 之间（95%乙醇），超出说明色素降解或仪器问题",
+        },
+        calcFn: "calcChlorophyll",
+    },
+    {
+        id: "soluble_protein",
+        name: "可溶性蛋白 - 考马斯亮蓝法",
+        icon: "🧬",
+        category: "植物生理",
+        description: "考马斯亮蓝G-250与蛋白质结合后变蓝，测595nm吸光度，通过标准曲线计算蛋白含量。",
+        formula: [
+            "蛋白浓度 = (A₅₉₅ − b) / a × 稀释倍数",
+            "蛋白含量 = 蛋白浓度 × V提取液 / (W样品 × 1000)",
+            "其中 a、b 为标准曲线斜率和截距"
+        ],
+        requiredCols: [
+            { key: "sampleName", label: "样品名称", type: "sample_name", required: true },
+            { key: "a595", label: "A595 (吸光度)", type: "od_value", required: true },
+            { key: "dilution", label: "稀释倍数", type: "dilution", required: false },
+        ],
+        params: [
+            { key: "slope", label: "标准曲线斜率 a", type: "number", defaultValue: "" },
+            { key: "intercept", label: "标准曲线截距 b", type: "number", defaultValue: "" },
+            { key: "weight", label: "样品鲜重 (g)", type: "number", defaultValue: 0.2 },
+            { key: "volume", label: "提取液总体积 (mL)", type: "number", defaultValue: 5 },
+        ],
+        validation: {
+            odMin: 0, odMax: 1.5,
+            odWarning: "OD595值应控制在 0.1 - 0.8 之间，超出需稀释或浓缩",
+        },
+        calcFn: "calcSolubleProtein",
+    },
+    {
+        id: "soluble_sugar",
+        name: "可溶性糖 - 蒽酮比色法",
+        icon: "🍬",
+        category: "植物生理",
+        description: "糖在浓硫酸作用下与蒽酮反应生成蓝绿色物质，测620nm/630nm吸光度，通过标准曲线计算糖含量。",
+        formula: [
+            "糖浓度 = (A₆₂₀ − b) / a × 稀释倍数",
+            "糖含量 = 糖浓度 × V提取液 / (W样品 × 10⁶) × 100%",
+            "其中 a、b 为标准曲线斜率和截距"
+        ],
+        requiredCols: [
+            { key: "sampleName", label: "样品名称", type: "sample_name", required: true },
+            { key: "a620", label: "A620 (吸光度)", type: "od_value", required: true },
+            { key: "dilution", label: "稀释倍数", type: "dilution", required: false },
+        ],
+        params: [
+            { key: "slope", label: "标准曲线斜率 a", type: "number", defaultValue: "" },
+            { key: "intercept", label: "标准曲线截距 b", type: "number", defaultValue: "" },
+            { key: "weight", label: "样品干重 (g)", type: "number", defaultValue: 0.1 },
+            { key: "volume", label: "提取液总体积 (mL)", type: "number", defaultValue: 10 },
+        ],
+        validation: {
+            odMin: 0, odMax: 1.5,
+            odWarning: "OD620值应控制在 0.1 - 0.8 之间",
+        },
+        calcFn: "calcSolubleSugar",
+    },
+    {
+        id: "mda",
+        name: "MDA含量 - TBA法",
+        icon: "🔥",
+        category: "植物生理",
+        description: "MDA与TBA反应生成红色物质，测532nm、600nm、450nm，扣除背景干扰后计算MDA含量。",
+        formula: [
+            "MDA (μmol/L) = 6.45×(A₅₃₂ − A₆₀₀) − 0.56×A₄₅₀",
+            "MDA含量 = MDA浓度 × V提取液 / W样品",
+        ],
+        requiredCols: [
+            { key: "sampleName", label: "样品名称", type: "sample_name", required: true },
+            { key: "a532", label: "A532 (吸光度)", type: "od_value", required: true },
+            { key: "a600", label: "A600 (吸光度)", type: "od_value", required: true },
+            { key: "a450", label: "A450 (吸光度)", type: "od_value", required: true },
+        ],
+        params: [
+            { key: "weight", label: "样品鲜重 (g)", type: "number", defaultValue: 0.5 },
+            { key: "volume", label: "提取液体积 (mL)", type: "number", defaultValue: 5 },
+        ],
+        validation: {
+            odMin: 0, odMax: 1.0,
+            odWarning: "A532应为最大吸收峰，若A600或A450高于A532说明有干扰",
+        },
+        calcFn: "calcMDA",
+    },
+    {
+        id: "pod",
+        name: "POD活性 - 愈创木酚法",
+        icon: "⚡",
+        category: "酶活性",
+        description: "POD催化愈创木酚+H₂O₂生成茶褐色产物，测470nm处OD变化速率，计算单位时间内吸光度增加量。",
+        formula: [
+            "ΔA₄₇₀ = A470(t₂) − A470(t₁)",
+            "POD活性(U·g⁻¹·min⁻¹) = ΔA₄₇₀ × V总 / (W样品 × V酶液 × 0.01 × t)",
+        ],
+        requiredCols: [
+            { key: "sampleName", label: "样品名称", type: "sample_name", required: true },
+            { key: "a470_start", label: "A470 (起始)", type: "od_value", required: true },
+            { key: "a470_end", label: "A470 (终点)", type: "od_value", required: true },
+            { key: "time_min", label: "间隔时间 (min)", type: "numeric", required: false },
+        ],
+        params: [
+            { key: "weight", label: "样品鲜重 (g)", type: "number", defaultValue: 0.5 },
+            { key: "totalVol", label: "提取液总体积 (mL)", type: "number", defaultValue: 5 },
+            { key: "enzymeVol", label: "取用酶液体积 (mL)", type: "number", defaultValue: 0.1 },
+        ],
+        validation: {
+            odMin: 0, odMax: 1.5,
+            odWarning: "每30秒读数一次，连续读3-5分钟，要求ΔA₄₇₀随时间线性变化",
+        },
+        calcFn: "calcPOD",
+    },
+    {
+        id: "cat",
+        name: "CAT活性测定",
+        icon: "💨",
+        category: "酶活性",
+        description: "CAT分解H₂O₂，测240nm处H₂O₂减少的速率，反映CAT活性。",
+        formula: [
+            "CAT活性(U·g⁻¹·min⁻¹) = ΔA₂₄₀ × V总 / (W样品 × V酶液 × 0.0436 × t)",
+            "0.0436 为 240nm处 1μmol H₂O₂ 的消光系数"
+        ],
+        requiredCols: [
+            { key: "sampleName", label: "样品名称", type: "sample_name", required: true },
+            { key: "a240_start", label: "A240 (起始)", type: "od_value", required: true },
+            { key: "a240_end", label: "A240 (终点)", type: "od_value", required: true },
+            { key: "time_min", label: "间隔时间 (min)", type: "numeric", required: false },
+        ],
+        params: [
+            { key: "weight", label: "样品鲜重 (g)", type: "number", defaultValue: 0.5 },
+            { key: "totalVol", label: "提取液总体积 (mL)", type: "number", defaultValue: 5 },
+            { key: "enzymeVol", label: "取用酶液体积 (mL)", type: "number", defaultValue: 0.1 },
+        ],
+        validation: {
+            odMin: 0, odMax: 2.0,
+            odWarning: "ΔA₂₄₀随时间变化应基本线性，若初期下降过快说明酶液太浓需稀释",
+        },
+        calcFn: "calcCAT",
+    },
+    {
+        id: "sod",
+        name: "SOD活性 - NBT法",
+        icon: "🛡️",
+        category: "酶活性",
+        description: "SOD抑制NBT在光下的还原，测560nm吸光度，用抑制率50%定义1个酶活力单位。",
+        formula: [
+            "抑制率(%) = (A对照 − A样品) / A对照 × 100%",
+            "SOD活性(U·g⁻¹) = 抑制率 × V总 / (W样品 × V酶液 × 50%)",
+        ],
+        requiredCols: [
+            { key: "sampleName", label: "样品名称", type: "sample_name", required: true },
+            { key: "a560_sample", label: "A560 (样品管)", type: "od_value", required: true },
+            { key: "a560_control", label: "A560 (照光对照)", type: "od_value", required: true },
+            { key: "a560_dark", label: "A560 (暗对照)", type: "od_value", required: false },
+        ],
+        params: [
+            { key: "weight", label: "样品鲜重 (g)", type: "number", defaultValue: 0.5 },
+            { key: "totalVol", label: "提取液总体积 (mL)", type: "number", defaultValue: 5 },
+            { key: "enzymeVol", label: "取用酶液体积 (mL)", type: "number", defaultValue: 0.05 },
+        ],
+        validation: {
+            odMin: 0, odMax: 1.5,
+            odWarning: "照光对照A560应在0.3-0.6之间，若太低或太高需调整光照时间",
+        },
+        calcFn: "calcSOD",
+    },
+    {
+        id: "reducing_sugar",
+        name: "还原糖 - DNS法",
+        icon: "🧪",
+        category: "植物生理",
+        description: "还原糖与DNS试剂共热生成棕红色物质，测540nm吸光度，通过标准曲线计算还原糖含量。",
+        formula: [
+            "还原糖浓度 = (A₅₄₀ − b) / a × 稀释倍数",
+            "还原糖含量 = 还原糖浓度 × V提取液 / (W样品 × 1000)",
+        ],
+        requiredCols: [
+            { key: "sampleName", label: "样品名称", type: "sample_name", required: true },
+            { key: "a540", label: "A540 (吸光度)", type: "od_value", required: true },
+            { key: "dilution", label: "稀释倍数", type: "dilution", required: false },
+        ],
+        params: [
+            { key: "slope", label: "标准曲线斜率 a", type: "number", defaultValue: "" },
+            { key: "intercept", label: "标准曲线截距 b", type: "number", defaultValue: "" },
+            { key: "weight", label: "样品重量 (g)", type: "number", defaultValue: 0.1 },
+            { key: "volume", label: "提取液总体积 (mL)", type: "number", defaultValue: 10 },
+        ],
+        validation: { odMin: 0, odMax: 1.5, odWarning: "OD540值应控制在 0.1 - 0.8 之间" },
+        calcFn: "calcReducingSugar",
+    },
+    {
+        id: "group_indicator_stats",
+        name: "按指标分组统计",
+        icon: "📊",
+        category: "通用",
+        description: "适合「组别-指标-数据」结构：第1列组别/品种（空格继承上行），第2列指标名（株高/叶长/叶宽等），后面是数据列。自动按组×指标计算统计量。",
+        formula: ["按(组别, 指标)分组", "每组计算：Mean, SD, SE, Min, Max, CV%", "结果以组别×指标矩阵展示"],
+        requiredCols: [
+            { key: "groupCol", label: "组别列（品种/处理）", type: "sample_name", required: true },
+            { key: "indicatorCol", label: "指标列（株高/叶绿素等）", type: "sample_name", required: true },
+        ],
+        params: [],
+        validation: { odMin: -1e10, odMax: 1e10, odWarning: "" },
+        calcFn: "calcGroupIndicatorStats",
+    },
+    {
+        id: "generic_stats",
+        name: "通用统计分析",
+        icon: "📈",
+        category: "通用",
+        description: "对数据进行均值、标准差、标准误、变异系数等统计分析，适用于任何数值数据。",
+        formula: ["Mean = Σx/n", "SD = √(Σ(x−Mean)²/(n−1))", "SE = SD/√n", "CV(%) = SD/|Mean|×100"],
+        requiredCols: [
+            { key: "sampleName", label: "样品名称", type: "sample_name", required: true },
+        ],
+        params: [],
+        validation: { odMin: -1e10, odMax: 1e10, odWarning: "" },
+        calcFn: "calcGenericStats",
+    },
+];
+
+/* ============ 文件上传 ============ */
+const uploadZone = document.getElementById('uploadZone');
+const fileInput = document.getElementById('fileInput');
+
+uploadZone.addEventListener('dragover', e => {
+    e.preventDefault();
+    uploadZone.classList.add('dragover');
+});
+uploadZone.addEventListener('dragleave', () => {
+    uploadZone.classList.remove('dragover');
+});
+uploadZone.addEventListener('drop', e => {
+    e.preventDefault();
+    uploadZone.classList.remove('dragover');
+    if (e.dataTransfer.files.length > 0) {
+        fileInput.files = e.dataTransfer.files;
+        handleFileUpload(e.dataTransfer.files[0]);
+    }
+});
+fileInput.addEventListener('change', e => {
+    if (e.target.files.length > 0) handleFileUpload(e.target.files[0]);
+});
+
+function handleFileUpload(file) {
+    const fname = file.name.toLowerCase();
+    if (!fname.endsWith('.xlsx') && !fname.endsWith('.xls') && !fname.endsWith('.docx')) {
+        showParseStatus('error', '❌ 仅支持 .xlsx / .xls / .docx 格式');
+        return;
+    }
+    if (file.size > 20 * 1024 * 1024) {
+        showParseStatus('error', '❌ 文件大小不能超过 20MB');
+        return;
+    }
+
+    showParseStatus('info', '⏳ 正在解析文件...');
+    setBtnLoading('importConfirmBtn', true);
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    fetch('/api/parse-file', {
+        method: 'POST',
+        body: formData
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.error) {
+            aiStatus.textContent = '❌ ' + data.error;
+            aiStatus.className = 'd-parse-status error';
+            if (data.need_api_key) {
+                aiStatus.innerHTML = '⚠️ 请先在个人中心配置API Key <br><br><button class="d-btn d-btn-primary d-btn-sm" onclick="window.location.href='/profile'">去配置</button>';
+            }
+            return;
+        }
+        if (data.task_id) { aiStatus.textContent = '🤖 ' + (data.message||'AI分析中...'); aiStatus.className = 'd-parse-status info'; pollAITask(data.task_id); return; }
+        handleAIResult(data.ai_analysis || data);
+    })
+    .catch(err => {
+        setBtnLoading('importConfirmBtn', false);
+        showParseStatus('error', '❌ 上传失败: ' + err.message);
+    });
+}
+
+function showParseStatus(type, msg) {
+    const el = document.getElementById('parseStatus');
+    el.style.display = 'block';
+    el.className = 'd-parse-status ' + type;
+    el.innerHTML = msg;
+}
+
+function setBtnLoading(btnId, loading) {
+    const btn = document.getElementById(btnId);
+    if (!btn) return;
+    if (loading) {
+        btn._origText = btn.textContent;
+        btn.textContent = '⏳ 处理中...';
+        btn.disabled = true;
+        btn.style.opacity = '0.7';
+        btn.style.cursor = 'not-allowed';
+    } else {
+        btn.textContent = btn._origText || btn.textContent;
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        btn.style.cursor = 'pointer';
+    }
+}
+
+function showFileInfo(name, source, sheetCount) {
+    const el = document.getElementById('fileInfoBar');
+    el.style.display = 'flex';
+    const icon = source === 'excel' ? '📗' : '📘';
+    el.innerHTML = `
+        <span class="file-icon">${icon}</span>
+        <div>
+            <div class="file-name">${name}</div>
+            <div class="file-meta">${sheetCount} 个数据表</div>
+        </div>
+        <button class="file-remove" onclick="clearUpload()" title="移除文件">✕</button>
+    `;
+}
+
+function renderSheetTabs() {
+    const container = document.getElementById('sheetTabs');
+    if (parsedSheets.length <= 1) {
+        container.style.display = 'none';
+        return;
+    }
+    container.style.display = 'flex';
+    container.innerHTML = parsedSheets.map((s, i) =>
+        `<button class="d-sheet-tab ${i === activeSheetIdx ? 'active' : ''}" onclick="switchSheet(${i})">${s.name} (${s.row_count}行)</button>`
+    ).join('');
+}
+
+function switchSheet(idx) {
+    activeSheetIdx = idx;
+    renderSheetTabs();
+    renderPreview();
+}
+
+function renderPreview() {
+    const sheet = parsedSheets[activeSheetIdx];
+    if (!sheet) return;
+
+    const wrap = document.getElementById('previewTableWrap');
+    const maxPreviewRows = 500;
+    const displayRows = sheet.rows.slice(0, maxPreviewRows);
+
+    let html = '<table class="d-preview-table"><thead><tr>';
+    // 表头 + 列类型标签
+    sheet.headers.forEach((h, i) => {
+        const ct = sheet.col_types[i];
+        let tagClass = 'unknown';
+        let tagText = '';
+        if (ct) {
+            if (ct.type === 'group_col') { tagClass = 'sample'; tagText = '组别'; }
+            else if (ct.type === 'indicator_col') { tagClass = 'od'; tagText = '指标'; }
+            else if (ct.type === 'sample_name') { tagClass = 'sample'; tagText = '样品名'; }
+            else if (ct.type === 'od_value') { tagClass = 'od'; tagText = 'OD值'; }
+            else if (ct.type === 'concentration') { tagClass = 'od'; tagText = '浓度'; }
+            else if (ct.type === 'weight') { tagClass = 'numeric'; tagText = '重量'; }
+            else if (ct.type === 'volume') { tagClass = 'numeric'; tagText = '体积'; }
+            else if (ct.type === 'dilution') { tagClass = 'numeric'; tagText = '稀释'; }
+            else if (ct.type === 'replicate') { tagClass = 'numeric'; tagText = '重复'; }
+            else if (ct.type === 'numeric') { tagClass = 'numeric'; tagText = /^\d{1,3}$/.test(h.trim()) ? `数据${h.trim()}` : '数值'; }
+        }
+        html += `<th>${h || '列' + (i+1)}${tagText ? '<span class="d-col-tag ' + tagClass + '">' + tagText + '</span>' : ''}</th>`;
+    });
+    html += '</tr></thead><tbody>';
+
+    displayRows.forEach(row => {
+        html += '<tr>';
+        sheet.headers.forEach((_, ci) => {
+            let val = ci < row.length ? row[ci] : '';
+            if (val === '' || val === null || val === undefined) val = '';
+            html += `<td title="${val}">${val}</td>`;
+        });
+        html += '</tr>';
+    });
+
+    html += '</tbody></table>';
+
+    if (sheet.rows.length > maxPreviewRows) {
+        html += `<div style="text-align:center;font-size:0.8rem;color:var(--text-light);padding:0.5rem;">显示前 ${maxPreviewRows} 行，共 ${sheet.rows.length} 行数据</div>`;
+    }
+
+    wrap.innerHTML = html;
+}
+
+function confirmImport() {
+    const sheet = parsedSheets[activeSheetIdx];
+    if (!sheet) return;
+
+    setBtnLoading('importConfirmBtn', true);
+    const colTypes = sheet.col_types || [];
+    const headers = sheet.headers;
+    const rows = sheet.rows;
+
+    // 找样品名：优先"样品号/编号/名称"，其次"品种/处理"
+    const sampleNameCols = [];
+    colTypes.forEach((ct, i) => {
+        if (ct.type === 'sample_name') sampleNameCols.push(i);
+    });
+    let sampleCol = -1;
+    if (sampleNameCols.length >= 2) {
+        // 多个样品名列：优先选含"号"/"编号"/"名"的那个，最后选"品种"
+        for (let ci of sampleNameCols) {
+            const h = (headers[ci] || '').toLowerCase();
+            if (/[号编号名]|name|id/.test(h)) { sampleCol = ci; break; }
+        }
+        if (sampleCol < 0) sampleCol = sampleNameCols[0];
+    } else if (sampleNameCols.length === 1) {
+        sampleCol = sampleNameCols[0];
+    } else {
+        // 没有识别到样品名列，用第一列
+        sampleCol = 0;
+    }
+
+    const numericCols = [];
+    colTypes.forEach((ct, i) => {
+        if (ct.type === 'numeric' || ct.type === 'od_value' || ct.type === 'concentration') {
+            numericCols.push(i);
+        }
+    });
+
+    if (numericCols.length >= 1) {
+        activeSheetData = sheet;
+
+        const isGroupIndicator = sheet.data_structure === 'group_indicator';
+        if (!isGroupIndicator) {
+            importAsStats(sheet, sampleCol, numericCols);
+        }
+
+        // 展示实验区，自动选中最佳匹配实验并计算
+        showParseStatus('success', isGroupIndicator
+            ? `识别为「组别-指标」结构：${rows.length} 行数据，${numericCols.length} 个数据列`
+            : `已导入：${rows.length} 个样本，${numericCols.length} 列数据`);
+
+        renderExperimentOptions();
+        document.getElementById('experimentSection').style.display = 'block';
+
+        // 滚动到实验区
+        document.getElementById('experimentSection').scrollIntoView({ behavior: 'smooth' });
+
+        // 检查是否有API Key，有则自动AI分析；无则直接规则计算
+        fetch('/api/user/has-api-key')
+            .then(r => r.json())
+            .then(d => {
+                if (d.has_api_key) {
+                    setBtnLoading('importConfirmBtn', false);
+                    runAIAnalysis();
+                } else {
+                    setTimeout(function() {
+                        setBtnLoading('importConfirmBtn', false);
+                        runExperimentCalc();
+                    }, 300);
+                }
+            })
+            .catch(() => {
+                setTimeout(function() {
+                    setBtnLoading('importConfirmBtn', false);
+                    runExperimentCalc();
+                }, 300);
+            });
+        return;
+    }
+
+    setBtnLoading('importConfirmBtn', false);
+    showParseStatus('error', '未找到数值列，请检查数据。<br>当前表头: ' + headers.join(', '));
+}
+
+function importAsStats(sheet, sampleColIdx, valColIndices) {
+    // 清空现有数据
+    const tbody = document.getElementById('statsBody');
+    tbody.innerHTML = '';
+
+    // 设置重复次数
+    replicateCount = valColIndices.length;
+    buildStatsHead();
+
+    sheet.rows.forEach((row, ri) => {
+        const name = sampleColIdx >= 0 && sampleColIdx < row.length ? String(row[sampleColIdx]) : ('样品' + (ri + 1));
+        const tr = document.createElement('tr');
+        let html = `<td><input type="text" value="${name}" class="sname"></td>`;
+        valColIndices.forEach(ci => {
+            const val = ci < row.length && typeof row[ci] === 'number' ? row[ci] : '';
+            html += `<td><input type="number" step="any" value="${val}" class="sval"></td>`;
+        });
+        html += `<td><button class="d-inline-btn d-del-col" onclick="this.closest('tr').remove()">×</button></td>`;
+        tr.innerHTML = html;
+        tbody.appendChild(tr);
+    });
+}
+
+function importAsCurve(sheet, concColIdx, odColIdx) {
+    const tbody = document.getElementById('curveBody');
+    tbody.innerHTML = '';
+
+    sheet.rows.forEach((row, ri) => {
+        const conc = concColIdx < row.length ? row[concColIdx] : '';
+        const od = odColIdx < row.length ? row[odColIdx] : '';
+        const name = '标准' + (ri + 1);
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><input type="text" value="${name}" class="std-name"></td>
+            <td><input type="number" step="any" value="${conc}" class="std-conc"></td>
+            <td><input type="number" step="any" value="${od}" class="std-od"></td>
+            <td><button class="d-inline-btn d-del-col" onclick="this.closest('tr').remove()">×</button></td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+/* ============ AI智能分析 ============ */
+let aiAnalysisResult = null;
+
+function runAIAnalysis() {
+    if (!activeSheetData) return;
+
+    const aiSection = document.getElementById('aiResultSection');
+    const aiStatus = document.getElementById('aiStatus');
+
+    aiSection.style.display = 'block';
+    aiStatus.textContent = '🤖 AI正在分析数据结构...';
+    aiStatus.className = 'd-parse-status info';
+    document.getElementById('aiInsights').innerHTML = '';
+    document.getElementById('aiWarnings').innerHTML = '';
+    document.getElementById('aiActions').innerHTML = '';
+
+    fetch('/api/data/ai-analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            headers: activeSheetData.headers,
+            rows: activeSheetData.rows,
+            col_types: activeSheetData.col_types,
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.error) {
+            if (data.need_api_key) {
+                aiStatus.innerHTML = '⚠️ ' + data.message + '<br><br><button class="d-btn d-btn-primary d-btn-sm" onclick="window.location.href=\'/profile\'">去配置API Key</button>';
+                aiStatus.className = 'd-parse-status error';
+            } else {
+                aiStatus.textContent = '❌ ' + data.error;
+                aiStatus.className = 'd-parse-status error';
+            }
+            return;
+        }
+
+        const analysis = data.ai_analysis || data;
+        aiAnalysisResult = analysis;
+
+        // 显示置信度
+        const conf = analysis.confidence !== undefined ? (analysis.confidence * 100).toFixed(0) + '%' : 'N/A';
+        aiStatus.textContent = `🤖 AI分析完成 | 置信度: ${conf} | 推荐: ${analysis.experiment_type || 'N/A'}`;
+        aiStatus.className = 'd-parse-status success';
+
+        // 洞察
+        if (analysis.insights && analysis.insights.length > 0) {
+            document.getElementById('aiInsights').innerHTML = '<div class="d-card"><h3>💡 AI洞察</h3>' +
+                analysis.insights.map(i => `<div class="d-issue success"><span class="issue-icon">💡</span><span>${i}</span></div>`).join('') +
+                '</div>';
+        }
+
+        // 警告
+        if (analysis.warnings && analysis.warnings.length > 0) {
+            document.getElementById('aiWarnings').innerHTML = '<div class="d-card"><h3>⚠️ AI警告</h3>' +
+                analysis.warnings.map(w => `<div class="d-issue warning"><span class="issue-icon">⚠️</span><span>${w}</span></div>`).join('') +
+                '</div>';
+        }
+
+        // 建议操作
+        if (analysis.recommended_actions && analysis.recommended_actions.length > 0) {
+            document.getElementById('aiActions').innerHTML = '<div class="d-card"><h3>📋 建议操作</h3>' +
+                analysis.recommended_actions.map(a => `<div style="font-size:0.85rem;padding:0.3rem 0;">• ${a}</div>`).join('') +
+                '</div>';
+        }
+
+        // 自动应用AI建议（置信度高时自动执行）
+        if (analysis.confidence > 0.6) {
+            setTimeout(function() {
+                applyAISuggestions();
+            }, 200);
+        }
+    })
+    .catch(err => {
+        aiStatus.textContent = '❌ 请求失败: ' + (err.message || '服务器未响应，请稍后重试');
+        aiStatus.className = 'd-parse-status error';
+        console.error('AI分析请求失败:', err);
+    });
+}
+
+function applyAISuggestions() {
+    if (!aiAnalysisResult) return;
+
+    const analysis = aiAnalysisResult;
+    const applied = [];
+
+    // 1. 应用列类型修正
+    if (analysis.column_analysis && activeSheetData.col_types) {
+        let changed = 0;
+        analysis.column_analysis.forEach(colA => {
+            const idx = colA.col_index !== undefined ? colA.col_index : colA.col_idx;
+            if (idx !== undefined && idx < activeSheetData.col_types.length) {
+                const oldType = activeSheetData.col_types[idx].type;
+                const newType = colA.suggested_type || colA.type || oldType;
+                if (oldType !== newType) {
+                    activeSheetData.col_types[idx].type = newType;
+                    changed++;
+                }
+            }
+        });
+        applied.push(`列类型修正${changed}处`);
+        renderPreview();
+    }
+
+    // 2. 应用实验类型推荐
+    if (analysis.experiment_type) {
+        const exp = EXPERIMENT_TYPES.find(e => e.id === analysis.experiment_type);
+        if (exp) {
+            selectExperiment(exp.id);
+            applied.push(`实验类型→${exp.name}`);
+        }
+    }
+
+    // 3. 应用参数推荐（如果AI给了参数值）
+    if (analysis.suggested_params) {
+        const params = analysis.suggested_params;
+        document.querySelectorAll('.exp-param').forEach(inp => {
+            if (params[inp.dataset.key] !== undefined) {
+                inp.value = params[inp.dataset.key];
+                applied.push(`参数${inp.dataset.key}=${params[inp.dataset.key]}`);
+            }
+        });
+    }
+
+    // 4. 如果AI给了数据修正建议且置信度高，自动应用列映射
+    if (analysis.column_mapping && analysis.confidence > 0.7) {
+        const mapping = analysis.column_mapping;
+        document.querySelectorAll('.col-mapping').forEach(sel => {
+            const key = sel.dataset.key;
+            if (mapping[key] !== undefined) {
+                // 按列名或索引找option
+                const target = mapping[key];
+                Array.from(sel.options).forEach(opt => {
+                    if (opt.value === String(target) || opt.text.includes(String(target))) {
+                        sel.value = opt.value;
+                    }
+                });
+            }
+        });
+        applied.push('列映射自动配置');
+    }
+
+    // 5. 重新计算
+    setTimeout(function() {
+        runExperimentCalc();
+        showParseStatus('success', applied.length > 0
+            ? '✅ AI已自动: ' + applied.join(' | ') + ' | 已重新计算'
+            : '✅ 已应用AI建议并重新计算');
+
+function pollAITask(taskId) {
+    let attempts = 0;
+    var poll = setInterval(function() {
+        attempts++;
+        fetch('/api/data/ai-analyze/status/' + taskId)
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                var aiStatus = document.getElementById('aiStatus');
+                if (data.status === 'completed') {
+                    clearInterval(poll);
+                    var analysis = data.ai_analysis || {};
+                    handleAIResult(analysis.ai_analysis || analysis);
+                } else if (data.status === 'failed') {
+                    clearInterval(poll);
+                    aiStatus.textContent = '❌ AI分析失败: ' + (data.error || '未知');
+                    aiStatus.className = 'd-parse-status error';
+                } else if (attempts >= 90) {
+                    clearInterval(poll);
+                    aiStatus.textContent = '⏰ 超时，请重试';
+                    aiStatus.className = 'd-parse-status error';
+                } else {
+                    aiStatus.textContent = '🤖 AI正在分析数据... (' + attempts * 2 + 's)';
+                }
+            })
+            .catch(function() {
+                if (attempts >= 90) { clearInterval(poll); }
+            });
+    }, 2000);
+}
+
+function handleAIResult(analysis) {
+    if (!analysis) return;
+    aiAnalysisResult = analysis;
+    var aiStatus = document.getElementById('aiStatus');
+    var conf = analysis.confidence !== undefined ? (analysis.confidence * 100).toFixed(0) + '%' : 'N/A';
+    aiStatus.textContent = '🤖 AI分析完成 | 置信度: ' + conf + ' | 推荐: ' + (analysis.experiment_type || 'N/A');
+    aiStatus.className = 'd-parse-status success';
+
+    if (analysis.insights && analysis.insights.length > 0) {
+        document.getElementById('aiInsights').innerHTML = '<div class="d-card"><h3>💡 AI洞察</h3>' +
+            analysis.insights.map(function(i) { return '<div class="d-issue success"><span>💡 ' + i + '</span></div>'; }).join('') + '</div>';
+    }
+    if (analysis.warnings && analysis.warnings.length > 0) {
+        document.getElementById('aiWarnings').innerHTML = '<div class="d-card"><h3>⚠️ AI警告</h3>' +
+            analysis.warnings.map(function(w) { return '<div class="d-issue warning"><span>⚠️ ' + w + '</span></div>'; }).join('') + '</div>';
+    }
+    if (analysis.recommended_actions && analysis.recommended_actions.length > 0) {
+        document.getElementById('aiActions').innerHTML = '<div class="d-card"><h3>📋 建议</h3>' +
+            analysis.recommended_actions.map(function(a) { return '<div style="font-size:0.85rem;padding:0.2rem 0;">• ' + a + '</div>'; }).join('') + '</div>';
+    }
+    if (analysis.confidence > 0.6) {
+        setTimeout(function() { applyAISuggestions(); }, 300);
+    }
+}
+
+/* ============ 推断性统计：t检验 + ANOVA + Duncan多重比较 ============ */
+
+// t分布CDF
+function tDistCDF(t, df) {
+    if (df <= 0) return 0.5;
+    const x = df / (df + t * t);
+    let a = 1;
+    const n = df % 2 === 0 ? df - 2 : df - 1;
+    for (let i = n; i >= 2; i -= 2) a = (i - 1) / (i * x) * a + 1;
+    let p = 1 - 0.5 * Math.pow(x, df / 2) * (a - (df % 2 ? 0 : 0));
+    if (df % 2 !== 0) {
+        const theta = Math.atan(Math.abs(t) / Math.sqrt(df));
+        p = 1 - (theta + Math.sin(theta) * Math.cos(theta) * a) / Math.PI;
+    }
+    return 1 - p / 2;
+}
+
+function independentTTest(g1, g2) {
+    const n1 = g1.length, n2 = g2.length;
+    if (n1 < 2 || n2 < 2) return null;
+    const m1 = g1.reduce((a,b)=>a+b,0)/n1, m2 = g2.reduce((a,b)=>a+b,0)/n2;
+    const v1 = n1>1?g1.reduce((s,v)=>s+(v-m1)**2,0)/(n1-1):0, v2 = n2>1?g2.reduce((s,v)=>s+(v-m2)**2,0)/(n2-1):0;
+    const se = Math.sqrt(v1/n1+v2/n2);
+    if (se===0) return null;
+    const t = (m1-m2)/se;
+    const num = (v1/n1+v2/n2)**2, den = (v1/n1)**2/(n1-1)+(v2/n2)**2/(n2-1);
+    const df = den>0?num/den:n1+n2-2;
+    const p = 2*(1-tDistCDF(Math.abs(t),df));
+    return {m1,m2,n1,n2,t:parseFloat(t.toFixed(4)),df:parseFloat(df.toFixed(2)),p:parseFloat(p.toFixed(6)),sig:p<0.05?(p<0.01?'**':'*'):'ns'};
+}
+
+function oneWayANOVA(groups) {
+    const gNames = Object.keys(groups);
+    if (gNames.length<2) return null;
+    const allV = gNames.flatMap(g=>groups[g]), N = allV.length;
+    if (N===0) return null;
+    const grandM = allV.reduce((a,b)=>a+b,0)/N;
+    let ssB=0, ssW=0;
+    const gm={}, gc={};
+    gNames.forEach(g=>{
+        const v=groups[g], m=v.reduce((a,b)=>a+b,0)/v.length;
+        gm[g]=parseFloat(m.toFixed(4)); gc[g]=v.length;
+        ssB+=v.length*(m-grandM)**2;
+        v.forEach(x=>{ssW+=(x-m)**2;});
+    });
+    const dfB=gNames.length-1, dfW=N-gNames.length;
+    const msB=ssB/dfB, msW=ssW/dfW, F=msB/msW;
+    const p = fApproxP(F,dfB,dfW);
+    return {F:parseFloat(F.toFixed(4)),dfB,dfW,p:parseFloat(p.toFixed(6)),sig:p<0.05,msW:parseFloat(msW.toFixed(6)),gm,gc,N,ssB,ssW};
+}
+
+function fApproxP(F,df1,df2) {
+    if (F<=0) return 1;
+    const x=df2/(df2+df1*F), a=df2/2, b=df1/2;
+    return 1-betaReg(x,a,b);
+}
+function betaReg(x,a,b) {
+    if (x<=0||x>=1) return x>0.5?1:0;
+    if (x>0.5) return 1-betaReg(1-x,b,a);
+    const lnB = logGamma(a)+logGamma(b)-logGamma(a+b);
+    let s=0, term=1, k=0;
+    const eps=1e-15;
+    while (Math.abs(term)>eps && k<200) {
+        term = Math.exp(Math.log(x)*(a+k)+Math.log(1-x)*b-lnB-Math.log(a+k))*Math.exp(logGamma(a+b+k)-logGamma(a+k+1)-logGamma(b)+logGamma(a+b)-logGamma(a+k));
+        s+=term; k++;
+    }
+    return s;
+}
+function logGamma(z) {
+    if (z<0.5) return Math.log(Math.PI/Math.sin(Math.PI*z))-logGamma(1-z);
+    const c=[676.5203681218851,-1259.1392167224028,771.3234287776531,-176.6150291621406,12.507343278686905,-0.13857109526572012,9.984369578019572e-6,1.5056327351493116e-7];
+    let x=0.99999999999980993, t=z+6.5;
+    for (let i=0;i<c.length;i++) x+=c[i]/(z+i);
+    return Math.log(2.5066282746310005)+(z-0.5)*Math.log(t)-t+Math.log(x);
+}
+
+// Duncan SSR表(α=0.05)
+const DUNCAN_SSR = {
+    2:[18.0,6.09,4.50,3.93,3.64,3.46,3.34,3.26,3.20,3.15,3.08,3.01,2.95,2.89,2.86,2.83,2.80,2.77],
+    3:[18.0,6.09,4.50,3.98,3.74,3.58,3.47,3.39,3.34,3.30,3.23,3.16,3.10,3.04,3.01,2.98,2.95,2.92],
+    4:[18.0,6.09,4.50,4.01,3.79,3.64,3.54,3.47,3.41,3.37,3.33,3.25,3.18,3.12,3.09,3.06,3.03,3.00],
+    5:[18.0,6.09,4.50,4.02,3.83,3.68,3.58,3.52,3.47,3.43,3.39,3.31,3.25,3.19,3.16,3.13,3.10,3.06],
+    6:[18.0,6.09,4.50,4.02,3.83,3.68,3.60,3.55,3.50,3.46,3.44,3.36,3.30,3.24,3.21,3.18,3.15,3.11],
+    7:[18.0,6.09,4.50,4.02,3.83,3.68,3.61,3.56,3.52,3.49,3.48,3.40,3.34,3.28,3.25,3.22,3.19,3.15],
+    8:[18.0,6.09,4.50,4.02,3.83,3.68,3.61,3.56,3.53,3.51,3.51,3.43,3.37,3.31,3.28,3.25,3.22,3.18],
+    9:[18.0,6.09,4.50,4.02,3.83,3.68,3.61,3.56,3.54,3.52,3.53,3.45,3.40,3.34,3.31,3.28,3.25,3.21],
+    10:[18.0,6.09,4.50,4.02,3.83,3.68,3.61,3.56,3.54,3.53,3.54,3.47,3.42,3.36,3.33,3.30,3.27,3.23]
+};
+const DUNCAN_DF = [1,2,3,4,5,6,7,8,9,10,12,15,20,30,40,60,120,1e6];
+
+function getSSR(p, df) {
+    if (p<2) p=2; if (p>10) p=10;
+    let lo=0, hi=DUNCAN_DF.length-1;
+    for (let i=0;i<DUNCAN_DF.length-1;i++) { if (df>=DUNCAN_DF[i]&&df<=DUNCAN_DF[i+1]) { lo=i; hi=i+1; break; } }
+    if (df<=DUNCAN_DF[0]) lo=hi=0;
+    if (df>=DUNCAN_DF[hi]) lo=hi=hi;
+    const v1=DUNCAN_SSR[p][lo], v2=DUNCAN_SSR[p][hi];
+    if (lo===hi) return v1;
+    return v1+(v2-v1)*(df-DUNCAN_DF[lo])/(DUNCAN_DF[hi]-DUNCAN_DF[lo]);
+}
+
+function duncanLetterMarking(anova, groups) {
+    const {gm, msW, dfW} = anova;
+    const names = Object.keys(gm).sort((a,b)=>gm[b]-gm[a]);
+    const k=names.length;
+    if (k<2) return null;
+
+    const counts = names.map(g=>groups[g].length);
+    const nH = counts.length/counts.reduce((s,c)=>s+1/c,0);
+    const se = Math.sqrt(msW/nH);
+
+    // 连通矩阵
+    const conn = Array(k).fill().map(()=>Array(k).fill(false));
+    for (let i=0;i<k;i++) for (let j=0;j<k;j++) {
+        const p=Math.abs(i-j)+1;
+        const Rp=getSSR(p,dfW)*se;
+        conn[i][j]=Math.abs(gm[names[i]]-gm[names[j]])<=Rp;
+    }
+    // 分配字母
+    const letters=Array(k).fill('');
+    let ch=97;
+    for (let i=0;i<k;i++) {
+        if (letters[i]!=='') continue;
+        let grp=[i];
+        for (let j=i+1;j<k;j++) {
+            if (letters[j]!=='') continue;
+            if (grp.every(g=>conn[g][j]&&conn[j][g])) grp.push(j);
+        }
+        const l=String.fromCharCode(ch++);
+        grp.forEach(g=>letters[g]+=l);
+    }
+    return {
+        method:"Duncan's MRT (α=0.05)",
+        comps: names.map((g,i)=>({group:g,mean:gm[g],n:groups[g].length,letter:letters[i],display:gm[g].toFixed(3)+' '+letters[i]})),
+        nH:parseFloat(nH.toFixed(2)), se:parseFloat(se.toFixed(6))
+    };
+}
+
+function runSignificanceTest() {
+    if (!activeSheetData) { showParseStatus('error','请先上传并导入数据'); return; }
+    const rows=activeSheetData.rows, colTypes=activeSheetData.col_types||[];
+
+    // 找组别列
+    let groupCol=-1;
+    for (let i=0;i<colTypes.length;i++) {
+        if (colTypes[i].type==='group_col'||colTypes[i].type==='sample_name') { groupCol=i; break; }
+    }
+    if (groupCol<0) { showParseStatus('error','未找到组别列。请确认数据有分组列（品种/处理等）。'); return; }
+
+    // 聚组
+    const groups={};
+    rows.forEach(row=>{
+        const g=String(row[groupCol]||'').trim();
+        if (!g) return;
+        if (!groups[g]) groups[g]=[];
+        for (let ci=0;ci<row.length;ci++) {
+            if (ci===groupCol) continue;
+            const v=row[ci];
+            if (typeof v==='number') groups[g].push(v);
+            else if (typeof v==='string'&&v.trim()) { const n=parseFloat(v); if (!isNaN(n)) groups[g].push(n); }
+        }
+    });
+    Object.keys(groups).forEach(g=>{ if (groups[g].length===0) delete groups[g]; });
+
+    const names=Object.keys(groups);
+    if (names.length<2) { showParseStatus('error','仅'+names.length+'个有效组，需≥2组做显著性检验'); return; }
+
+    const anova=oneWayANOVA(groups);
+    if (!anova) { showParseStatus('error','ANOVA计算失败'); return; }
+
+    let html='';
+    if (names.length===2) {
+        const t=independentTTest(groups[names[0]],groups[names[1]]);
+        if (t) html+=`<div class="d-card"><h3>🔬 t检验</h3><div class="d-formula-bar">t=${t.t}, df=${t.df}, p=${t.p.toFixed(4)} <strong>${t.sig}</strong><br>${names[0]}: ${t.m1.toFixed(3)} (n=${t.n1}) vs ${names[1]}: ${t.m2.toFixed(3)} (n=${t.n2})</div></div>`;
+    }
+
+    html+=`<div class="d-card"><h3>📊 单因素方差分析</h3><div class="d-formula-bar">F(${anova.dfB},${anova.dfW})=<strong>${anova.F}</strong>, p=<strong>${anova.p.toFixed(4)}</strong> ${anova.sig?'✅ <span style=\"color:#2E7D32\">显著</span>':'⚠️ 不显著'}</div></div>`;
+
+    if (anova.sig) {
+        const d=duncanLetterMarking(anova,groups);
+        if (d) {
+            html+=`<div class="d-card"><h3>🔤 Duncan多重比较</h3><div class="d-table-scroll"><table class="d-result-table"><thead><tr><th>组别</th><th>均值</th><th>n</th><th>字母标记</th></tr></thead><tbody>${d.comps.map(c=>`<tr><td><strong>${c.group}</strong></td><td>${c.mean.toFixed(3)}</td><td>${c.n}</td><td style=\"font-weight:700;color:#2E7D32\">${c.letter}</td></tr>`).join('')}</tbody></table></div><div style=\"font-size:0.78rem;color:var(--text-light);margin-top:0.4rem;\">${d.method} | 相同字母=差异不显著(P>0.05)</div></div>`;
+        }
+    }
+
+    let sec=document.getElementById('significanceSection');
+    if (!sec) {
+        sec=document.createElement('div'); sec.id='significanceSection'; sec.style.marginTop='1rem';
+        const crs=document.getElementById('calcResultSection');
+        if (crs) crs.appendChild(sec);
+    }
+    sec.innerHTML=html;
+    showParseStatus('success',`显著性分析完成 | ${names.length}组 | ANOVA p=${anova.p.toFixed(4)} | ${anova.sig?'差异显著':'差异不显著'}`);
+}
+
+function clearUpload() {
+    parsedSheets = [];
+    activeSheetIdx = 0;
+    activeSheetData = null;
+    selectedExperiment = null;
+    lastCalcResult = null;
+    fileInput.value = '';
+    document.getElementById('previewArea').style.display = 'none';
+    document.getElementById('fileInfoBar').style.display = 'none';
+    document.getElementById('parseStatus').style.display = 'none';
+    document.getElementById('experimentSection').style.display = 'none';
+    document.getElementById('mappingSection').style.display = 'none';
+    document.getElementById('paramsSection').style.display = 'none';
+    document.getElementById('issuesSection').style.display = 'none';
+    document.getElementById('calcBtnRow').style.display = 'none';
+    document.getElementById('calcResultSection').style.display = 'none';
+}
+
+function switchDataTabByName(name) {
+    document.querySelectorAll('.data-tab-btn').forEach(b => {
+        b.classList.remove('active');
+        if (b.textContent.includes(name === 'stats' ? '统计' : name === 'curve' ? '标准曲线' : name === 'unknown' ? '浓度' : '图表')) {
+            b.classList.add('active');
+        }
+    });
+    document.querySelectorAll('.data-panel').forEach(p => p.classList.remove('active'));
+    const panel = document.getElementById('panel-' + name);
+    if (panel) panel.classList.add('active');
+}
+
+/* ============ 实验计算模块 ============ */
+
+// confirmImport 现在统一处理：导入数据 + 展示实验选择
+// 原始函数已在上方被这个覆盖（通过函数声明提升覆盖）
+
+function renderExperimentOptions() {
+    const container = document.getElementById('experimentOptions');
+    const cols = activeSheetData.col_types || [];
+    const headers = activeSheetData.headers || [];
+    const dataStructure = activeSheetData.data_structure || 'standard';
+
+    // 如果是组别-指标结构，给 group_indicator_stats 加分
+    const isGroupIndicator = dataStructure === 'group_indicator';
+
+    // 对每个实验类型算匹配度
+    const scored = EXPERIMENT_TYPES.map(exp => {
+        let score = 0;
+        const matched = {};
+        exp.requiredCols.forEach(rc => {
+            for (let ci = 0; ci < cols.length; ci++) {
+                if (cols[ci].type === rc.type || (ci < headers.length && headers[ci].toLowerCase().includes(rc.key.toLowerCase()))) {
+                    score++;
+                    matched[rc.key] = ci;
+                    break;
+                }
+            }
+        });
+        // 组别-指标结构→给 group_indicator_stats 额外加分使其排第一
+        if (isGroupIndicator && exp.id === 'group_indicator_stats') score += 5;
+        return { exp, score, matched };
+    });
+
+    // 排序，匹配度高的在前
+    scored.sort((a, b) => b.score - a.score);
+
+    container.innerHTML = scored.map(({ exp, score }) => `
+        <div class="d-exp-option${selectedExperiment && selectedExperiment.id === exp.id ? ' selected' : ''}" onclick="selectExperiment('${exp.id}')">
+            <div class="exp-name">${exp.icon} ${exp.name}</div>
+            <div class="exp-desc">${exp.description}</div>
+            <div style="font-size:0.72rem;color:${score >= exp.requiredCols.filter(c=>c.required).length ? '#2E7D32' : '#F57F17'};margin-top:0.2rem;">
+                匹配度: ${'★'.repeat(Math.min(score, exp.requiredCols.filter(c=>c.required).length))}${'☆'.repeat(Math.max(0, exp.requiredCols.filter(c=>c.required).length - score))}
+            </div>
+        </div>
+    `).join('');
+
+    // 如果没有选中任何实验，自动选匹配度最高的
+    if (!selectedExperiment && scored.length > 0 && scored[0].score > 0) {
+        selectExperiment(scored[0].exp.id);
+    }
+}
+
+function toggleMappingDetail() {
+    const grid = document.getElementById('mappingGrid');
+    const btn = document.querySelector('#mappingSection .d-btn-outline');
+    if (grid.style.display === 'none') {
+        grid.style.display = '';
+        btn.textContent = '收起调整';
+    } else {
+        grid.style.display = 'none';
+        btn.textContent = '展开调整';
+    }
+}
+
+function selectExperiment(expId) {
+    const exp = EXPERIMENT_TYPES.find(e => e.id === expId);
+    if (!exp) return;
+    selectedExperiment = exp;
+
+    // 更新选择UI
+    document.querySelectorAll('.d-exp-option').forEach(el => {
+        el.classList.remove('selected');
+        if (el.querySelector('.exp-name') && el.querySelector('.exp-name').textContent.includes(exp.name)) {
+            el.classList.add('selected');
+        }
+    });
+
+    // 显示公式
+    const formulaBar = document.getElementById('expFormulaBar');
+    formulaBar.innerHTML = '<div style="font-weight:700;margin-bottom:0.3rem;">计算公式：</div>' +
+        exp.formula.map(f => `<code>${f}</code>`).join('<br>');
+
+    // 渲染列映射
+    renderColumnMapping(exp);
+
+    // 渲染参数
+    renderParams(exp);
+
+    document.getElementById('mappingSection').style.display = 'block';
+    document.getElementById('paramsSection').style.display = exp.params.length > 0 ? 'block' : 'none';
+}
+
+function renderColumnMapping(exp) {
+    const grid = document.getElementById('mappingGrid');
+    const summary = document.getElementById('mappingSummary');
+    const headers = activeSheetData.headers;
+    const colTypes = activeSheetData.col_types;
+
+    // 构建列选项
+    const options = [{ value: '', text: '-- 不选择 --' }];
+    headers.forEach((h, i) => {
+        const ct = colTypes[i];
+        const tag = ct ? ` [${ct.type}]` : '';
+        options.push({ value: String(i), text: `${h || '列'+(i+1)}${tag}` });
+    });
+
+    // 生成映射
+    const mappings = exp.requiredCols.map(rc => {
+        let matchedVal = '';
+        // 特殊处理：group_indicator_stats 需要匹配 group_col 和 indicator_col
+        const matchTypes = [rc.type];
+        if (rc.key === 'groupCol') matchTypes.push('group_col', 'sample_name');
+        if (rc.key === 'indicatorCol') matchTypes.push('indicator_col', 'sample_name');
+
+        for (let ci = 0; ci < colTypes.length; ci++) {
+            if (matchTypes.includes(colTypes[ci].type)) { matchedVal = String(ci); break; }
+        }
+        if (!matchedVal) {
+            for (let ci = 0; ci < headers.length; ci++) {
+                if (headers[ci].toLowerCase().includes(rc.key.toLowerCase())) { matchedVal = String(ci); break; }
+            }
+        }
+        return { rc, matchedVal };
+    });
+
+    // 摘要
+    const mapped = mappings.filter(m => m.matchedVal !== '');
+    const unmapped = mappings.filter(m => m.rc.required && m.matchedVal === '');
+    const summaryParts = mapped.map(m => {
+        const h = headers[parseInt(m.matchedVal)] || '列' + (parseInt(m.matchedVal)+1);
+        return `<code>${m.rc.label}</code> ← <strong>${h}</strong>`;
+    });
+    summary.innerHTML = summaryParts.length > 0
+        ? '已自动匹配：' + summaryParts.join('，') + (unmapped.length > 0 ? ` <span style="color:#F44336;">（${unmapped.length}项未匹配，请展开调整）</span>` : ' ✅')
+        : '<span style="color:#F44336;">未能自动匹配，请展开手动选择</span>';
+
+    // 详细选择（默认隐藏）
+    grid.style.display = 'none';
+    const btn = document.querySelector('#mappingSection .d-btn-outline');
+    if (btn) btn.textContent = '展开调整';
+
+    grid.innerHTML = mappings.map(({ rc, matchedVal }) => {
+        const selectHtml = `<select class="col-mapping" data-key="${rc.key}" onchange="onMappingChanged()">
+            ${options.map(o => `<option value="${o.value}"${o.value === matchedVal ? ' selected' : ''}>${o.text}</option>`).join('')}
+        </select>`;
+        return `<div class="d-mapping-item">
+            <label>${rc.label}${rc.required ? '<span class="required"> *</span>' : ''}</label>
+            ${selectHtml}
+        </div>`;
+    }).join('');
+}
+
+function onMappingChanged() {
+    // 映射改动后清除旧结果，提示重新计算
+    document.getElementById('calcResultSection').style.display = 'none';
+    document.getElementById('issuesSection').style.display = 'none';
+    lastCalcResult = null;
+}
+
+function renderParams(exp) {
+    const grid = document.getElementById('paramsGrid');
+    if (!exp.params || exp.params.length === 0) { grid.innerHTML = ''; return; }
+
+    // 如果有标准曲线参数，尝试从fitted值自动填充
+    const defaultValueOverrides = {};
+    if (exp.id === 'soluble_protein' || exp.id === 'soluble_sugar' || exp.id === 'reducing_sugar') {
+        if (fittedSlope) defaultValueOverrides.slope = fittedSlope;
+        if (fittedIntercept) defaultValueOverrides.intercept = fittedIntercept;
+    }
+
+    grid.innerHTML = exp.params.map(p => {
+        const val = defaultValueOverrides[p.key] !== undefined ? defaultValueOverrides[p.key] : (p.defaultValue || '');
+        return `<div class="d-mapping-item">
+            <label>${p.label}</label>
+            <input type="${p.type}" step="any" class="exp-param" data-key="${p.key}" value="${val}" placeholder="${p.label}" oninput="onMappingChanged()">
+        </div>`;
+    }).join('');
+}
+
+/* ============ 数据校验 ============ */
+function validateData(exp) {
+    const issues = [];
+
+    // 1. 检查必填列映射
+    const mappings = {};
+    document.querySelectorAll('.col-mapping').forEach(sel => {
+        mappings[sel.dataset.key] = sel.value;
+    });
+
+    exp.requiredCols.forEach(rc => {
+        if (rc.required && !mappings[rc.key]) {
+            issues.push({ type: 'error', msg: `缺少必填列: ${rc.label}` });
+        }
+    });
+
+    // 2. 检查必填参数
+    document.querySelectorAll('.exp-param').forEach(inp => {
+        const key = inp.dataset.key;
+        const val = inp.value.trim();
+        if (!val) {
+            const pDef = exp.params.find(p => p.key === key);
+            if (pDef && pDef.key === 'slope') {
+                issues.push({ type: 'error', msg: `缺少标准曲线斜率a → <a href=\"#\" onclick=\"switchDataTabByName('curve');return false;\" style=\"color:#1565C0;text-decoration:underline;font-weight:600;\">点此跳转到标准曲线Tab进行拟合</a>` });
+            } else if (pDef && pDef.key === 'intercept') {
+                issues.push({ type: 'error', msg: `缺少标准曲线截距b → <a href=\"#\" onclick=\"switchDataTabByName('curve');return false;\" style=\"color:#1565C0;text-decoration:underline;font-weight:600;\">点此跳转到标准曲线Tab进行拟合</a>` });
+            } else if (pDef) {
+                issues.push({ type: 'error', msg: `缺少参数: <strong>${pDef.label}</strong>` });
+            }
+        }
+    });
+
+    if (issues.some(i => i.type === 'error')) return issues;
+
+    // 3. 检查数据行
+    const rows = activeSheetData.rows;
+    if (!rows || rows.length === 0) {
+        issues.push({ type: 'error', msg: '数据表为空，没有可计算的数据行' });
+        return issues;
+    }
+
+    // 提取数值
+    const rowData = extractRowData(exp, mappings);
+    const validRows = rowData.filter(r => r._valid);
+
+    if (validRows.length === 0) {
+        issues.push({ type: 'error', msg: '所有行的必需数值均为空，请检查列映射是否正确' });
+        return issues;
+    }
+
+    // 4. 检查OD值范围
+    if (exp.validation && exp.validation.odMin !== undefined) {
+        const { odMin, odMax, odWarning } = exp.validation;
+        const odKeys = exp.requiredCols.filter(c => c.type === 'od_value').map(c => c.key);
+        const outOfRangeDetails = [];
+
+        odKeys.forEach(key => {
+            validRows.forEach(r => {
+                const val = r[key];
+                if (val !== null && val !== undefined && (val < odMin || val > odMax)) {
+                    outOfRangeDetails.push(`${r._name}的${key}=${val}`);
+                }
+            });
+        });
+
+        if (outOfRangeDetails.length > 0 && odWarning) {
+            const samples = outOfRangeDetails.slice(0, 5).join(', ');
+            const more = outOfRangeDetails.length > 5 ? `...等${outOfRangeDetails.length}处` : '';
+            issues.push({ type: 'warning', msg: `OD值超出范围(${odMin}-${odMax})：${samples}${more}。${odWarning}` });
+        }
+    }
+
+    // 5. 叶绿素特有：A665/A649比值检查
+    if (exp.validation && exp.validation.ratioCheck && exp.id === 'chlorophyll') {
+        validRows.forEach((r, i) => {
+            const a665 = r.a665, a649 = r.a649;
+            if (a665 && a649 && a649 > 0) {
+                const ratio = a665 / a649;
+                if (ratio < 2.0 || ratio > 3.5) {
+                    issues.push({ type: 'warning', msg: `${r._name || '第'+(i+1)+'行'}: A665/A649 = ${ratio.toFixed(2)}，异常。${exp.validation.ratioDesc}` });
+                }
+            }
+        });
+    }
+
+    // 6. 酶活性方向检查
+    if (exp.id === 'pod') {
+        validRows.forEach((r, i) => {
+            if (r.a470_end !== null && r.a470_start !== null && r.a470_end <= r.a470_start) {
+                issues.push({ type: 'error', msg: `${r._name}: A470终点(${r.a470_end}) ≤ 起始(${r.a470_start})，POD产物应随时间增加吸光度，请检查数据` });
+            }
+        });
+    }
+    if (exp.id === 'cat') {
+        validRows.forEach((r, i) => {
+            if (r.a240_end !== null && r.a240_start !== null && r.a240_end >= r.a240_start) {
+                issues.push({ type: 'error', msg: `${r._name}: A240终点(${r.a240_end}) ≥ 起始(${r.a240_start})，CAT分解H₂O₂应导致A240下降，请检查数据` });
+            }
+        });
+    }
+
+    // 7. 缺失值
+    const missingCount = rows.length - validRows.length;
+    if (missingCount > 0) {
+        issues.push({ type: 'warning', msg: `${missingCount} 行数据因缺少必要数值被跳过` });
+    }
+
+    return issues;
+}
+
+function extractRowData(exp, mappings) {
+    const rows = activeSheetData.rows;
+    const colTypes = activeSheetData.col_types || [];
+    const isGenericStats = exp.id === 'generic_stats';
+
+    return rows.map((row, ri) => {
+        const r = { _name: `第${ri+1}行`, _valid: true };
+        let hasRequired = true;
+
+        // 1. 提取实验定义中的必填列
+        exp.requiredCols.forEach(rc => {
+            const colIdx = parseInt(mappings[rc.key]);
+            if (isNaN(colIdx) || colIdx >= row.length) {
+                if (rc.required) hasRequired = false;
+                r[rc.key] = null;
+                return;
+            }
+            const val = row[colIdx];
+            if (rc.type === 'sample_name') {
+                r[rc.key] = val !== null && val !== undefined && val !== '' ? String(val) : ('样品' + (ri+1));
+            } else if (rc.type === 'od_value' || rc.type === 'numeric' || rc.type === 'concentration' || rc.type === 'dilution') {
+                if (typeof val === 'number') {
+                    r[rc.key] = val;
+                } else if (typeof val === 'string' && val.trim() !== '') {
+                    const num = parseFloat(val);
+                    if (!isNaN(num)) r[rc.key] = num;
+                    else if (rc.required) { hasRequired = false; r[rc.key] = null; }
+                    else r[rc.key] = null;
+                } else if (rc.required) { hasRequired = false; r[rc.key] = null; }
+                else r[rc.key] = null;
+            }
+            if (rc.key === 'sampleName') {
+                r._name = r[rc.key] || ('样品' + (ri+1));
+            }
+        });
+
+        // 2. 通用统计：额外提取所有数值列
+        if (isGenericStats) {
+            r._allValues = [];
+            colTypes.forEach((ct, ci) => {
+                if (ci >= row.length) return;
+                if (ct.type === 'numeric' || ct.type === 'od_value' || ct.type === 'concentration') {
+                    const val = row[ci];
+                    if (typeof val === 'number') {
+                        r['_col' + ci] = val;
+                        r._allValues.push(val);
+                    } else if (typeof val === 'string' && val.trim() !== '') {
+                        const num = parseFloat(val);
+                        if (!isNaN(num)) {
+                            r['_col' + ci] = num;
+                            r._allValues.push(num);
+                        }
+                    }
+                }
+            });
+        }
+
+        r._valid = hasRequired;
+        return r;
+    });
+}
+
+function getParams() {
+    const params = {};
+    document.querySelectorAll('.exp-param').forEach(inp => {
+        const val = inp.value.trim();
+        params[inp.dataset.key] = val !== '' ? parseFloat(val) : null;
+    });
+    return params;
+}
+
+/* ============ 各实验计算函数 ============ */
+
+function calcChlorophyll(rowData, params) {
+    const weight = params.weight || 0.2;
+    const volume = params.volume || 5;
+    const results = [];
+
+    rowData.forEach(r => {
+        if (!r._valid) return;
+        const a665 = r.a665 || 0;
+        const a649 = r.a649 || 0;
+        const ca = 12.72 * a665 - 2.59 * a649;
+        const cb = 22.88 * a649 - 4.67 * a665;
+        const ct = ca + cb;
+        const perGram = ct * volume / (weight * 1000);
+
+        results.push({
+            name: r._name,
+            a665, a649,
+            ca: Math.max(0, ca),
+            cb: Math.max(0, cb),
+            ct: Math.max(0, ct),
+            perGram: Math.max(0, perGram),
+            unit: 'mg/g FW',
+        });
+    });
+    return results;
+}
+
+function calcSolubleProtein(rowData, params) {
+    const slope = params.slope;
+    const intercept = params.intercept || 0;
+    const weight = params.weight || 0.2;
+    const volume = params.volume || 5;
+    const results = [];
+
+    rowData.forEach(r => {
+        if (!r._valid || slope === null) return;
+        const a595 = r.a595 || 0;
+        const df = r.dilution || 1;
+        const conc = (a595 - intercept) / slope * df;
+        const perGram = conc * volume / (weight * 1000);
+
+        results.push({
+            name: r._name,
+            a595, df,
+            dilutionConc: (a595 - intercept) / slope,
+            conc,
+            perGram: Math.max(0, perGram),
+            unit: 'mg/g FW',
+        });
+    });
+    return results;
+}
+
+function calcSolubleSugar(rowData, params) {
+    const slope = params.slope;
+    const intercept = params.intercept || 0;
+    const weight = params.weight || 0.1;
+    const volume = params.volume || 10;
+    const results = [];
+
+    rowData.forEach(r => {
+        if (!r._valid || slope === null) return;
+        const a620 = r.a620 || 0;
+        const df = r.dilution || 1;
+        const conc = (a620 - intercept) / slope * df;
+        const percent = conc * volume / (weight * 10000);
+
+        results.push({
+            name: r._name,
+            a620, df,
+            conc,
+            percent: Math.max(0, percent),
+            unit: '%',
+        });
+    });
+    return results;
+}
+
+function calcMDA(rowData, params) {
+    const weight = params.weight || 0.5;
+    const volume = params.volume || 5;
+    const results = [];
+
+    rowData.forEach(r => {
+        if (!r._valid) return;
+        const a532 = r.a532 || 0;
+        const a600 = r.a600 || 0;
+        const a450 = r.a450 || 0;
+        const mdaConc = 6.45 * (a532 - a600) - 0.56 * a450;
+        const perGram = Math.max(0, mdaConc * volume / weight);
+
+        results.push({
+            name: r._name,
+            a532, a600, a450,
+            mdaConc: Math.max(0, mdaConc),
+            perGram,
+            unit: 'μmol/g FW',
+        });
+    });
+    return results;
+}
+
+function calcEnzymeActivity(rowData, params, odKeyStart, odKeyEnd, extinctionCoeff, unitName) {
+    const weight = params.weight || 0.5;
+    const totalVol = params.totalVol || 5;
+    const enzymeVol = params.enzymeVol || 0.1;
+    const results = [];
+
+    rowData.forEach(r => {
+        if (!r._valid) return;
+        const odStart = r[odKeyStart] || 0;
+        const odEnd = r[odKeyEnd] || 0;
+        const time = r.time_min || 1;
+        const deltaOD = odEnd - odStart;
+        const activity = deltaOD * totalVol / (weight * enzymeVol * extinctionCoeff * time);
+
+        results.push({
+            name: r._name,
+            odStart, odEnd, deltaOD: deltaOD.toFixed(4),
+            time, activity: Math.max(0, activity),
+            unit: unitName,
+        });
+    });
+    return results;
+}
+
+function calcPOD(rowData, params) { return calcEnzymeActivity(rowData, params, 'a470_start', 'a470_end', 0.01, 'U·g⁻¹·min⁻¹'); }
+function calcCAT(rowData, params) { return calcEnzymeActivity(rowData, params, 'a240_start', 'a240_end', 0.0436, 'U·g⁻¹·min⁻¹'); }
+
+function calcSOD(rowData, params) {
+    const weight = params.weight || 0.5;
+    const totalVol = params.totalVol || 5;
+    const enzymeVol = params.enzymeVol || 0.05;
+    const results = [];
+
+    rowData.forEach(r => {
+        if (!r._valid) return;
+        const aSample = r.a560_sample || 0;
+        const aControl = r.a560_control || 0;
+        const aDark = r.a560_dark;
+        const ref = aDark !== null && aDark !== undefined ? aDark : aControl;
+        if (ref <= 0) return;
+        const inhibition = ((ref - aSample) / ref) * 100;
+        const activity = inhibition * totalVol / (weight * enzymeVol * 50);
+
+        results.push({
+            name: r._name,
+            aSample, aControl, aDark: aDark !== null ? aDark : '-',
+            inhibition: Math.max(0, inhibition),
+            activity: Math.max(0, activity),
+            unit: 'U·g⁻¹ FW',
+        });
+    });
+    return results;
+}
+
+function calcReducingSugar(rowData, params) {
+    const slope = params.slope;
+    const intercept = params.intercept || 0;
+    const weight = params.weight || 0.1;
+    const volume = params.volume || 10;
+    const results = [];
+
+    rowData.forEach(r => {
+        if (!r._valid || slope === null) return;
+        const a540 = r.a540 || 0;
+        const df = r.dilution || 1;
+        const conc = (a540 - intercept) / slope * df;
+        const perGram = conc * volume / (weight * 1000);
+
+        results.push({
+            name: r._name,
+            a540, df,
+            conc,
+            perGram: Math.max(0, perGram),
+            unit: 'mg/g',
+        });
+    });
+    return results;
+}
+
+function calcGroupIndicatorStats(rowData, paramsObj) {
+    const colTypes = activeSheetData.col_types || [];
+    const headers = activeSheetData.headers || [];
+    const rows = activeSheetData.rows;
+
+    // 获取映射的组别列和指标列
+    const mappings = {};
+    document.querySelectorAll('.col-mapping').forEach(sel => { mappings[sel.dataset.key] = sel.value; });
+    const groupColIdx = parseInt(mappings['groupCol']) || 0;
+    const indicatorColIdx = parseInt(mappings['indicatorCol']) || 1;
+
+    // 找所有数值列（跳过组别列和指标列）
+    const numericCols = [];
+    colTypes.forEach((ct, i) => {
+        if (i !== groupColIdx && i !== indicatorColIdx) {
+            if (ct.type === 'numeric' || ct.type === 'od_value' || ct.type === 'concentration') {
+                numericCols.push(i);
+            }
+        }
+    });
+
+    // 如果没有找到足够的数值列，手动收集所有数值列
+    if (numericCols.length === 0) {
+        for (let i = 0; i < (rows[0] || []).length; i++) {
+            if (i !== groupColIdx && i !== indicatorColIdx) {
+                const sampleVal = rows[0] ? rows[0][i] : null;
+                if (typeof sampleVal === 'number') numericCols.push(i);
+            }
+        }
+    }
+
+    // 按(组别, 指标)聚合
+    const grouped = {};
+    rows.forEach((row, ri) => {
+        const groupName = String(row[groupColIdx] || '').trim();
+        const indicatorName = String(row[indicatorColIdx] || '').trim();
+        if (!groupName || !indicatorName) return;
+
+        const vals = [];
+        numericCols.forEach(ci => {
+            if (ci < row.length && typeof row[ci] === 'number') vals.push(row[ci]);
+            else if (ci < row.length && typeof row[ci] === 'string') {
+                const n = parseFloat(row[ci]);
+                if (!isNaN(n)) vals.push(n);
+            }
+        });
+        if (vals.length === 0) return;
+
+        const key = groupName + '|||' + indicatorName;
+        if (!grouped[key]) grouped[key] = { group: groupName, indicator: indicatorName, vals: [] };
+        grouped[key].vals.push(...vals);
+    });
+
+    if (Object.keys(grouped).length === 0) return [];
+
+    const results = [];
+    Object.values(grouped).forEach(({ group, indicator, vals }) => {
+        if (vals.length === 0) return;
+        const n = vals.length;
+        const mean = vals.reduce((a, b) => a + b, 0) / n;
+        const variance = n > 1 ? vals.reduce((a, b) => a + (b - mean) ** 2, 0) / (n - 1) : 0;
+        const sd = Math.sqrt(variance);
+        results.push({
+            '组别': group,
+            '指标': indicator,
+            '数据点': n,
+            '均值': parseFloat(mean.toFixed(3)),
+            'SD': parseFloat(sd.toFixed(3)),
+            'SE': parseFloat((sd / Math.sqrt(n)).toFixed(3)),
+            'Min': parseFloat(Math.min(...vals).toFixed(3)),
+            'Max': parseFloat(Math.max(...vals).toFixed(3)),
+            'CV%': mean !== 0 ? parseFloat((sd / Math.abs(mean) * 100).toFixed(1)) : 0,
+        });
+    });
+
+    return results;
+}
+
+function calcGenericStats(rowData, paramsObj) {
+    const colTypes = activeSheetData.col_types || [];
+    const headers = activeSheetData.headers || [];
+    const rows = activeSheetData.rows;
+
+    // 找分组列
+    const sampleCols = [];
+    colTypes.forEach((ct, i) => { if (ct.type === 'sample_name') sampleCols.push(i); });
+    let groupCol = -1;
+    if (sampleCols.length >= 2) {
+        for (let ci of sampleCols) {
+            if (/[品种处组]|group|treat/i.test(headers[ci] || '')) { groupCol = ci; break; }
+        }
+        if (groupCol < 0) groupCol = sampleCols[0];
+    } else if (sampleCols.length === 1) {
+        groupCol = sampleCols[0];
+    }
+
+    // 用户手动映射的样品名列
+    const mappings = {};
+    document.querySelectorAll('.col-mapping').forEach(sel => { mappings[sel.dataset.key] = sel.value; });
+    const sampleMapCol = parseInt(mappings['sampleName']) || -1;
+
+    // 按组聚合所有数值
+    const grouped = {};
+    let skipped = 0;
+    rows.forEach((row, ri) => {
+        if (ri >= rowData.length || !rowData[ri]._valid) return;
+        const vals = rowData[ri]._allValues || [];
+        if (vals.length === 0) { skipped++; return; }
+
+        let gName = '';
+        if (groupCol >= 0 && groupCol < row.length) gName = String(row[groupCol] || '').trim();
+        if (!gName && sampleMapCol >= 0 && sampleMapCol < row.length) gName = String(row[sampleMapCol] || '').trim();
+        if (!gName) gName = rowData[ri]._name || '';
+        // 兜底：空名称或非法名
+        if (!gName || gName === 'undefined' || gName === 'null' || gName === '未命名') {
+            gName = '第' + (ri + 1) + '行';
+        }
+
+        if (!grouped[gName]) grouped[gName] = [];
+        grouped[gName].push(...vals);
+    });
+
+    if (Object.keys(grouped).length === 0) return [];
+
+    const results = [];
+    Object.entries(grouped).forEach(([gName, vals]) => {
+        if (vals.length === 0) return;
+        const n = vals.length;
+        const mean = vals.reduce((a, b) => a + b, 0) / n;
+        const variance = n > 1 ? vals.reduce((a, b) => a + (b - mean) ** 2, 0) / (n - 1) : 0;
+        const sd = Math.sqrt(variance);
+        results.push({
+            '组别': gName,
+            '数据点': n,
+            '均值': mean.toFixed(4),
+            'SD': sd.toFixed(4),
+            'SE': (sd / Math.sqrt(n)).toFixed(4),
+            'Min': Math.min(...vals).toFixed(4),
+            'Max': Math.max(...vals).toFixed(4),
+            'CV%': (mean !== 0 ? (sd / Math.abs(mean)) * 100 : 0).toFixed(2),
+        });
+    });
+
+    return results;
+}
+
+/* ============ 计算入口 ============ */
+function runExperimentCalc() {
+    if (!selectedExperiment || !activeSheetData) return;
+
+    const exp = selectedExperiment;
+    const issues = validateData(exp);
+
+    const issuesSection = document.getElementById('issuesSection');
+    issuesSection.style.display = 'block';
+
+    if (issues.length > 0) {
+        issuesSection.innerHTML = issues.map(i =>
+            `<div class="d-issue ${i.type}"><span class="issue-icon">${i.type === 'error' ? '❌' : '⚠️'}</span><span>${i.msg}</span></div>`
+        ).join('');
+    } else {
+        issuesSection.innerHTML = '<div class="d-issue success"><span class="issue-icon">✅</span><span>数据校验通过，无异常</span></div>';
+    }
+
+    const hasError = issues.some(i => i.type === 'error');
+    document.getElementById('calcBtnRow').style.display = 'block';
+    document.getElementById('calcResultSection').style.display = 'none';
+
+    if (hasError) {
+        issuesSection.innerHTML += '<div style="margin-top:0.5rem;font-size:0.85rem;color:#C62828;font-weight:600;">⚠️ 存在严重错误，请修正后再计算。但仍可强制计算（结果可能不准确）。</div>';
+    }
+
+    // 执行计算
+    const mappings = {};
+    document.querySelectorAll('.col-mapping').forEach(sel => {
+        mappings[sel.dataset.key] = sel.value;
+    });
+    const params = getParams();
+    const rowData = extractRowData(exp, mappings);
+
+    let results = [];
+    if (exp.calcFn === 'calcChlorophyll') results = calcChlorophyll(rowData, params);
+    else if (exp.calcFn === 'calcSolubleProtein') results = calcSolubleProtein(rowData, params);
+    else if (exp.calcFn === 'calcSolubleSugar') results = calcSolubleSugar(rowData, params);
+    else if (exp.calcFn === 'calcMDA') results = calcMDA(rowData, params);
+    else if (exp.calcFn === 'calcPOD') results = calcPOD(rowData, params);
+    else if (exp.calcFn === 'calcCAT') results = calcCAT(rowData, params);
+    else if (exp.calcFn === 'calcSOD') results = calcSOD(rowData, params);
+    else if (exp.calcFn === 'calcReducingSugar') results = calcReducingSugar(rowData, params);
+    else if (exp.calcFn === 'calcGroupIndicatorStats') results = calcGroupIndicatorStats(rowData, params);
+    else if (exp.calcFn === 'calcGenericStats') results = calcGenericStats(rowData, params);
+
+    if (results.length === 0) {
+        issuesSection.innerHTML += '<div style="margin-top:0.5rem;color:#C62828;font-weight:600;">⚠️ 没有有效数据行可计算</div>';
+        return;
+    }
+
+    lastCalcResult = { exp, results, params };
+    renderCalcResult(results, exp);
+}
+
+function renderCalcResult(results, exp) {
+    const section = document.getElementById('calcResultSection');
+    section.style.display = 'block';
+
+    // 公式
+    document.getElementById('resultFormula').innerHTML = '<div style="font-weight:700;margin-bottom:0.3rem;">应用公式：</div>' +
+        exp.formula.map(f => `<code>${f}</code>`).join('<br>');
+
+    // 表格
+    const keys = Object.keys(results[0]).filter(k => !k.startsWith('_'));
+    let html = '<thead><tr>' + keys.map(k => `<th>${k}</th>`).join('') + '</tr></thead><tbody>';
+    results.forEach(r => {
+        html += '<tr>' + keys.map(k => {
+            const v = r[k];
+            if (typeof v === 'number') return `<td>${v.toFixed(4)}</td>`;
+            return `<td>${v}</td>`;
+        }).join('') + '</tr>';
+    });
+    html += '</tbody>';
+    document.getElementById('calcResultTable').innerHTML = html;
+
+    // 统计摘要
+    const numericKeys = keys.filter(k => k !== 'name' && typeof results[0][k] === 'number');
+    if (results.length > 1 && numericKeys.length > 0) {
+        let statsHtml = '<div class="d-card" style="margin-top:0.8rem;"><h3>数据摘要</h3><div style="display:flex;gap:1.5rem;flex-wrap:wrap;">';
+        numericKeys.forEach(key => {
+            const vals = results.map(r => r[key]).filter(v => typeof v === 'number');
+            if (vals.length < 2) return;
+            const mean = vals.reduce((a, b) => a + b, 0) / vals.length;
+            const min = Math.min(...vals);
+            const max = Math.max(...vals);
+            const unit = results[0].unit || '';
+            statsHtml += `<div style="font-size:0.82rem;"><strong>${key}:</strong><br>Mean=${mean.toFixed(4)}<br>Range=[${min.toFixed(4)}, ${max.toFixed(4)}] ${unit}</div>`;
+        });
+        statsHtml += '</div></div>';
+        document.getElementById('resultStats').innerHTML = statsHtml;
+    } else {
+        document.getElementById('resultStats').innerHTML = '';
+    }
+}
+
+function copyCalcResult() {
+    const table = document.getElementById('calcResultTable');
+    if (!table.querySelector('tbody')) return;
+    copyTableToClipboard(table);
+}
+
+function exportCalcExcel() {
+    if (!lastCalcResult) return;
+    const exp = lastCalcResult.exp;
+    const data = tableToExcelData('calcResultTable', exp.name + '结果');
+    exportExcel({ ...data, sheetName: exp.name });
+}
 
 /* ============ Tab切换 ============ */
 function switchDataTab(name) {
@@ -774,72 +2988,144 @@ function fitCurve() {
         const c = parseFloat(tr.querySelector('.std-conc').value);
         const o = parseFloat(tr.querySelector('.std-od').value);
         const n = tr.querySelector('.std-name').value;
-        if (!isNaN(c) && !isNaN(o)) {
-            concs.push(c);
-            ods.push(o);
-            names.push(n);
-        }
+        if (!isNaN(c) && !isNaN(o)) { concs.push(c); ods.push(o); names.push(n); }
     });
 
-    if (concs.length < 2) {
-        alert('至少需要2个有效标准点');
-        return;
-    }
-
-    /* 线性回归 */
     const n = concs.length;
-    let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0, sumY2 = 0;
-    for (let i = 0; i < n; i++) {
-        sumX += concs[i];
-        sumY += ods[i];
-        sumXY += concs[i] * ods[i];
-        sumX2 += concs[i] ** 2;
-        sumY2 += ods[i] ** 2;
+    if (n < 2) { alert('至少需要2个有效标准点'); return; }
+
+    const model = document.getElementById('curveModel').value;
+    const yMean = ods.reduce((a,b)=>a+b,0)/n;
+    let params, eqText, predictFn;
+
+    if (model === 'linear') {
+        if (n < 2) { alert('线性拟合需≥2个点'); return; }
+        let sx=0,sy=0,sxy=0,sx2=0;
+        for (let i=0;i<n;i++) { sx+=concs[i]; sy+=ods[i]; sxy+=concs[i]*ods[i]; sx2+=concs[i]**2; }
+        const a=(n*sxy-sx*sy)/(n*sx2-sx**2), b=(sy-a*sx)/n;
+        params=[a,b]; eqText=`y = ${a.toFixed(6)}x + ${b.toFixed(6)}`;
+        predictFn=x=>a*x+b;
+    } else if (model === 'quadratic') {
+        if (n < 3) { alert('二次拟合需≥3个点'); return; }
+        params = polyFit(concs, ods, 2);
+        eqText = `y = ${params[0].toFixed(6)}x² + ${params[1].toFixed(6)}x + ${params[2].toFixed(6)}`;
+        predictFn = x => params[0]*x*x + params[1]*x + params[2];
+    } else if (model === 'cubic') {
+        if (n < 4) { alert('三次拟合需≥4个点'); return; }
+        params = polyFit(concs, ods, 3);
+        eqText = `y = ${params[0].toFixed(6)}x³ + ${params[1].toFixed(6)}x² + ${params[2].toFixed(6)}x + ${params[3].toFixed(6)}`;
+        predictFn = x => params[0]*x*x*x + params[1]*x*x + params[2]*x + params[3];
+    } else if (model === 'logistic4p') {
+        if (n < 5) { alert('Logistic四参数拟合需≥5个点'); return; }
+        const result = fitLogistic4P(concs, ods);
+        if (!result) { alert('Logistic拟合未收敛，请尝试其他模型'); return; }
+        params = [result.a, result.b, result.c, result.d];
+        eqText = `y = ${result.d.toFixed(4)} + (${result.a.toFixed(4)}-${result.d.toFixed(4)}) / (1+(x/${result.c.toFixed(4)})^${result.b.toFixed(4)})`;
+        predictFn = x => result.d + (result.a-result.d)/(1+Math.pow(x/result.c, result.b));
     }
 
-    const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX ** 2);
-    const intercept = (sumY - slope * sumX) / n;
+    // R²
+    let ssRes=0, ssTot=0;
+    for (let i=0;i<n;i++) { const pred=predictFn(concs[i]); ssRes+=(ods[i]-pred)**2; ssTot+=(ods[i]-yMean)**2; }
+    const r2 = ssTot===0?0:1-ssRes/ssTot;
 
-    /* R² */
-    const yMean = sumY / n;
-    let ssRes = 0, ssTot = 0;
-    for (let i = 0; i < n; i++) {
-        const yPred = slope * concs[i] + intercept;
-        ssRes += (ods[i] - yPred) ** 2;
-        ssTot += (ods[i] - yMean) ** 2;
-    }
-    const r2 = ssTot === 0 ? 0 : 1 - ssRes / ssTot;
-
-    fittedSlope = slope;
-    fittedIntercept = intercept;
+    fittedSlope = model==='linear'?params[0]:0;
+    fittedIntercept = model==='linear'?params[1]:0;
     fittedR2 = r2;
 
-    /* 显示方程 */
     const eqDiv = document.getElementById('curveEquation');
-    const sign = intercept >= 0 ? '+' : '-';
-    eqDiv.innerHTML = `
-        <div style="font-size:1.1rem;font-weight:700;margin-bottom:0.5rem;">
-            回归方程：y = ${slope.toFixed(6)}x ${sign} ${Math.abs(intercept).toFixed(6)}
-        </div>
-        <div style="display:flex;gap:2rem;flex-wrap:wrap;">
-            <span>斜率 a = <code>${slope.toFixed(6)}</code></span>
-            <span>截距 b = <code>${intercept.toFixed(6)}</code></span>
-            <span>R² = <code>${r2.toFixed(6)}</code></span>
-            <span style="color:${r2 >= 0.99 ? '#2E7D32' : r2 >= 0.95 ? '#F57F17' : '#F44336'};">
-                ${r2 >= 0.99 ? '✅ 拟合优秀' : r2 >= 0.95 ? '⚠️ 拟合良好' : '❌ 拟合较差，建议增加标准点'}
-            </span>
-        </div>
-    `;
+    eqDiv.innerHTML = `<div style="font-size:1.1rem;font-weight:700;margin-bottom:0.5rem;">${eqText}</div>
+        <div style="display:flex;gap:2rem;flex-wrap:wrap;"><span>R² = <code>${r2.toFixed(6)}</code></span>
+        <span style="color:${r2>=0.999?'#2E7D32':r2>=0.99?'#388E3C':r2>=0.95?'#F57F17':'#F44336'};">${r2>=0.999?'✅ 拟合优秀':r2>=0.99?'✅ 拟合良好':r2>=0.95?'⚠️ 可接受':'❌ 拟合较差'}</span></div>`;
 
-    /* 自动填入浓度计算Tab */
-    document.getElementById('slopeInput').value = slope.toFixed(6);
-    document.getElementById('interceptInput').value = intercept.toFixed(6);
+    if (model==='linear') { document.getElementById('slopeInput').value=params[0].toFixed(6); document.getElementById('interceptInput').value=params[1].toFixed(6); }
+    drawCurveMulti(concs, ods, names, predictFn);
+    drawCurveDisplayMulti(concs, ods, names, predictFn, eqText, r2);
+    document.getElementById('curveResult').style.display='block';
+}
 
-    /* 绘制标准曲线图 */
-    drawCurveChart(concs, ods, names, slope, intercept);
-    drawCurveChartDisplay(concs, ods, names, slope, intercept);
+// 多项式最小二乘拟合
+function polyFit(x, y, degree) {
+    const n = x.length;
+    const A = Array(degree+1).fill().map(()=>Array(degree+1).fill(0));
+    const B = Array(degree+1).fill(0);
+    for (let i=0;i<=degree;i++) {
+        for (let j=0;j<=degree;j++) for (let k=0;k<n;k++) A[i][j]+=Math.pow(x[k],i+j);
+        for (let k=0;k<n;k++) B[i]+=Math.pow(x[k],i)*y[k];
+    }
+    return gaussElim(A,B);
+}
 
-    document.getElementById('curveResult').style.display = 'block';
+function gaussElim(A, b) {
+    const n=b.length;
+    for (let i=0;i<n;i++) {
+        let max=i;
+        for (let j=i+1;j<n;j++) if (Math.abs(A[j][i])>Math.abs(A[max][i])) max=j;
+        [A[i],A[max]]=[A[max],A[i]]; [b[i],b[max]]=[b[max],b[i]];
+        for (let j=i+1;j<n;j++) {
+            const f=A[j][i]/A[i][i];
+            for (let k=i;k<n;k++) A[j][k]-=f*A[i][k];
+            b[j]-=f*b[i];
+        }
+    }
+    const x=Array(n).fill(0);
+    for (let i=n-1;i>=0;i--) { x[i]=b[i]; for (let j=i+1;j<n;j++) x[i]-=A[i][j]*x[j]; x[i]/=A[i][i]; }
+    return x;
+}
+
+// Logistic四参数拟合 (Levenberg-Marquardt)
+function fitLogistic4P(x, y) {
+    const n=x.length;
+    // 初始参数估计
+    let a=Math.max(...y)*1.05, d=Math.min(...y)*0.95;
+    const halfY=(a+d)/2;
+    let cIdx=0; for (let i=0;i<n;i++) if (Math.abs(y[i]-halfY)<Math.abs(y[cIdx]-halfY)) cIdx=i;
+    let c=x[cIdx]||1, b=1;
+    let params=[a,b,c,d], lambda=0.001;
+    for (let iter=0;iter<50;iter++) {
+        let sse=0;
+        const J=Array(n).fill().map(()=>Array(4).fill(0));
+        const r=Array(n).fill(0);
+        for (let i=0;i<n;i++) {
+            const xi=x[i], pow=Math.pow(xi/c,b), denom=1+pow;
+            const pred=d+(a-d)/denom;
+            r[i]=y[i]-pred; sse+=r[i]*r[i];
+            J[i][0]=1/denom;
+            J[i][1]=-(a-d)*Math.log(xi/c)*pow/(denom*denom);
+            J[i][2]=(a-d)*b*pow*xi/(c*c*denom*denom);
+            J[i][3]=1-1/denom;
+        }
+        const JTJ=Array(4).fill().map(()=>Array(4).fill(0));
+        const JTr=Array(4).fill(0);
+        for (let i=0;i<4;i++) { for (let j=0;j<4;j++) { for (let k=0;k<n;k++) JTJ[i][j]+=J[k][i]*J[k][j]; } for (let k=0;k<n;k++) JTr[i]+=J[k][i]*r[k]; }
+        for (let i=0;i<4;i++) JTJ[i][i]*=(1+lambda);
+        const dp=gaussElim(JTJ,JTr);
+        const newParams=params.map((p,i)=>p+dp[i]);
+        let newSSE=0;
+        for (let i=0;i<n;i++) { const pow=Math.pow(x[i]/newParams[2],newParams[1]); const pred=newParams[3]+(newParams[0]-newParams[3])/(1+pow); newSSE+=(y[i]-pred)**2; }
+        if (newSSE<sse) { params=newParams; lambda*=0.1; sse=newSSE; }
+        else { lambda*=10; }
+        if (Math.abs(dp.reduce((s,d)=>s+Math.abs(d),0))<1e-6) break;
+    }
+    return {a:params[0],b:params[1],c:params[2],d:params[3]};
+}
+
+function drawCurveMulti(concs, ods, names, predictFn) {
+    const ctx=document.getElementById('curveChart').getContext('2d');
+    if (curveChartInstance) curveChartInstance.destroy();
+    const minX=Math.min(...concs), maxX=Math.max(...concs);
+    const linePts=[];
+    for (let i=0;i<=100;i++) { const x=minX+(maxX-minX)*i/100; linePts.push({x,y:predictFn(x)}); }
+    curveChartInstance=new Chart(ctx,{type:'scatter',data:{datasets:[{label:'标准品',data:concs.map((c,i)=>({x:c,y:ods[i]})),backgroundColor:'rgba(107,124,78,0.8)',borderColor:'rgba(107,124,78,1)',pointRadius:6,pointHoverRadius:8},{label:'拟合曲线',data:linePts,type:'line',borderColor:'rgba(196,125,43,0.8)',borderWidth:2,pointRadius:0,fill:false,tension:0.3}]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'top'}},scales:{x:{title:{display:true,text:'浓度'}},y:{title:{display:true,text:'OD'},beginAtZero:true}}}});
+}
+
+function drawCurveDisplayMulti(concs, ods, names, predictFn, eqText, r2) {
+    const ctx=document.getElementById('curveChartDisplay').getContext('2d');
+    if (curveDisplayInstance) curveDisplayInstance.destroy();
+    const minX=Math.min(...concs), maxX=Math.max(...concs);
+    const linePts=[];
+    for (let i=0;i<=100;i++) { const x=minX+(maxX-minX)*i/100; linePts.push({x,y:predictFn(x)}); }
+    curveDisplayInstance=new Chart(ctx,{type:'scatter',data:{datasets:[{label:'标准品',data:concs.map((c,i)=>({x:c,y:ods[i]})),backgroundColor:'rgba(107,124,78,0.8)',pointRadius:6},{label:`${eqText} R²=${r2.toFixed(4)}`,data:linePts,type:'line',borderColor:'rgba(196,125,43,0.8)',borderWidth:2,pointRadius:0,fill:false,tension:0.3}]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'top'}},scales:{x:{title:{display:true,text:'浓度'}},y:{title:{display:true,text:'OD'},beginAtZero:true}}}});
 }
 
 function drawCurveChart(concs, ods, names, slope, intercept) {
@@ -1146,6 +3432,43 @@ function downloadChart(canvasId, name) {
     link.download = name + '.png';
     link.click();
 }
+
+/* ============ 导航栏自动隐藏 ============ */
+let lastScrollY = 0;
+let navbarHidden = false;
+
+function handleNavbarScroll() {
+    const navbar = document.querySelector('.navbar');
+    if (!navbar) return;
+    const scrollY = window.scrollY;
+
+    if (scrollY > 200 && scrollY > lastScrollY && !navbarHidden) {
+        navbar.style.transform = 'translateY(-100%)';
+        navbar.style.transition = 'transform 0.3s ease';
+        navbarHidden = true;
+    } else if ((scrollY < lastScrollY || scrollY < 100) && navbarHidden) {
+        navbar.style.transform = 'translateY(0)';
+        navbarHidden = false;
+    }
+    lastScrollY = scrollY;
+}
+
+window.addEventListener('scroll', handleNavbarScroll, { passive: true });
+
+/* 预览表滚动时扩大可视区域 */
+document.addEventListener('DOMContentLoaded', function() {
+    const previewWrap = document.getElementById('previewTableWrap');
+    if (previewWrap) {
+        previewWrap.addEventListener('wheel', function(e) {
+            const atTop = this.scrollTop === 0;
+            const atBottom = this.scrollTop + this.clientHeight >= this.scrollHeight - 2;
+            if ((e.deltaY < 0 && !atTop) || (e.deltaY > 0 && !atBottom)) {
+                e.preventDefault();
+                this.scrollTop += e.deltaY;
+            }
+        }, { passive: false });
+    }
+});
 
 /* ============ 初始化 ============ */
 window.addEventListener('DOMContentLoaded', function() {

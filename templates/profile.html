@@ -9,7 +9,7 @@
 
 /* 顶部欢迎区 */
 .dash-hero {
-    background: linear-gradient(135deg, #4A5635, #6B7C4E, #8FA465);
+    background: linear-gradient(135deg, #A85C25, #D4793A, #E89B5E);
     border-radius: 20px;
     padding: 2rem 2.5rem;
     color: white;
@@ -38,9 +38,9 @@
 .dash-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
 .dash-stat {
     background: var(--card-bg); border: 1px solid var(--border); border-radius: 14px;
-    padding: 1.2rem; text-align: center; transition: all 0.25s;
+    padding: 1.2rem; text-align: center; transition: box-shadow 0.2s;
 }
-.dash-stat:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+.dash-stat:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
 .dash-stat .icon { font-size: 1.8rem; margin-bottom: 0.4rem; }
 .dash-stat .num { font-size: 1.8rem; font-weight: 800; color: var(--primary); }
 .dash-stat .label { font-size: 0.8rem; color: var(--text-light); margin-top: 0.2rem; }
@@ -51,9 +51,9 @@
     display: flex; flex-direction: column; align-items: center; gap: 0.4rem;
     padding: 1rem 0.5rem; background: var(--card-bg); border: 1px solid var(--border);
     border-radius: 14px; text-decoration: none; color: var(--text);
-    transition: all 0.25s; font-size: 0.85rem; font-weight: 600;
+    transition: box-shadow 0.2s; font-size: 0.85rem; font-weight: 600;
 }
-.dash-shortcut:hover { border-color: var(--primary); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+.dash-shortcut:hover { border-color: var(--primary); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
 .dash-shortcut .sc-icon { font-size: 1.6rem; }
 
 /* 主内容区 */
@@ -71,7 +71,7 @@
     padding: 0.6rem 0.8rem; border: 1px solid var(--border); border-radius: 10px;
     transition: all 0.2s; font-size: 0.85rem;
 }
-.d-item:hover { border-color: var(--primary); background: rgba(107,124,78,0.02); }
+.d-item:hover { border-color: var(--primary); background: rgba(212,121,58,0.02); }
 .d-item-left { display: flex; align-items: center; gap: 0.5rem; flex: 1; min-width: 0; }
 .d-item-tag {
     padding: 0.15rem 0.5rem; border-radius: 6px; font-size: 0.72rem;
@@ -88,7 +88,7 @@
     cursor: pointer; display: flex; align-items: center; justify-content: center;
     transition: all 0.2s;
 }
-.d-item-btn-view { background: rgba(107,124,78,0.1); color: var(--primary); }
+.d-item-btn-view { background: rgba(212,121,58,0.1); color: var(--primary); }
 .d-item-btn-view:hover { background: var(--primary); color: white; }
 .d-item-btn-del { background: rgba(244,67,54,0.1); color: #F44336; }
 .d-item-btn-del:hover { background: #F44336; color: white; }
@@ -104,6 +104,22 @@
 
 .dash-empty { text-align: center; padding: 2rem 1rem; color: var(--text-light); font-size: 0.88rem; }
 .dash-empty a { color: var(--primary); font-weight: 600; text-decoration: none; }
+
+/* API设置表单 */
+.api-form-group { margin-bottom: 1rem; }
+.api-label { display: block; font-size: 0.82rem; font-weight: 600; color: var(--text); margin-bottom: 0.3rem; }
+.api-input, .api-select {
+    width: 100%; padding: 0.6rem 0.8rem; border: 1px solid var(--border); border-radius: 8px;
+    font-size: 0.88rem; background: var(--card-bg); color: var(--text); box-sizing: border-box;
+    transition: border-color 0.2s;
+}
+.api-input:focus, .api-select:focus { outline: none; border-color: var(--primary); }
+.api-input::placeholder { color: var(--text-light); opacity: 0.6; }
+.api-toggle-vis {
+    position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+    background: none; border: none; cursor: pointer; font-size: 1rem; opacity: 0.5;
+}
+.api-toggle-vis:hover { opacity: 1; }
 
 /* 数据详情弹窗 */
 .dash-modal-overlay {
@@ -218,25 +234,132 @@
         <!-- 账户信息 -->
         <div class="dash-card">
             <h3>⚙️ 账户信息</h3>
-            <div class="dash-setting-row">
-                <span class="dash-setting-label">用户名</span>
-                <span class="dash-setting-val">{{ user.username }}</span>
+            <div id="profileView">
+                <div class="dash-setting-row">
+                    <span class="dash-setting-label">用户名</span>
+                    <span class="dash-setting-val">{{ user.username }}</span>
+                </div>
+                <div class="dash-setting-row">
+                    <span class="dash-setting-label">邮箱</span>
+                    <span class="dash-setting-val">{{ user.email }}</span>
+                </div>
+                <div class="dash-setting-row">
+                    <span class="dash-setting-label">角色</span>
+                    <span class="dash-setting-val">{{ user.role }}</span>
+                </div>
+                <div class="dash-setting-row">
+                    <span class="dash-setting-label">注册时间</span>
+                    <span class="dash-setting-val">{{ user.created_at }}</span>
+                </div>
+                <div class="dash-setting-row">
+                    <span class="dash-setting-label">最近登录</span>
+                    <span class="dash-setting-val">{{ user.last_login or '首次登录' }}</span>
+                </div>
+                <div style="margin-top:0.8rem;display:flex;gap:0.6rem;">
+                    <button class="btn btn-primary" onclick="toggleProfileEdit()" style="padding:0.5rem 1.2rem;font-size:0.82rem;">✏️ 编辑资料</button>
+                    <button class="btn btn-secondary" onclick="togglePasswordEdit()" style="padding:0.5rem 1.2rem;font-size:0.82rem;">🔑 修改密码</button>
+                </div>
             </div>
-            <div class="dash-setting-row">
-                <span class="dash-setting-label">邮箱</span>
-                <span class="dash-setting-val">{{ user.email }}</span>
+
+            <!-- 编辑资料表单 -->
+            <div id="profileEdit" style="display:none;">
+                <div class="api-form-group">
+                    <label class="api-label">用户名</label>
+                    <input type="text" id="editUsername" class="api-input" value="{{ user.username }}" />
+                </div>
+                <div class="api-form-group">
+                    <label class="api-label">邮箱</label>
+                    <input type="email" id="editEmail" class="api-input" value="{{ user.email }}" />
+                </div>
+                <div style="display:flex;gap:0.6rem;margin-top:0.8rem;">
+                    <button class="btn btn-primary" onclick="saveProfile()" style="padding:0.5rem 1.2rem;font-size:0.82rem;">💾 保存</button>
+                    <button class="btn btn-secondary" onclick="toggleProfileEdit()" style="padding:0.5rem 1.2rem;font-size:0.82rem;">取消</button>
+                </div>
             </div>
-            <div class="dash-setting-row">
-                <span class="dash-setting-label">角色</span>
-                <span class="dash-setting-val">{{ user.role }}</span>
+
+            <!-- 修改密码表单 -->
+            <div id="passwordEdit" style="display:none;margin-top:0.5rem;border-top:1px solid var(--border);padding-top:0.8rem;">
+                <div class="api-form-group">
+                    <label class="api-label">原密码</label>
+                    <input type="password" id="oldPassword" class="api-input" placeholder="输入原密码" />
+                </div>
+                <div class="api-form-group">
+                    <label class="api-label">新密码</label>
+                    <input type="password" id="newPassword" class="api-input" placeholder="至少6位" />
+                </div>
+                <div class="api-form-group">
+                    <label class="api-label">确认新密码</label>
+                    <input type="password" id="confirmPassword" class="api-input" placeholder="再次输入新密码" />
+                </div>
+                <div style="display:flex;gap:0.6rem;margin-top:0.8rem;">
+                    <button class="btn btn-primary" onclick="changePassword()" style="padding:0.5rem 1.2rem;font-size:0.82rem;">💾 修改密码</button>
+                    <button class="btn btn-secondary" onclick="togglePasswordEdit()" style="padding:0.5rem 1.2rem;font-size:0.82rem;">取消</button>
+                </div>
             </div>
-            <div class="dash-setting-row">
-                <span class="dash-setting-label">注册时间</span>
-                <span class="dash-setting-val">{{ user.created_at }}</span>
+        </div>
+
+        <!-- AI API 设置 -->
+        <div class="dash-card">
+            <h3>🤖 AI 模型设置</h3>
+            <p style="font-size:0.8rem;color:var(--text-light);margin-bottom:1rem;">配置后可用于文献提取、自动审查等功能</p>
+
+            <div class="api-form-group">
+                <label class="api-label">模型供应商</label>
+                <select id="apiProvider" class="api-select" onchange="onProviderChange()">
+                    <option value="anthropic" {% if api_settings and api_settings.provider == 'anthropic' %}selected{% endif %}>Anthropic (Claude)</option>
+                    <option value="openai" {% if api_settings and api_settings.provider == 'openai' %}selected{% endif %}>OpenAI (GPT)</option>
+                    <option value="deepseek" {% if api_settings and api_settings.provider == 'deepseek' %}selected{% endif %}>DeepSeek</option>
+                    <option value="custom" {% if api_settings and api_settings.provider == 'custom' %}selected{% endif %}>自定义 (OpenAI兼容)</option>
+                </select>
             </div>
-            <div class="dash-setting-row">
-                <span class="dash-setting-label">最近登录</span>
-                <span class="dash-setting-val">{{ user.last_login or '首次登录' }}</span>
+
+            <div class="api-form-group">
+                <label class="api-label">API Key</label>
+                <div style="position:relative;">
+                    <input type="password" id="apiKeyInput" class="api-input" placeholder="sk-..." value="{{ api_settings.api_key if api_settings else '' }}" />
+                    <button class="api-toggle-vis" onclick="toggleKeyVis()" type="button">👁</button>
+                </div>
+            </div>
+
+            <div class="api-form-group" id="baseUrlGroup" style="display:{% if api_settings and api_settings.provider == 'custom' %}block{% else %}none{% endif %};">
+                <label class="api-label">Base URL <span style="font-weight:400;color:var(--text-light);">（自定义接口地址）</span></label>
+                <input type="text" id="apiBaseUrl" class="api-input" placeholder="https://api.example.com/v1" value="{{ api_settings.base_url if api_settings else '' }}" />
+            </div>
+
+            <div class="api-form-group">
+                <label class="api-label">模型</label>
+                <select id="apiModel" class="api-select">
+                    <!-- Anthropic models -->
+                    <optgroup label="Anthropic" id="optgroup-anthropic" style="{% if not api_settings or api_settings.provider == 'anthropic' %}{% else %}display:none{% endif %}">
+                        <option value="claude-sonnet-4-20250514" {% if api_settings and api_settings.model == 'claude-sonnet-4-20250514' %}selected{% endif %}>Claude Sonnet 4</option>
+                        <option value="claude-opus-4-20250514" {% if api_settings and api_settings.model == 'claude-opus-4-20250514' %}selected{% endif %}>Claude Opus 4</option>
+                        <option value="claude-haiku-4-20250414" {% if api_settings and api_settings.model == 'claude-haiku-4-20250414' %}selected{% endif %}>Claude Haiku 4</option>
+                    </optgroup>
+                    <!-- OpenAI models -->
+                    <optgroup label="OpenAI" id="optgroup-openai" style="{% if api_settings and api_settings.provider == 'openai' %}{% else %}display:none{% endif %}">
+                        <option value="gpt-4o" {% if api_settings and api_settings.model == 'gpt-4o' %}selected{% endif %}>GPT-4o</option>
+                        <option value="gpt-4o-mini" {% if api_settings and api_settings.model == 'gpt-4o-mini' %}selected{% endif %}>GPT-4o Mini</option>
+                        <option value="gpt-4-turbo" {% if api_settings and api_settings.model == 'gpt-4-turbo' %}selected{% endif %}>GPT-4 Turbo</option>
+                    </optgroup>
+                    <!-- DeepSeek models -->
+                    <optgroup label="DeepSeek" id="optgroup-deepseek" style="{% if api_settings and api_settings.provider == 'deepseek' %}{% else %}display:none{% endif %}">
+                        <option value="deepseek-v4-pro" {% if api_settings and api_settings.model == 'deepseek-v4-pro' %}selected{% endif %}>DeepSeek V4 Pro</option>
+                        <option value="deepseek-v4-flash" {% if api_settings and api_settings.model == 'deepseek-v4-flash' %}selected{% endif %}>DeepSeek V4 Flash</option>
+                        <option value="deepseek-reasoner" {% if api_settings and api_settings.model == 'deepseek-reasoner' %}selected{% endif %}>DeepSeek Reasoner (R1)</option>
+                    </optgroup>
+                    <!-- Custom -->
+                    <optgroup label="自定义" id="optgroup-custom" style="{% if api_settings and api_settings.provider == 'custom' %}{% else %}display:none{% endif %}">
+                        <option value="" {% if api_settings and api_settings.provider == 'custom' and not api_settings.model %}selected{% endif %}>手动输入模型名称</option>
+                    </optgroup>
+                </select>
+                <input type="text" id="apiModelCustom" class="api-input" style="margin-top:0.5rem;display:{% if api_settings and api_settings.provider == 'custom' %}block{% else %}none{% endif %};" placeholder="输入模型名称，如 gpt-4o" value="{% if api_settings and api_settings.provider == 'custom' %}{{ api_settings.model }}{% endif %}" />
+            </div>
+
+            <div style="display:flex;align-items:center;gap:0.8rem;margin-top:1rem;">
+                <button class="btn btn-primary" onclick="saveApiSettings()" style="padding:0.6rem 1.5rem;">💾 保存设置</button>
+                <button class="btn btn-outline" onclick="testApiKey()" style="padding:0.6rem 1rem;">🔍 测试连接</button>
+                <span id="apiSaveStatus" style="font-size:0.8rem;color:var(--primary);display:none;">已保存</span>
+                <span id="apiTestResult" style="font-size:0.82rem;font-weight:600;"></span>
             </div>
         </div>
 
@@ -322,6 +445,180 @@ function deleteData(id) {
                 total.textContent = parseInt(total.textContent) - 1;
             }
         });
+}
+
+/* ===== 个人资料编辑 ===== */
+function toggleProfileEdit() {
+    const view = document.getElementById('profileView');
+    const edit = document.getElementById('profileEdit');
+    const pwEdit = document.getElementById('passwordEdit');
+    pwEdit.style.display = 'none';
+    if (edit.style.display === 'none') {
+        edit.style.display = 'block';
+        view.querySelector('.dash-setting-row').style.display = 'none';
+    } else {
+        edit.style.display = 'none';
+        view.querySelectorAll('.dash-setting-row').forEach(r => r.style.display = '');
+    }
+}
+
+function togglePasswordEdit() {
+    const pwEdit = document.getElementById('passwordEdit');
+    const edit = document.getElementById('profileEdit');
+    edit.style.display = 'none';
+    document.getElementById('profileView').querySelectorAll('.dash-setting-row').forEach(r => r.style.display = '');
+    pwEdit.style.display = pwEdit.style.display === 'none' ? 'block' : 'none';
+}
+
+function saveProfile() {
+    const username = document.getElementById('editUsername').value.trim();
+    const email = document.getElementById('editEmail').value.trim();
+    if (!username || username.length < 2) { showToast2('用户名至少2个字符'); return; }
+    if (!email) { showToast2('请输入邮箱'); return; }
+
+    fetch('/api/user/update-profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, email })
+    })
+    .then(r => r.json().then(d => ({ status: r.status, data: d })))
+    .then(({ status, data }) => {
+        if (data.error) { showToast2(data.error); return; }
+        showToast2('资料已更新');
+        setTimeout(() => location.reload(), 800);
+    })
+    .catch(err => showToast2('保存失败：' + err.message));
+}
+
+function changePassword() {
+    const oldPw = document.getElementById('oldPassword').value;
+    const newPw = document.getElementById('newPassword').value;
+    const confirmPw = document.getElementById('confirmPassword').value;
+
+    if (!oldPw) { showToast2('请输入原密码'); return; }
+    if (newPw.length < 6) { showToast2('新密码至少6位'); return; }
+    if (newPw !== confirmPw) { showToast2('两次密码不一致'); return; }
+
+    fetch('/api/user/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ old_password: oldPw, new_password: newPw })
+    })
+    .then(r => r.json().then(d => ({ status: r.status, data: d })))
+    .then(({ status, data }) => {
+        if (data.error) { showToast2(data.error); return; }
+        showToast2('密码已修改');
+        togglePasswordEdit();
+        document.getElementById('oldPassword').value = '';
+        document.getElementById('newPassword').value = '';
+        document.getElementById('confirmPassword').value = '';
+    })
+    .catch(err => showToast2('修改失败：' + err.message));
+}
+
+/* ===== API设置 ===== */
+function onProviderChange() {
+    const provider = document.getElementById('apiProvider').value;
+    ['anthropic','openai','deepseek','custom'].forEach(p => {
+        const group = document.getElementById('optgroup-' + p);
+        if (group) group.style.display = p === provider ? '' : 'none';
+    });
+    document.getElementById('baseUrlGroup').style.display = provider === 'custom' ? 'block' : 'none';
+    document.getElementById('apiModelCustom').style.display = provider === 'custom' ? 'block' : 'none';
+    if (provider !== 'custom') {
+        const group = document.getElementById('optgroup-' + provider);
+        if (group) {
+            const firstOpt = group.querySelector('option');
+            if (firstOpt) document.getElementById('apiModel').value = firstOpt.value;
+        }
+    }
+    // 自动填充 base_url
+    const baseUrls = { deepseek: 'https://api.deepseek.com', openai: 'https://api.openai.com/v1' };
+    const baseInput = document.getElementById('apiBaseUrl');
+    if (baseUrls[provider]) baseInput.value = baseUrls[provider];
+    else if (provider !== 'custom') baseInput.value = '';
+}
+
+function toggleKeyVis() {
+    const input = document.getElementById('apiKeyInput');
+    input.type = input.type === 'password' ? 'text' : 'password';
+}
+
+function saveApiSettings() {
+    const provider = document.getElementById('apiProvider').value;
+    const apiKey = document.getElementById('apiKeyInput').value.trim();
+    const model = provider === 'custom'
+        ? document.getElementById('apiModelCustom').value.trim()
+        : document.getElementById('apiModel').value;
+    const baseUrl = document.getElementById('apiBaseUrl').value.trim();
+
+    if (!apiKey) {
+        showToast2('请输入API Key');
+        return;
+    }
+
+    fetch('/api/user/api-settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ provider, api_key: apiKey, model, base_url: baseUrl })
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (d.ok) {
+            const s = document.getElementById('apiSaveStatus');
+            s.style.display = 'inline';
+            setTimeout(() => s.style.display = 'none', 2000);
+        }
+    })
+    .catch(err => showToast2('保存失败：' + err.message));
+}
+
+function testApiKey() {
+    const provider = document.getElementById('apiProvider').value;
+    const apiKey = document.getElementById('apiKeyInput').value.trim();
+    const model = provider === 'custom'
+        ? document.getElementById('apiModelCustom').value.trim()
+        : document.getElementById('apiModel').value;
+    const baseUrl = document.getElementById('apiBaseUrl').value.trim();
+
+    if (!apiKey) { showToast2('请先输入API Key'); return; }
+
+    const statusEl = document.getElementById('apiTestResult');
+    statusEl.textContent = '⏳ 测试中...';
+    statusEl.style.color = '#1565C0';
+
+    fetch('/api/user/test-api-key', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ provider, api_key: apiKey, model, base_url: baseUrl })
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (d.ok) {
+            statusEl.textContent = '✅ ' + d.message;
+            statusEl.style.color = '#2E7D32';
+        } else {
+            statusEl.textContent = '❌ ' + (d.error || '未知错误');
+            statusEl.style.color = '#C62828';
+        }
+    })
+    .catch(err => {
+        statusEl.textContent = '❌ 网络错误: ' + err.message;
+        statusEl.style.color = '#C62828';
+    });
+}
+
+function showToast2(msg) {
+    // 简单的alert替代，后续可替换为toast组件
+    const existing = document.querySelector('.profile-toast');
+    if (existing) existing.remove();
+    const el = document.createElement('div');
+    el.className = 'profile-toast';
+    el.textContent = msg;
+    el.style.cssText = 'position:fixed;bottom:40px;left:50%;transform:translateX(-50%);background:#1A1D26;color:#fff;padding:10px 20px;border-radius:8px;font-size:14px;z-index:999;opacity:0;transition:opacity 0.3s;';
+    document.body.appendChild(el);
+    requestAnimationFrame(() => el.style.opacity = '1');
+    setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, 2500);
 }
 </script>
 {% endblock %}

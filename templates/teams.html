@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% set active = "teams" %}
+
+{% block title %}课题组协作 - 植研小白盒{% endblock %}
+
+{% block head %}
+<style>
+.teams-wrap { max-width: 800px; margin: 0 auto; padding: 1.5rem; }
+.team-card {
+    background: var(--card-bg); border: 1px solid var(--border); border-radius: 14px;
+    padding: 1.2rem; margin-bottom: 1rem; box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+}
+.team-card h3 { font-size: 1.1rem; margin: 0; flex: 1; }
+.team-card .team-meta { font-size: 0.82rem; color: var(--text-light); }
+.team-card .invite-code {
+    background: rgba(212,121,58,0.1); padding: 0.3rem 0.7rem; border-radius: 6px;
+    font-family: monospace; font-size: 0.9rem; font-weight: 600; color: var(--primary);
+    cursor: pointer; user-select: all;
+}
+.create-form { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
+.create-form input {
+    flex: 1; padding: 0.6rem 0.9rem; border: 1.5px solid var(--border); border-radius: 10px;
+    font-size: 0.9rem; outline: none;
+}
+.create-form input:focus { border-color: var(--primary); }
+.join-form { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
+.join-form input {
+    padding: 0.5rem 0.7rem; border: 1.5px solid var(--border); border-radius: 8px;
+    font-size: 0.85rem; outline: none; width: 120px;
+}
+.member-list { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem; }
+.member-tag {
+    background: var(--card-bg); border: 1px solid var(--border); border-radius: 20px;
+    padding: 0.3rem 0.8rem; font-size: 0.82rem; display: flex; align-items: center; gap: 0.3rem;
+}
+.member-tag .role-tag {
+    font-size: 0.7rem; padding: 0.1rem 0.4rem; border-radius: 4px;
+    background: var(--primary); color: white;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="teams-wrap">
+    <div class="data-header">
+        <h1>👥 课题组协作</h1>
+        <p>创建课题组，邀请成员，共享Protocol收藏和实验记录</p>
+    </div>
+
+    {% if current_user %}
+    <!-- 创建团队 -->
+    <div class="d-card">
+        <h3>创建新课题组</h3>
+        <div class="create-form">
+            <input type="text" id="newTeamName" placeholder="课题组名称（如：小麦抗逆生理课题组）">
+            <button class="d-btn d-btn-primary" onclick="createTeam()">创建</button>
+        </div>
+    </div>
+
+    <!-- 我的团队列表 -->
+    <div id="teamsList">
+        <div style="text-align:center;padding:2rem;color:var(--text-light);">加载中...</div>
+    </div>
+
+    {% else %}
+    <div class="d-card" style="text-align:center;padding:2rem;">
+        <p>请先登录以使用团队协作功能</p>
+        <a href="/login" class="d-btn d-btn-primary">去登录</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let teamsData = [];
+
+function loadTeams() {
+    fetch('/api/teams')
+        .then(r => r.json())
+        .then(data => {
+            if (data.teams) {
+                teamsData = data.teams;
+                renderTeams(data.teams);
+            } else {
+                document.getElementById('teamsList').innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-light);">暂未加入任何课题组</div>';
+            }
+        })
+        .catch(() => {
+            document.getElementById('teamsList').innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-light);">加载失败，请刷新重试</div>';
+        });
+}
+
+function renderTeams(teams) {
+    if (teams.length === 0) {
+        document.getElementById('teamsList').innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-light);">暂未加入任何课题组，创建一个吧！</div>';
+        return;
+    }
+
+    document.getElementById('teamsList').innerHTML = teams.map(t => `
+        <div class="team-card">
+            <div style="flex:1;">
+                <h3>${t.name}</h3>
+                <div class="team-meta">${t.member_count} 位成员 | 创建于 ${t.created_at || ''}</div>
+                <div class="member-list" id="members-${t.id}">
+                    <span style="font-size:0.78rem;color:var(--text-light);">加载成员...</span>
+                </div>
+            </div>
+            <div style="text-align:right;">
+                <div>邀请码：<span class="invite-code" onclick="copyInvite('${t.invite_code}')">${t.invite_code}</span></div>
+                <div style="font-size:0.72rem;color:var(--text-light);">点击邀请码复制</div>
+            </div>
+        </div>
+    `).join('');
+
+    // 加载每个组的成员
+    teams.forEach(t => {
+        fetch(`/api/teams/${t.id}/members`)
+            .then(r => r.json())
+            .then(data => {
+                const el = document.getElementById(`members-${t.id}`);
+                if (el && data.members) {
+                    el.innerHTML = data.members.map(m =>
+                        `<span class="member-tag">${m.username} <span class="role-tag">${m.role === 'owner' ? '组长' : '成员'}</span></span>`
+                    ).join('');
+                }
+            });
+    });
+}
+
+function createTeam() {
+    const name = document.getElementById('newTeamName').value.trim();
+    if (name.length < 2) { alert('请输入团队名称（至少2个字符）'); return; }
+    fetch('/api/teams', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.error) { alert(data.error); return; }
+        document.getElementById('newTeamName').value = '';
+        alert(`团队创建成功！邀请码：${data.invite_code}\n将此码分享给课题组成员即可加入。`);
+        loadTeams();
+    })
+    .catch(e => alert('创建失败: ' + e.message));
+}
+
+function copyInvite(code) {
+    navigator.clipboard.writeText(code).then(() => alert('邀请码已复制: ' + code)).catch(() => prompt('邀请码', code));
+}
+
+loadTeams();
+</script>
+{% endblock %}

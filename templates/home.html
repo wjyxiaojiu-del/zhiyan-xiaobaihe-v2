@@ -49,6 +49,11 @@
         <h3>AI问答助手</h3>
         <p>专属植物科研AI，解答问题、排查失败</p>
     </a>
+    <a href="/extract" class="feature-card">
+        <div class="icon">📄</div>
+        <h3>文献提取</h3>
+        <p>上传PDF论文，自动提取实验过程</p>
+    </a>
 </div>
 
 <!-- Protocol卡片网格 -->
@@ -103,73 +108,10 @@
     margin: 0 0.3rem;
     color: #8C7E6E;
 }
-.filter-btn:hover { border-color: #8FA465; color: #6B7C4E; }
-.filter-btn.active { border-color: #6B7C4E; background: #6B7C4E; color: white; }
+.filter-btn:hover { border-color: #E89B5E; color: #D4793A; }
+.filter-btn.active { border-color: #D4793A; background: #D4793A; color: white; }
 
-/* 粒子 */
-.hero-particles {
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    pointer-events: none;
-    z-index: 0;
-}
-
-.particle {
-    position: absolute;
-    border-radius: 50%;
-    opacity: 0.15;
-    animation: particleFloat linear infinite;
-}
-
-.p1 { width: 12px; height: 12px; background: white; top: 15%; left: 8%; animation-duration: 12s; animation-delay: 0s; }
-.p2 { width: 8px; height: 8px; background: white; top: 25%; left: 85%; animation-duration: 15s; animation-delay: 1s; }
-.p3 { width: 15px; height: 15px; background: white; top: 60%; left: 12%; animation-duration: 18s; animation-delay: 2s; }
-.p4 { width: 6px; height: 6px; background: white; top: 70%; left: 90%; animation-duration: 10s; animation-delay: 0.5s; }
-.p5 { width: 10px; height: 10px; background: white; top: 40%; left: 75%; animation-duration: 14s; animation-delay: 3s; }
-.p6 { width: 14px; height: 14px; background: white; top: 80%; left: 50%; animation-duration: 16s; animation-delay: 1.5s; }
-.p7 { width: 9px; height: 9px; background: white; top: 10%; left: 45%; animation-duration: 11s; animation-delay: 4s; }
-.p8 { width: 7px; height: 7px; background: white; top: 50%; left: 30%; animation-duration: 13s; animation-delay: 2.5s; }
-
-@keyframes particleFloat {
-    0%   { transform: translate(0, 0) scale(1); opacity: 0.1; }
-    25%  { transform: translate(15px, -20px) scale(1.2); opacity: 0.2; }
-    50%  { transform: translate(-10px, -35px) scale(0.8); opacity: 0.15; }
-    75%  { transform: translate(20px, -15px) scale(1.1); opacity: 0.18; }
-    100% { transform: translate(0, 0) scale(1); opacity: 0.1; }
-}
-
-/* Protocol卡片交错入场动画 */
-.protocol-card {
-    animation: cardFadeIn 0.5s ease both;
-}
-.protocol-card:nth-child(1) { animation-delay: 0.05s; }
-.protocol-card:nth-child(2) { animation-delay: 0.08s; }
-.protocol-card:nth-child(3) { animation-delay: 0.11s; }
-.protocol-card:nth-child(4) { animation-delay: 0.14s; }
-.protocol-card:nth-child(5) { animation-delay: 0.17s; }
-.protocol-card:nth-child(6) { animation-delay: 0.20s; }
-.protocol-card:nth-child(7) { animation-delay: 0.23s; }
-.protocol-card:nth-child(8) { animation-delay: 0.26s; }
-.protocol-card:nth-child(9) { animation-delay: 0.29s; }
-.protocol-card:nth-child(10) { animation-delay: 0.32s; }
-
-@keyframes cardFadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to   { opacity: 1; transform: translateY(0); }
-}
-
-/* 功能卡片入场 */
-.feature-card {
-    animation: featureFadeIn 0.5s ease both;
-}
-.feature-card:nth-child(1) { animation-delay: 0.35s; }
-.feature-card:nth-child(2) { animation-delay: 0.45s; }
-.feature-card:nth-child(3) { animation-delay: 0.55s; }
-
-@keyframes featureFadeIn {
-    from { opacity: 0; transform: translateY(16px) scale(0.96); }
-    to   { opacity: 1; transform: translateY(0) scale(1); }
-}
+/* 简化：去掉粒子动画 */
 </style>
 
 <script>
