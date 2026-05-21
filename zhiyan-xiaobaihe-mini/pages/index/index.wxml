@@ -1,0 +1,48 @@
+<!-- 首页 Protocol列表 -->
+<view class="page">
+  <!-- 搜索入口 -->
+  <view class="search-bar" bindtap="onSearchTap">
+    <text class="search-icon">🔍</text>
+    <text class="search-placeholder">搜索Protocol、试剂、仪器...</text>
+  </view>
+
+  <!-- 分类筛选 -->
+  <scroll-view class="cat-scroll" scroll-x>
+    <view class="cat-list">
+      <view
+        wx:for="{{categories}}"
+        wx:key="*this"
+        class="cat-btn {{currentCat === item ? 'active' : ''}}"
+        bindtap="onCategoryTap"
+        data-cat="{{item}}"
+      >{{item}}</view>
+    </view>
+  </scroll-view>
+
+  <!-- 加载中 -->
+  <view wx:if="{{loading}}" class="empty-tip">加载中...</view>
+
+  <!-- Protocol卡片列表 -->
+  <view wx:else class="protocol-list">
+    <view
+      wx:for="{{filtered}}"
+      wx:key="id"
+      class="protocol-card"
+      bindtap="onCardTap"
+      data-id="{{item.id}}"
+    >
+      <view class="card-header">
+        <view class="id-badge" style="background:{{item.color}}">{{item.id}}</view>
+        <view class="card-title">{{item.name}}</view>
+      </view>
+      <view class="card-desc">{{item.desc}}</view>
+      <view class="card-footer">
+        <text class="tag tag-category">{{item.category}}</text>
+        <text class="tag tag-difficulty">难度 {{item.difficulty === 1 ? '⭐' : item.difficulty === 2 ? '⭐⭐' : '⭐⭐⭐'}}</text>
+        <text wx:for="{{item.tags}}" wx:for-item="t" wx:key="*this" class="tag tag-instrument">{{t}}</text>
+      </view>
+    </view>
+
+    <view wx:if="{{filtered.length === 0}}" class="empty-tip">暂无Protocol</view>
+  </view>
+</view>

@@ -7,3 +7,5 @@ chroma_db/
 .DS_Store
 Thumbs.db
 *.tmp
+uploads/
+project.private.config.json

@@ -1,0 +1,48 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/detail/detail",
+    "pages/search/search",
+    "pages/calculator/calculator",
+    "pages/instruments/instruments",
+    "pages/instrument-detail/instrument-detail",
+    "pages/ai/ai",
+    "pages/upload/upload",
+    "pages/quantity/quantity"
+  ],
+  "window": {
+    "navigationBarBackgroundColor": "#0d9488",
+    "navigationBarTitleText": "植研小白盒",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#f8fafc",
+    "backgroundTextStyle": "dark"
+  },
+  "tabBar": {
+    "color": "#94a3b8",
+    "selectedColor": "#0d9488",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "Protocol",
+        "iconPath": "assets/tab-home.png",
+        "selectedIconPath": "assets/tab-home-active.png"
+      },
+      {
+        "pagePath": "pages/instruments/instruments",
+        "text": "仪器",
+        "iconPath": "assets/tab-instrument.png",
+        "selectedIconPath": "assets/tab-instrument-active.png"
+      },
+      {
+        "pagePath": "pages/ai/ai",
+        "text": "AI助手",
+        "iconPath": "assets/tab-ai.png",
+        "selectedIconPath": "assets/tab-ai-active.png"
+      }
+    ]
+  },
+  "sitemapLocation": "sitemap.json",
+  "style": "v2"
+}

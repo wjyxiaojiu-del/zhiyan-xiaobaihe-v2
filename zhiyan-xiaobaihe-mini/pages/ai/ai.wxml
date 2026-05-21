@@ -1,0 +1,35 @@
+<view class="page">
+  <!-- API Key输入 -->
+  <view wx:if="{{showKeyInput}}" class="key-box">
+    <view class="key-title">设置API Key</view>
+    <view class="key-desc">需要Anthropic Claude API Key才能使用AI助手</view>
+    <input class="key-input" password placeholder="sk-ant-..." value="{{apiKey}}" bindinput="onKeyInput" />
+    <button class="btn-primary" bindtap="onSaveKey">保存</button>
+  </view>
+
+  <!-- 聊天区域 -->
+  <scroll-view class="chat-area" scroll-y scroll-into-view="{{'msg-' + (messages.length - 1)}}">
+    <view wx:if="{{messages.length === 0}}" class="empty-chat">
+      <text class="empty-icon">🌿</text>
+      <text class="empty-text">你好！我是植研小白盒AI助手，有什么实验问题可以问我~</text>
+    </view>
+
+    <view wx:for="{{messages}}" wx:key="index" id="msg-{{index}}" class="msg-row {{item.role === 'user' ? 'msg-user' : 'msg-bot'}}">
+      <view class="msg-bubble">
+        <text>{{item.content}}</text>
+      </view>
+    </view>
+
+    <view wx:if="{{loading}}" class="msg-row msg-bot">
+      <view class="msg-bubble loading-bubble">思考中...</view>
+    </view>
+
+    <view id="msg-bottom" style="height:20rpx;"></view>
+  </scroll-view>
+
+  <!-- 输入栏 -->
+  <view class="input-bar">
+    <input class="chat-input" placeholder="输入实验问题..." value="{{inputText}}" bindinput="onInputChange" bindconfirm="onSend" />
+    <button class="send-btn" bindtap="onSend">发送</button>
+  </view>
+</view>

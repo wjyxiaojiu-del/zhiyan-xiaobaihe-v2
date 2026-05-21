@@ -1,0 +1,51 @@
+.desc { font-size: 24rpx; color: var(--text-light); margin-bottom: 20rpx; }
+
+.file-zone {
+  background: #f8fafc;
+  border: 3rpx dashed var(--border);
+  border-radius: 16rpx;
+  padding: 40rpx;
+  text-align: center;
+  margin-bottom: 20rpx;
+}
+.file-icon { font-size: 48rpx; display: block; margin-bottom: 12rpx; }
+.file-hint { font-size: 26rpx; color: var(--text-muted); }
+.file-name { font-size: 28rpx; color: var(--primary); font-weight: 600; }
+
+.form-item { margin-bottom: 20rpx; }
+.label { display: block; font-size: 24rpx; font-weight: 600; color: var(--text-light); margin-bottom: 8rpx; }
+.input {
+  padding: 16rpx 20rpx;
+  border: 2rpx solid var(--border);
+  border-radius: 12rpx;
+  font-size: 28rpx;
+  width: 100%;
+  box-sizing: border-box;
+}
+.textarea {
+  padding: 16rpx 20rpx;
+  border: 2rpx solid var(--border);
+  border-radius: 12rpx;
+  font-size: 26rpx;
+  width: 100%;
+  min-height: 120rpx;
+  box-sizing: border-box;
+}
+
+.step-edit-card {
+  background: #f8fafc;
+  border-radius: 12rpx;
+  padding: 16rpx;
+  margin-bottom: 12rpx;
+}
+.step-edit-idx {
+  font-size: 22rpx;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 8rpx;
+  display: block;
+}
+.step-input { margin-bottom: 8rpx; }
+.step-textarea { min-height: 80rpx; }
+
+.save-btn { margin-top: 24rpx; }

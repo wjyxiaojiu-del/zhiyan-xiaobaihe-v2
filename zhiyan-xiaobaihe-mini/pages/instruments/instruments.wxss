@@ -1,0 +1,18 @@
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16rpx;
+  padding: 20rpx 24rpx;
+}
+.inst-card {
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 24rpx;
+  text-align: center;
+  border: 1rpx solid var(--border);
+  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.04);
+}
+.inst-icon { font-size: 48rpx; margin-bottom: 12rpx; }
+.inst-name { font-size: 28rpx; font-weight: 700; margin-bottom: 8rpx; }
+.inst-desc { font-size: 22rpx; color: var(--text-light); margin-bottom: 8rpx; line-height: 1.4; }
+.inst-count { font-size: 20rpx; color: var(--primary); font-weight: 600; }

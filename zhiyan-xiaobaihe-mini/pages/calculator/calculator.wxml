@@ -1,0 +1,122 @@
+<view class="page">
+  <!-- 模式选择 -->
+  <scroll-view class="mode-scroll" scroll-x>
+    <view class="mode-list">
+      <view wx:for="{{modes}}" wx:key="*this"
+        class="mode-btn {{currentMode === index ? 'active' : ''}}"
+        bindtap="onModeTap" data-idx="{{index}}"
+      >{{item}}</view>
+    </view>
+  </scroll-view>
+
+  <!-- 摩尔浓度→质量 -->
+  <view wx:if="{{currentMode === 0}}" class="card">
+    <view class="form-item">
+      <text class="label">分子量 (g/mol)</text>
+      <input class="input" type="digit" value="{{mw}}" bindinput="onInput" data-field="mw" placeholder="如 180.16" />
+    </view>
+    <view class="form-item">
+      <text class="label">摩尔浓度 (mol/L)</text>
+      <input class="input" type="digit" value="{{molarity}}" bindinput="onInput" data-field="molarity" placeholder="如 0.1" />
+    </view>
+    <view class="form-item">
+      <text class="label">体积 (mL)</text>
+      <input class="input" type="digit" value="{{volume}}" bindinput="onInput" data-field="volume" placeholder="如 100" />
+    </view>
+    <button class="btn-primary" bindtap="onCalculate">计算</button>
+    <view wx:if="{{result}}" class="result-box">
+      <view class="result-line">质量: <text class="val">{{result.mass_g}} g</text> = <text class="val">{{result.mass_mg}} mg</text></view>
+    </view>
+  </view>
+
+  <!-- 质量→摩尔浓度 -->
+  <view wx:if="{{currentMode === 1}}" class="card">
+    <view class="form-item">
+      <text class="label">分子量 (g/mol)</text>
+      <input class="input" type="digit" value="{{mw}}" bindinput="onInput" data-field="mw" placeholder="如 180.16" />
+    </view>
+    <view class="form-item">
+      <text class="label">质量 (g)</text>
+      <input class="input" type="digit" value="{{mass}}" bindinput="onInput" data-field="mass" placeholder="如 1.8" />
+    </view>
+    <view class="form-item">
+      <text class="label">体积 (mL)</text>
+      <input class="input" type="digit" value="{{vol2}}" bindinput="onInput" data-field="vol2" placeholder="如 100" />
+    </view>
+    <button class="btn-primary" bindtap="onCalculate">计算</button>
+    <view wx:if="{{result}}" class="result-box">
+      <view class="result-line">摩尔浓度: <text class="val">{{result.molarity_mol}} mol/L</text> = <text class="val">{{result.molarity_mmol}} mmol/L</text></view>
+      <view class="result-line">质量浓度: <text class="val">{{result.mass_conc}} g/L</text></view>
+    </view>
+  </view>
+
+  <!-- 稀释 -->
+  <view wx:if="{{currentMode === 2}}" class="card">
+    <view class="form-item">
+      <text class="label">母液浓度</text>
+      <input class="input" type="digit" value="{{stock}}" bindinput="onInput" data-field="stock" />
+    </view>
+    <view class="form-item">
+      <text class="label">目标浓度</text>
+      <input class="input" type="digit" value="{{target}}" bindinput="onInput" data-field="target" />
+    </view>
+    <view class="form-item">
+      <text class="label">目标体积 (mL)</text>
+      <input class="input" type="digit" value="{{vol3}}" bindinput="onInput" data-field="vol3" />
+    </view>
+    <button class="btn-primary" bindtap="onCalculate">计算</button>
+    <view wx:if="{{result}}" class="result-box">
+      <view class="result-line">取母液: <text class="val">{{result.vol_stock_ml}} mL</text> = <text class="val">{{result.vol_stock_ul}} μL</text></view>
+      <view class="result-line">加溶剂: <text class="val">{{result.vol_solvent}} mL</text></view>
+      <view class="result-line">稀释倍数: <text class="val">{{result.dilution_ratio}}x</text></view>
+    </view>
+  </view>
+
+  <!-- 梯度稀释 -->
+  <view wx:if="{{currentMode === 3}}" class="card">
+    <view class="form-item">
+      <text class="label">起始浓度</text>
+      <input class="input" type="digit" value="{{start}}" bindinput="onInput" data-field="start" />
+    </view>
+    <view class="form-item">
+      <text class="label">稀释因子</text>
+      <input class="input" type="digit" value="{{factor}}" bindinput="onInput" data-field="factor" placeholder="如 2" />
+    </view>
+    <view class="form-item">
+      <text class="label">梯度数</text>
+      <input class="input" type="number" value="{{steps}}" bindinput="onInput" data-field="steps" />
+    </view>
+    <view class="form-item">
+      <text class="label">每级体积 (mL)</text>
+      <input class="input" type="digit" value="{{vol4}}" bindinput="onInput" data-field="vol4" />
+    </view>
+    <button class="btn-primary" bindtap="onCalculate">计算</button>
+    <view wx:if="{{result && result.table}}" class="result-box">
+      <view wx:for="{{result.table}}" wx:key="level" class="result-line">
+        Level {{item.level}}: <text class="val">{{item.conc}}</text> — {{item.method}}
+      </view>
+    </view>
+  </view>
+
+  <!-- RPM↔RCF -->
+  <view wx:if="{{currentMode === 4}}" class="card">
+    <view class="form-item">
+      <text class="label">转换方向</text>
+      <picker range="{{['RPM→RCF', 'RCF→RPM']}}" bindchange="onRcfModeChange">
+        <view class="input picker">{{rcfMode === 'rpm_to_rcf' ? 'RPM→RCF' : 'RCF→RPM'}}</view>
+      </picker>
+    </view>
+    <view class="form-item">
+      <text class="label">转子半径 (mm)</text>
+      <input class="input" type="digit" value="{{radius}}" bindinput="onInput" data-field="radius" />
+    </view>
+    <view class="form-item">
+      <text class="label">{{rcfMode === 'rpm_to_rcf' ? 'RPM' : 'RCF (×g)'}}</text>
+      <input class="input" type="digit" value="{{rpmValue}}" bindinput="onInput" data-field="rpmValue" />
+    </view>
+    <button class="btn-primary" bindtap="onCalculate">计算</button>
+    <view wx:if="{{result}}" class="result-box">
+      <view class="result-line">结果: <text class="val">{{result.result}} {{result.unit}}</text></view>
+    </view>
+  </view>
+</view>

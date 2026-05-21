@@ -1,0 +1,68 @@
+<view class="page">
+  <view class="card">
+    <view class="section-title">上传文献提取Protocol</view>
+    <view class="desc">支持PDF和Word格式，AI自动提取实验流程</view>
+
+    <view class="form-item">
+      <text class="label">Claude API Key</text>
+      <input class="input" password placeholder="sk-ant-..." value="{{apiKey}}" bindinput="onKeyInput" />
+    </view>
+
+    <view class="file-zone" bindtap="onChooseFile">
+      <text wx:if="{{!fileName}}" class="file-icon">📄</text>
+      <text wx:if="{{!fileName}}" class="file-hint">点击选择PDF/Word文件</text>
+      <text wx:else class="file-name">{{fileName}}</text>
+    </view>
+
+    <button class="btn-primary" bindtap="onExtract" loading="{{loading}}" disabled="{{loading}}">
+      {{loading ? 'AI提取中...' : '开始提取'}}
+    </button>
+  </view>
+
+  <!-- 提取结果 -->
+  <view wx:if="{{extracted}}" class="card">
+    <view class="section-title">提取结果（可编辑）</view>
+
+    <view class="form-item">
+      <text class="label">实验名称</text>
+      <input class="input" value="{{sections.name}}" bindinput="onFieldInput" data-field="name" />
+    </view>
+    <view class="form-item">
+      <text class="label">实验原理</text>
+      <textarea class="textarea" value="{{sections.principle}}" bindinput="onFieldInput" data-field="principle" />
+    </view>
+    <view class="form-item">
+      <text class="label">所需仪器</text>
+      <textarea class="textarea" value="{{sections.instruments}}" bindinput="onFieldInput" data-field="instruments" />
+    </view>
+    <view class="form-item">
+      <text class="label">所需试剂</text>
+      <textarea class="textarea" value="{{sections.reagents}}" bindinput="onFieldInput" data-field="reagents" />
+    </view>
+    <view class="form-item">
+      <text class="label">配方</text>
+      <textarea class="textarea" value="{{sections.formula}}" bindinput="onFieldInput" data-field="formula" />
+    </view>
+
+    <!-- 步骤编辑 -->
+    <view wx:if="{{sections.steps.length}}" class="form-item">
+      <text class="label">操作步骤</text>
+      <view wx:for="{{sections.steps}}" wx:key="title" class="step-edit-card">
+        <text class="step-edit-idx">步骤{{index + 1}}</text>
+        <input class="input step-input" placeholder="步骤标题" value="{{item.title}}" bindinput="onStepTitleInput" data-idx="{{index}}" />
+        <textarea class="textarea step-textarea" placeholder="具体操作" value="{{item.how}}" bindinput="onStepHowInput" data-idx="{{index}}" />
+      </view>
+    </view>
+
+    <view class="form-item">
+      <text class="label">安全提示</text>
+      <textarea class="textarea" value="{{sections.safety}}" bindinput="onFieldInput" data-field="safety" />
+    </view>
+    <view class="form-item">
+      <text class="label">避坑提示</text>
+      <textarea class="textarea" value="{{sections.tips}}" bindinput="onFieldInput" data-field="tips" />
+    </view>
+
+    <button class="btn-primary save-btn" bindtap="onSave" loading="{{loading}}">保存为Protocol</button>
+  </view>
+</view>

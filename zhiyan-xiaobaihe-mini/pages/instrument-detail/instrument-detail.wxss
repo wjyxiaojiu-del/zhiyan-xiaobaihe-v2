@@ -1,0 +1,73 @@
+.inst-header {
+  background: #fff;
+  margin: 20rpx 24rpx;
+  border-radius: 20rpx;
+  padding: 24rpx;
+  border: 1rpx solid var(--border);
+}
+.inst-title { font-size: 36rpx; font-weight: 800; margin-bottom: 8rpx; }
+.inst-desc { font-size: 26rpx; color: var(--text-light); }
+
+.hotspot-hint { font-size: 24rpx; color: var(--text-muted); margin-bottom: 16rpx; }
+.hotspot-grid { display: flex; flex-wrap: wrap; gap: 12rpx; }
+.hotspot-btn {
+  padding: 12rpx 24rpx;
+  background: #f0fdfa;
+  color: var(--primary);
+  border: 2rpx solid #99f6e4;
+  border-radius: 12rpx;
+  font-size: 24rpx;
+  font-weight: 600;
+}
+
+.proto-link {
+  display: flex;
+  align-items: center;
+  padding: 12rpx 0;
+  border-bottom: 1rpx solid var(--border);
+}
+.proto-id { color: var(--primary); font-weight: 600; font-size: 26rpx; }
+.arrow { color: var(--text-muted); margin-left: auto; }
+
+/* 弹窗 */
+.overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 100;
+  display: flex;
+  align-items: flex-end;
+}
+.panel {
+  background: #fff;
+  width: 100%;
+  max-height: 80vh;
+  border-radius: 32rpx 32rpx 0 0;
+  padding: 32rpx;
+  overflow-y: auto;
+}
+.panel-close {
+  float: right;
+  font-size: 36rpx;
+  color: var(--text-muted);
+  padding: 8rpx;
+}
+.panel-title { font-size: 32rpx; font-weight: 800; margin-bottom: 8rpx; }
+.panel-desc { font-size: 26rpx; color: var(--text-light); margin-bottom: 24rpx; }
+.panel-section { margin-bottom: 20rpx; }
+.panel-label { font-size: 24rpx; font-weight: 700; color: var(--primary); margin-bottom: 12rpx; }
+.panel-step { display: flex; gap: 12rpx; margin-bottom: 8rpx; font-size: 26rpx; }
+.step-dot {
+  width: 36rpx; height: 36rpx;
+  background: var(--primary);
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20rpx;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.panel-tip { font-size: 24rpx; color: #92400e; margin-bottom: 6rpx; }
+.video-info { font-size: 24rpx; color: var(--text-muted); background: #f1f5f9; padding: 12rpx; border-radius: 8rpx; }

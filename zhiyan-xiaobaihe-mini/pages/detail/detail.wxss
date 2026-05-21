@@ -1,0 +1,117 @@
+.page { padding-bottom: 160rpx; }
+
+.header {
+  background: #fff;
+  margin: 20rpx 24rpx;
+  border-radius: 24rpx;
+  padding: 28rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.04);
+  border: 1rpx solid var(--border);
+}
+
+.id-badge {
+  display: inline-block;
+  color: #fff;
+  font-size: 22rpx;
+  font-weight: 700;
+  padding: 4rpx 16rpx;
+  border-radius: 8rpx;
+  margin-bottom: 12rpx;
+}
+
+.title { font-size: 36rpx; font-weight: 800; margin-bottom: 8rpx; }
+.desc { font-size: 26rpx; color: var(--text-light); margin-bottom: 16rpx; }
+.meta-row { display: flex; flex-wrap: wrap; gap: 8rpx; }
+
+.tab-scroll { white-space: nowrap; padding: 0 24rpx; }
+.tab-list { display: inline-flex; gap: 8rpx; padding: 12rpx 0; }
+.tab-item {
+  padding: 12rpx 28rpx;
+  font-size: 24rpx;
+  font-weight: 600;
+  color: var(--text-light);
+  border-radius: 32rpx;
+  background: #f1f5f9;
+}
+.tab-item.active {
+  color: #fff;
+  background: var(--primary);
+}
+
+.tab-content { padding: 0 24rpx; }
+.section { margin-top: 20rpx; }
+
+.text-block {
+  font-size: 26rpx;
+  line-height: 1.8;
+  color: var(--text);
+  white-space: pre-wrap;
+}
+.text-block.muted { color: var(--text-light); font-size: 24rpx; }
+
+/* 步骤卡片 */
+.step-card {
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 20rpx;
+  margin-bottom: 16rpx;
+  border: 1rpx solid var(--border);
+}
+
+.step-header { display: flex; align-items: center; margin-bottom: 12rpx; }
+.step-num {
+  width: 48rpx; height: 48rpx;
+  background: var(--primary);
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24rpx;
+  font-weight: 700;
+  margin-right: 16rpx;
+  flex-shrink: 0;
+}
+.step-title { font-size: 28rpx; font-weight: 700; }
+.step-body { font-size: 24rpx; color: var(--text-light); margin-bottom: 12rpx; line-height: 1.6; }
+.step-why { font-size: 24rpx; color: var(--primary-dark); margin-bottom: 8rpx; }
+.step-checks { font-size: 24rpx; }
+.check-good { color: var(--success); margin-bottom: 4rpx; }
+.check-bad { color: var(--danger); }
+
+.safety-box {
+  background: #fef2f2;
+  border: 2rpx solid #fecaca;
+  border-radius: 16rpx;
+  padding: 20rpx;
+  font-size: 26rpx;
+  line-height: 1.8;
+  color: #991b1b;
+  white-space: pre-wrap;
+}
+
+.tip-box {
+  background: #fffbeb;
+  border: 2rpx solid #fde68a;
+  border-radius: 16rpx;
+  padding: 20rpx;
+  font-size: 26rpx;
+  line-height: 1.8;
+  color: #92400e;
+  white-space: pre-wrap;
+}
+
+.bottom-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  gap: 16rpx;
+  padding: 20rpx 24rpx;
+  background: #fff;
+  border-top: 1rpx solid var(--border);
+  box-shadow: 0 -2rpx 8rpx rgba(0,0,0,0.04);
+  padding-bottom: calc(20rpx + env(safe-area-inset-bottom));
+}
+.bottom-bar button { flex: 1; margin: 0; }

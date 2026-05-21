@@ -1,0 +1,11 @@
+<view class="page">
+  <view wx:if="{{loading}}" class="empty-tip">加载中...</view>
+  <view wx:else class="grid">
+    <view wx:for="{{instruments}}" wx:key="id" class="inst-card" bindtap="onCardTap" data-id="{{item.id}}">
+      <view class="inst-icon">🔧</view>
+      <view class="inst-name">{{item.name}}</view>
+      <view class="inst-desc">{{item.desc}}</view>
+      <view class="inst-count">关联 {{item.protocols.length}} 个Protocol</view>
+    </view>
+  </view>
+</view>

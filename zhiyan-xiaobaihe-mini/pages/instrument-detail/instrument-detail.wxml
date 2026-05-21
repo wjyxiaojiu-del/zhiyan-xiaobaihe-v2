@@ -1,0 +1,59 @@
+<view wx:if="{{loading}}" class="empty-tip">加载中...</view>
+
+<view wx:else class="page">
+  <view class="inst-header" style="border-top:6rpx solid {{instrument.color}}">
+    <view class="inst-title">{{instrument.name}}</view>
+    <view class="inst-desc">{{instrument.desc}}</view>
+  </view>
+
+  <!-- 热点区域 -->
+  <view class="card">
+    <view class="section-title">交互操作指南</view>
+    <view class="hotspot-hint">点击下方区域查看操作步骤</view>
+    <view class="hotspot-grid">
+      <view
+        wx:for="{{instrument.hotspots}}"
+        wx:key="name"
+        class="hotspot-btn"
+        bindtap="onHotspotTap"
+        data-idx="{{index}}"
+      >{{item.name}}</view>
+    </view>
+  </view>
+
+  <!-- 关联Protocol -->
+  <view class="card">
+    <view class="section-title">关联Protocol</view>
+    <view wx:for="{{instrument.protocols}}" wx:key="*this" class="proto-link" bindtap="onProtocolTap" data-id="{{item}}">
+      <text class="proto-id">{{item}}</text>
+      <text class="arrow">→</text>
+    </view>
+  </view>
+
+  <!-- 热点详情弹窗 -->
+  <view wx:if="{{showPanel}}" class="overlay" bindtap="onClosePanel">
+    <view class="panel" catchtap>
+      <view class="panel-close" bindtap="onClosePanel">✕</view>
+      <view class="panel-title">{{currentHotspot.name}}</view>
+      <view class="panel-desc">{{currentHotspot.desc}}</view>
+
+      <view wx:if="{{currentHotspot.steps.length}}" class="panel-section">
+        <view class="panel-label">操作步骤</view>
+        <view wx:for="{{currentHotspot.steps}}" wx:key="*this" class="panel-step">
+          <text class="step-dot">{{index + 1}}</text>
+          <text>{{item}}</text>
+        </view>
+      </view>
+
+      <view wx:if="{{currentHotspot.tips.length}}" class="panel-section">
+        <view class="panel-label">注意事项</view>
+        <view wx:for="{{currentHotspot.tips}}" wx:key="*this" class="panel-tip">💡 {{item}}</view>
+      </view>
+
+      <view wx:if="{{currentHotspot.video}}" class="panel-section">
+        <view class="panel-label">教学视频</view>
+        <view class="video-info">B站: {{currentHotspot.video.bvid}} ({{currentHotspot.video.t}}s)</view>
+      </view>
+    </view>
+  </view>
+</view>

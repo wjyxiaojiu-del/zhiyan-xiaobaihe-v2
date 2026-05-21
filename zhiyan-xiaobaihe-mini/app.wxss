@@ -1,0 +1,94 @@
+/* 植研小白盒小程序 - 全局样式 */
+
+page {
+  --primary: #0d9488;
+  --primary-light: #14b8a6;
+  --primary-dark: #0f766e;
+  --accent: #f59e0b;
+  --bg: #f8fafc;
+  --card-bg: #ffffff;
+  --text: #1e293b;
+  --text-light: #64748b;
+  --text-muted: #94a3b8;
+  --border: #e2e8f0;
+  --danger: #ef4444;
+  --success: #22c55e;
+
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  font-size: 28rpx;
+  color: var(--text);
+  background: var(--bg);
+  box-sizing: border-box;
+}
+
+.card {
+  background: var(--card-bg);
+  border-radius: 24rpx;
+  padding: 28rpx;
+  margin: 20rpx 24rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.04);
+  border: 1rpx solid var(--border);
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 16rpx;
+  padding: 20rpx 40rpx;
+  font-size: 28rpx;
+  font-weight: 600;
+  text-align: center;
+}
+
+.btn-primary::after { border: none; }
+
+.btn-secondary {
+  background: #f1f5f9;
+  color: var(--text);
+  border: 2rpx solid var(--border);
+  border-radius: 16rpx;
+  padding: 20rpx 40rpx;
+  font-size: 28rpx;
+  font-weight: 500;
+  text-align: center;
+}
+
+.btn-secondary::after { border: none; }
+
+.tag {
+  display: inline-block;
+  padding: 4rpx 16rpx;
+  border-radius: 8rpx;
+  font-size: 22rpx;
+  font-weight: 600;
+}
+
+.tag-category {
+  background: #f0fdfa;
+  color: var(--primary);
+}
+
+.tag-difficulty {
+  background: #fffbeb;
+  color: #b45309;
+}
+
+.tag-instrument {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.section-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 20rpx;
+}
+
+.empty-tip {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 60rpx 0;
+  font-size: 26rpx;
+}

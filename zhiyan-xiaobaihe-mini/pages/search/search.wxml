@@ -1,0 +1,23 @@
+<view class="page">
+  <view class="search-box">
+    <input class="search-input" placeholder="输入关键词搜索Protocol" value="{{query}}" bindinput="onInput" bindconfirm="onSearch" focus="true" confirm-type="search" />
+    <button class="btn-primary search-btn" bindtap="onSearch">搜索</button>
+  </view>
+
+  <view wx:if="{{loading}}" class="empty-tip">搜索中...</view>
+
+  <view wx:elif="{{searched && results.length === 0}}" class="empty-tip">未找到相关结果</view>
+
+  <view wx:elif="{{results.length > 0}}" class="result-list">
+    <view class="result-count">找到 {{results.length}} 个结果</view>
+    <view wx:for="{{results}}" wx:key="protocol_id" class="result-card" bindtap="onResultTap" data-id="{{item.protocol_id}}">
+      <view class="result-header">
+        <text class="result-id">{{item.protocol_id}}</text>
+        <text class="result-name">{{item.protocol_name}}</text>
+        <text class="tag tag-category">{{item.category}}</text>
+      </view>
+      <view class="result-desc">{{item.desc}}</view>
+      <view wx:if="{{item.snippet}}" class="result-snippet">{{item.snippet}}</view>
+    </view>
+  </view>
+</view>

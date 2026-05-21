@@ -1,0 +1,48 @@
+<view class="page">
+  <view class="card">
+    <view class="section-title">用量配置</view>
+    <view class="desc">根据实验规模自动计算试剂用量</view>
+
+    <view class="param-row">
+      <view class="param-item">
+        <text class="label">样品数量</text>
+        <input class="input" type="number" value="{{sampleCount}}" bindinput="onSampleInput" />
+      </view>
+      <view class="param-item">
+        <text class="label">重复次数</text>
+        <input class="input" type="number" value="{{replicates}}" bindinput="onReplicateInput" />
+      </view>
+    </view>
+
+    <view class="scale-hint">缩放倍数 = {{sampleCount}} × {{replicates}} = {{scaleFactor}}x</view>
+
+    <button class="btn-primary" bindtap="onCalculate" loading="{{loading}}">计算推荐用量</button>
+  </view>
+
+  <!-- 结果 -->
+  <view wx:if="{{showResult}}" class="card">
+    <view class="section-title">用量对比</view>
+
+    <view wx:if="{{quantities.length === 0}}" class="empty-tip">未检测到可缩放的试剂用量</view>
+
+    <view wx:else class="qty-list">
+      <view wx:for="{{quantities}}" wx:key="original" class="qty-item">
+        <view class="qty-context">{{item.context}}</view>
+        <view class="qty-row">
+          <text class="qty-original">{{item.original}}</text>
+          <text class="qty-arrow">→</text>
+          <text class="qty-scaled">{{item.value * scaleFactor}}{{item.unit}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view wx:if="{{scaledContent}}" class="preview-box">
+      <view class="preview-title">缩放后预览</view>
+      <scroll-view class="preview-scroll" scroll-y>
+        <text class="preview-text">{{scaledContent}}</text>
+      </scroll-view>
+    </view>
+
+    <button class="btn-secondary" style="margin-top:20rpx;" bindtap="onCopyScaled">📋 复制缩放后Protocol</button>
+  </view>
+</view>

@@ -1,0 +1,96 @@
+<!-- Protocol详情页 -->
+<view wx:if="{{loading}}" class="empty-tip">加载中...</view>
+
+<view wx:else class="page">
+  <!-- 头部 -->
+  <view class="header" style="border-top: 6rpx solid {{meta.color}}">
+    <view class="id-badge" style="background:{{meta.color}}">{{meta.id}}</view>
+    <view class="title">{{meta.name}}</view>
+    <view class="desc">{{meta.desc}}</view>
+    <view class="meta-row">
+      <text class="tag tag-category">{{meta.category}}</text>
+      <text class="tag tag-difficulty">难度 {{meta.difficulty === 1 ? '⭐' : meta.difficulty === 2 ? '⭐⭐' : '⭐⭐⭐'}}</text>
+      <text wx:for="{{meta.tags}}" wx:key="*this" class="tag tag-instrument">{{item}}</text>
+    </view>
+  </view>
+
+  <!-- Tab导航 -->
+  <scroll-view class="tab-scroll" scroll-x>
+    <view class="tab-list">
+      <view
+        wx:for="{{tabs}}"
+        wx:key="*this"
+        class="tab-item {{currentTab === index ? 'active' : ''}}"
+        bindtap="onTabTap"
+        data-idx="{{index}}"
+      >{{item}}</view>
+    </view>
+  </scroll-view>
+
+  <!-- Tab内容 -->
+  <view class="tab-content">
+    <!-- 概览 -->
+    <view wx:if="{{currentTab === 0}}" class="section">
+      <view class="section-title">实验原理</view>
+      <view class="text-block">{{content.principle}}</view>
+      <view wx:if="{{content.principle_inner}}" class="text-block" style="margin-top:16rpx;">{{content.principle_inner}}</view>
+
+      <view class="section-title" style="margin-top:32rpx;">来源出处</view>
+      <view class="text-block muted">{{content.source}}</view>
+
+      <view class="section-title" style="margin-top:32rpx;">所需仪器</view>
+      <view class="text-block">{{content.instruments}}</view>
+    </view>
+
+    <!-- 操作步骤 -->
+    <view wx:if="{{currentTab === 1}}" class="section">
+      <view class="section-title">分步操作步骤</view>
+      <view wx:if="{{content.steps && content.steps.length}}" class="steps-list">
+        <view wx:for="{{content.steps}}" wx:key="title" class="step-card">
+          <view class="step-header">
+            <view class="step-num">{{index + 1}}</view>
+            <view class="step-title">{{item.title}}</view>
+          </view>
+          <view wx:if="{{item.how}}" class="step-body">{{item.how}}</view>
+          <view wx:if="{{item.why}}" class="step-why">💡 {{item.why}}</view>
+          <view class="step-checks">
+            <view wx:if="{{item.correct}}" class="check-good">✅ 做对了：{{item.correct}}</view>
+            <view wx:if="{{item.wrong}}" class="check-bad">❌ 做错了：{{item.wrong}}</view>
+          </view>
+        </view>
+      </view>
+      <view wx:elif="{{content.steps_raw}}" class="text-block">{{content.steps_raw}}</view>
+    </view>
+
+    <!-- 试剂配方 -->
+    <view wx:if="{{currentTab === 2}}" class="section">
+      <view class="section-title">所需试剂</view>
+      <view class="text-block">{{content.reagents}}</view>
+      <view class="section-title" style="margin-top:32rpx;">配方与配制方法</view>
+      <view class="text-block">{{content.formula}}</view>
+      <button class="btn-primary" style="margin-top:32rpx;" bindtap="onQuantity">🧮 用量配置</button>
+    </view>
+
+    <!-- 避坑指南 -->
+    <view wx:if="{{currentTab === 3}}" class="section">
+      <view class="section-title">安全红线</view>
+      <view class="safety-box">{{content.safety}}</view>
+      <view class="section-title" style="margin-top:32rpx;">新手避坑提示</view>
+      <view class="tip-box">{{content.tips}}</view>
+    </view>
+
+    <!-- 数据处理 -->
+    <view wx:if="{{currentTab === 4}}" class="section">
+      <view class="section-title">数据处理与结果判读</view>
+      <view class="text-block">{{content.data}}</view>
+      <view class="section-title" style="margin-top:32rpx;">常见问题排查表</view>
+      <view class="text-block">{{content.troubleshoot}}</view>
+    </view>
+  </view>
+
+  <!-- 底部操作 -->
+  <view class="bottom-bar">
+    <button class="btn-primary" bindtap="onCopyMD">📋 复制Markdown</button>
+    <button class="btn-secondary" bindtap="onQuantity">🧮 用量配置</button>
+  </view>
+</view>
