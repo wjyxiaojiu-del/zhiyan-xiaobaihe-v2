@@ -1,6 +1,6 @@
 # 植研小白盒 v3.0
 
-植物生理生化实验一站式 Web 工具，面向实验新手，提供 Protocol 检索、试剂计算、Claude AI 问答等功能。
+植物生理生化实验一站式 Web 工具，面向实验新手，提供 Protocol 检索、试剂计算、DeepSeek AI 问答等功能。
 
 **在线访问**: https://zhiyan-xiaobaihe-v2-git-master-wjyxiaojiu-dels-projects.vercel.app
 
@@ -20,8 +20,8 @@
 - **母液配制计算** — 输入目标浓度和质量，计算所需溶剂体积
 - **比活力计算** — ED50 与比活力互算
 
-### AI 问答助手 (Claude AI)
-- 接入 Anthropic Claude API，提供专业的植物实验问答
+### AI 问答助手 (DeepSeek)
+- 接入 DeepSeek API，提供专业的植物实验问答
 - 自动检索 Protocol 知识库作为上下文，回答更精准
 - 支持多轮对话历史
 - 未配置 API Key 时自动回退到本地规则引擎
@@ -57,8 +57,8 @@
 # 安装依赖
 pip install -r requirements.txt
 
-# (可选) 配置 Claude AI
-export ANTHROPIC_API_KEY=sk-ant-xxx
+# (可选) 配置 DeepSeek AI
+export DEEPSEEK_API_KEY=sk-xxx
 
 # 启动服务
 python app.py
@@ -70,7 +70,7 @@ python app.py
 
 1. Fork 本仓库
 2. 在 Vercel 中导入项目
-3. (可选) 在 Environment Variables 中添加 `ANTHROPIC_API_KEY`
+3. (可选) 在 Environment Variables 中添加 `DEEPSEEK_API_KEY`
 4. 部署完成
 
 ## 项目结构
@@ -93,7 +93,7 @@ python app.py
 │   ├── cache.py            # 内存缓存（TTL）
 │   ├── protocol_service.py # Protocol 解析与缓存
 │   ├── search_service.py   # 搜索服务（批量查询优化）
-│   └── ai_service.py       # AI 服务（Claude API + 本地回退）
+│   └── ai_service.py       # AI 服务（DeepSeek API + 本地回退）
 ├── data/                   # 数据层
 │   ├── protocol_meta.py    # Protocol 元数据（65 条）
 │   ├── instrument_meta.py  # 仪器元数据（10 条）
@@ -112,7 +112,7 @@ python app.py
 - **前端**: HTML / CSS / JavaScript（Jinja2 模板）
 - **数据库**: SQLite（用户系统）
 - **部署**: Vercel（Serverless）
-- **AI**: Anthropic Claude API（claude-sonnet-4-20250514）
+- **AI**: DeepSeek API（deepseek-v4-pro）
 
 ## v3.0 架构优化
 
@@ -128,7 +128,7 @@ python app.py
 - 数据库连接使用 context manager，杜绝连接泄漏
 
 ### AI 能力
-- 接入 Claude API 实现真正的智能问答
+- 接入 DeepSeek API 实现真正的智能问答
 - 自动检索 Protocol 知识库作为上下文
 - 支持多轮对话
 - 未配置 API Key 时自动回退到本地规则引擎
@@ -142,7 +142,7 @@ python app.py
 
 ### v3.0 (2026-05-18)
 - 架构重构：单文件拆分为 Blueprint 模块化架构
-- 接入 Claude API 实现真正的 AI 问答
+- 接入 DeepSeek API 实现真正的 AI 问答
 - 性能优化：缓存 + 批量查询
 - 代码质量提升
 

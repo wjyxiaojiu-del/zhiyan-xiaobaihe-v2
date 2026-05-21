@@ -1,6 +1,6 @@
 """
 植研小白盒 v3 - Flask Web 应用（模块化重构）
-功能：Protocol 检索 + 试剂计算器 + Claude AI 问答 + 仪器可视化指南
+功能：Protocol 检索 + 试剂计算器 + DeepSeek AI 问答 + 仪器可视化指南
 运行：python app.py
 """
 import os

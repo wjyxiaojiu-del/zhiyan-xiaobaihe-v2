@@ -11,6 +11,7 @@ USER_DB = os.path.join("/tmp", "users.db") if os.environ.get("VERCEL") else os.p
 
 SECRET_KEY = os.environ.get("SECRET_KEY", secrets.token_hex(32))
 
-# Claude API
-ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
-CLAUDE_MODEL = os.environ.get("CLAUDE_MODEL", "claude-sonnet-4-20250514")
+# DeepSeek API (OpenAI 兼容)
+DEEPSEEK_API_KEY = os.environ.get("DEEPSEEK_API_KEY", "")
+DEEPSEEK_BASE_URL = os.environ.get("DEEPSEEK_BASE_URL", "https://api.deepseek.com")
+DEEPSEEK_MODEL = os.environ.get("DEEPSEEK_MODEL", "deepseek-v4-pro")
